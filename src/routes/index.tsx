@@ -17,7 +17,10 @@ import AuthLayout from "../layouts/AuthLayout";
 // Admin Pages
 import AdminDashboard from "../pages/admin/Dashboard";
 import CreateEvent from "../pages/admin/CreateEvent";
+import EventsList from "../pages/admin/EventsList";
 import UserManagement from "../pages/admin/UserManagement";
+import DonationManagement from "../pages/admin/DonationManagement";
+import TeamManagement from "../pages/admin/TeamManagement";
 import ReliefRequests from "../pages/admin/ReliefRequests";
 import Warehouse from "../pages/admin/Warehouse";
 
@@ -76,7 +79,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <AdminDashboard />, // Or create EventsList page
+            element: <EventsList />,
           },
           {
             path: "create",
@@ -87,6 +90,14 @@ const router = createBrowserRouter([
       {
         path: "users",
         element: <UserManagement />,
+      },
+      {
+        path: "donations",
+        element: <DonationManagement />,
+      },
+      {
+        path: "teams",
+        element: <TeamManagement />,
       },
       {
         path: "relief-requests",

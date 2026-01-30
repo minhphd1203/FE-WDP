@@ -11,15 +11,23 @@ import {
 export interface CreateEventDto {
   title: string;
   description: string;
-  type: 'relief_team' | 'product_donation';
+  type: 'DONATION' | 'VOLUNTEER';
   startDate: string;
   endDate: string;
   location?: string;
   teamId?: string;
 }
 
-export interface UpdateEventDto extends Partial<CreateEventDto> {
-  status?: 'active' | 'completed' | 'cancelled';
+export interface UpdateEventDto {
+  title?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+}
+
+export interface UpdateEventStatusDto {
+  status: 'OPEN' | 'CLOSED' | 'CANCELLED';
 }
 
 export interface ApproveRegistrationDto {
@@ -58,6 +66,14 @@ export const eventApi = {
   // Delete event
   deleteEvent: async (id: string): Promise<ApiResponse<void>> => {
     return httpClient.delete(API_ENDPOINTS.EVENT_BY_ID(id));
+  },
+
+  // Update event status
+  updateEventStatus: async (
+    id: string,
+    data: UpdateEventStatusDto
+  ): Promise<ApiResponse<Event>> => {
+    return httpClient.patch(`${API_ENDPOINTS.EVENT_BY_ID(id)}/status`, data);
   },
 
   // Register for event
