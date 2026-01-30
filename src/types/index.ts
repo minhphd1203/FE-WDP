@@ -1,33 +1,34 @@
 export enum UserRole {
-  ADMIN = 'admin',
-  STAFF = 'staff',
-  USER = 'user',
+  ADMIN = "admin",
+  STAFF = "staff",
+  USER = "user",
 }
 
 export enum EventType {
-  RELIEF_TEAM = 'relief_team',
-  PRODUCT_DONATION = 'product_donation',
+  RELIEF_TEAM = "relief_team",
+  PRODUCT_DONATION = "product_donation",
 }
 
 export enum RequestStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  REJECTED = 'rejected',
+  PENDING = "pending",
+  APPROVED = "approved",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  REJECTED = "rejected",
 }
 
 export enum ProductStatus {
-  PENDING = 'pending',
-  VERIFIED = 'verified',
-  DISTRIBUTED = 'distributed',
-  REJECTED = 'rejected',
+  PENDING = "pending",
+  VERIFIED = "verified",
+  DISTRIBUTED = "distributed",
+  REJECTED = "rejected",
 }
 
 export interface User {
   id: string;
   email: string;
   name: string;
+  fullName?: string;
   phone?: string;
   role: UserRole;
   avatar?: string;
@@ -45,7 +46,7 @@ export interface ReliefTeam {
   members: TeamMember[];
   capacity: number;
   currentMembers: number;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   createdAt: string;
   eventId?: string;
 }
@@ -56,7 +57,7 @@ export interface TeamMember {
   email: string;
   phone?: string;
   joinedAt: string;
-  role: 'leader' | 'member';
+  role: "leader" | "member";
 }
 
 export interface Event {
@@ -69,7 +70,7 @@ export interface Event {
   location?: string;
   createdBy: string;
   createdByName: string;
-  status: 'active' | 'completed' | 'cancelled';
+  status: "active" | "completed" | "cancelled";
   teamId?: string;
   team?: ReliefTeam;
   registrations?: EventRegistration[];
@@ -85,7 +86,7 @@ export interface EventRegistration {
   userName: string;
   userEmail: string;
   userPhone?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   registeredAt: string;
 }
 
@@ -95,7 +96,7 @@ export interface Product {
   category: string;
   quantity: number;
   unit: string;
-  condition: 'new' | 'used' | 'refurbished';
+  condition: "new" | "used" | "refurbished";
   description?: string;
   images?: string[];
   donorId: string;
@@ -134,7 +135,7 @@ export interface ReliefRequest {
       lng: number;
     };
   };
-  urgency: 'low' | 'medium' | 'high' | 'critical';
+  urgency: "low" | "medium" | "high" | "critical";
   status: RequestStatus;
   assignedTeamId?: string;
   assignedTeamName?: string;
@@ -155,7 +156,7 @@ export interface WarehouseItem {
   category: string;
   quantity: number;
   unit: string;
-  condition: 'new' | 'used' | 'refurbished';
+  condition: "new" | "used" | "refurbished";
   location?: string;
   shelf?: string;
   donorName: string;
@@ -177,7 +178,7 @@ export interface PaginationParams {
   page: number;
   limit: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface ApiResponse<T> {

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCircle,
   Send,
@@ -7,11 +7,14 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  User,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/utils";
+import { authService } from "../service/auth/api";
+import { CurrentUserData } from "../types/auth";
 
 const navigation = [
   {
@@ -33,8 +36,44 @@ const navigation = [
 
 export default function StaffLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUserData | null>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await authService.getCurrentUser();
+        if (response.success) {
+          setCurrentUser(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  const displayUser = currentUser || user;
+
+  const getFullName = () => {
+    if (currentUser) {
+      return (
+        currentUser.fullName ||
+        (currentUser.profile?.fullName as string | undefined) ||
+        currentUser.name ||
+        "Staff"
+      );
+    }
+    return user?.fullName || user?.name || "Staff";
+  };
+
+  const getFirstChar = () => {
+    const fullName = getFullName();
+    return fullName.charAt(0).toUpperCase();
+  };
 
   const handleLogout = () => {
     logout();
@@ -89,18 +128,35 @@ export default function StaffLayout() {
             {/* User section */}
             <div className="border-t p-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary font-semibold">
-                    {user?.name?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                {currentUser?.profile?.avatarUrl ? (
+                  <img
+                    src={currentUser.profile.avatarUrl}
+                    alt="Avatar"
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-primary font-semibold">
+                      {getFirstChar()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <p className="text-sm font-medium truncate">
+                    {getFullName()}
+                  </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {user?.email}
+                    {displayUser?.role}
                   </p>
                 </div>
               </div>
+              <button
+                onClick={() => navigate(ROUTES.STAFF_UPDATE_PROFILE)}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors mb-2"
+              >
+                <User className="h-4 w-4" />
+                Cập nhật hồ sơ
+              </button>
               <Button
                 variant="outline"
                 className="w-full"
@@ -147,16 +203,33 @@ export default function StaffLayout() {
           {/* User section */}
           <div className="border-t p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-semibold">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              {currentUser?.profile?.avatarUrl ? (
+                <img
+                  src={currentUser.profile.avatarUrl}
+                  alt="Avatar"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-semibold">
+                    {getFirstChar()}
+                  </span>
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <p className="text-sm font-medium truncate">{getFullName()}</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {displayUser?.role}
+                </p>
               </div>
             </div>
+            <button
+              onClick={() => navigate(ROUTES.STAFF_UPDATE_PROFILE)}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors mb-2"
+            >
+              <User className="h-4 w-4" />
+              Cập nhật hồ sơ
+            </button>
             <Button variant="outline" className="w-full" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Đăng xuất

@@ -25,6 +25,7 @@ import Warehouse from "../pages/admin/Warehouse";
 import StaffDashboard from "../pages/staff/Dashboard";
 import VerifyProducts from "../pages/staff/VerifyProducts";
 import DistributeProducts from "../pages/staff/DistributeProducts";
+import UpdateProfile from "../pages/staff/UpdateProfile";
 
 // Auth Pages
 import Login from "../pages/auth/Login";
@@ -124,6 +125,10 @@ const router = createBrowserRouter([
       {
         path: "distribute",
         element: <DistributeProducts />,
+      },
+      {
+        path: "update-profile",
+        element: <UpdateProfile />,
       },
     ],
   },
