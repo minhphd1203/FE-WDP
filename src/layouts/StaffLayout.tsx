@@ -23,13 +23,13 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    name: "Xác minh sản phẩm",
-    href: ROUTES.STAFF_VERIFY_PRODUCTS,
+    name: "Quản lý sản phẩm",
+    href: ROUTES.STAFF_PRODUCTS,
     icon: CheckCircle,
   },
   {
-    name: "Phân phối sản phẩm",
-    href: ROUTES.STAFF_DISTRIBUTE,
+    name: "Danh sách tình nguyện viên",
+    href: ROUTES.STAFF_VOLUNTEERS,
     icon: Send,
   },
 ];

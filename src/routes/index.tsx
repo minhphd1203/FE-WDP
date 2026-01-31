@@ -23,8 +23,8 @@ import Warehouse from "../pages/admin/Warehouse";
 
 // Staff Pages
 import StaffDashboard from "../pages/staff/Dashboard";
-import VerifyProducts from "../pages/staff/VerifyProducts";
-import DistributeProducts from "../pages/staff/DistributeProducts";
+import ProductManagement from "../pages/staff/ProductManagement";
+import VolunteerList from "../pages/staff/VolunteerList";
 import UpdateProfile from "../pages/staff/UpdateProfile";
 
 // Auth Pages
@@ -119,12 +119,12 @@ const router = createBrowserRouter([
         element: <StaffDashboard />,
       },
       {
-        path: "verify-products",
-        element: <VerifyProducts />,
+        path: "products",
+        element: <ProductManagement />,
       },
       {
-        path: "distribute",
-        element: <DistributeProducts />,
+        path: "volunteers",
+        element: <VolunteerList />,
       },
       {
         path: "update-profile",
