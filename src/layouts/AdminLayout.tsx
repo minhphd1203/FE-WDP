@@ -22,13 +22,23 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Tạo sự kiện',
-    href: ROUTES.ADMIN_CREATE_EVENT,
+    name: 'Quản lý sự kiện',
+    href: ROUTES.ADMIN_EVENTS,
     icon: Calendar,
   },
   {
     name: 'Quản lý người dùng',
     href: ROUTES.ADMIN_USERS,
+    icon: Users,
+  },
+  {
+    name: 'Quản lý Donations',
+    href: ROUTES.ADMIN_DONATIONS,
+    icon: Package,
+  },
+  {
+    name: 'Quản lý Đội Cứu Hộ',
+    href: ROUTES.ADMIN_TEAMS,
     icon: Users,
   },
   {
