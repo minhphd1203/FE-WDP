@@ -72,6 +72,8 @@ export const ROUTES = {
   ADMIN_EVENTS: "/admin/events",
   ADMIN_CREATE_EVENT: "/admin/events/create",
   ADMIN_USERS: "/admin/users",
+  ADMIN_DONATIONS: "/admin/donations",
+  ADMIN_TEAMS: "/admin/teams",
   ADMIN_RELIEF_REQUESTS: "/admin/relief-requests",
   ADMIN_WAREHOUSE: "/admin/warehouse",
 
@@ -90,40 +92,40 @@ export const ROUTES = {
 
 export const API_ENDPOINTS = {
   // Auth
-  LOGIN: "/api/auth/login",
-  REGISTER: "/api/auth/register",
-  LOGOUT: "/api/auth/logout",
-  ME: "/api/auth/me",
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
+  LOGOUT: "/auth/logout",
+  ME: "/auth/me",
 
   // Users
-  USERS: "/api/users",
-  USER_BY_ID: (id: string) => `/api/users/${id}`,
+  USERS: "/users",
+  USER_BY_ID: (id: string) => `/users/${id}`,
 
   // Events
-  EVENTS: "/api/events",
-  EVENT_BY_ID: (id: string) => `/api/events/${id}`,
-  EVENT_REGISTER: (id: string) => `/api/events/${id}/register`,
-  EVENT_REGISTRATIONS: (id: string) => `/api/events/${id}/registrations`,
+  EVENTS: "/events",
+  EVENT_BY_ID: (id: string) => `/events/${id}`,
+  EVENT_REGISTER: (id: string) => `/events/${id}/volunteer-registrations`,
+  EVENT_REGISTRATIONS: (id: string) => `/events/${id}/volunteer-registrations`,
 
   // Relief Teams
-  RELIEF_TEAMS: "/api/relief-teams",
-  RELIEF_TEAM_BY_ID: (id: string) => `/api/relief-teams/${id}`,
+  RELIEF_TEAMS: "/relief-teams",
+  RELIEF_TEAM_BY_ID: (id: string) => `/relief-teams/${id}`,
 
   // Products
-  PRODUCTS: "/api/products",
-  PRODUCT_BY_ID: (id: string) => `/api/products/${id}`,
-  PRODUCT_VERIFY: (id: string) => `/api/products/${id}/verify`,
-  PRODUCT_DISTRIBUTE: (id: string) => `/api/products/${id}/distribute`,
+  PRODUCTS: "/products",
+  PRODUCT_BY_ID: (id: string) => `/products/${id}`,
+  PRODUCT_VERIFY: (id: string) => `/products/${id}/verify`,
+  PRODUCT_DISTRIBUTE: (id: string) => `/products/${id}/distribute`,
 
   // Relief Requests
-  RELIEF_REQUESTS: "/api/relief-requests",
-  RELIEF_REQUEST_BY_ID: (id: string) => `/api/relief-requests/${id}`,
-  RELIEF_REQUEST_ASSIGN: (id: string) => `/api/relief-requests/${id}/assign`,
+  RELIEF_REQUESTS: "/relief-requests",
+  RELIEF_REQUEST_BY_ID: (id: string) => `/relief-requests/${id}`,
+  RELIEF_REQUEST_ASSIGN: (id: string) => `/relief-requests/${id}/assign`,
 
   // Warehouse
-  WAREHOUSE: "/api/warehouse",
-  WAREHOUSE_STATS: "/api/warehouse/stats",
-  WAREHOUSE_EXPORT: "/api/warehouse/export",
+  WAREHOUSE: "/warehouse",
+  WAREHOUSE_STATS: "/warehouse/stats",
+  WAREHOUSE_EXPORT: "/warehouse/export",
 } as const;
 
 export const PAGINATION_DEFAULTS = {

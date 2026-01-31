@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,13 +16,12 @@ import {
 } from '../../../components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { createEventSchema, CreateEventFormData } from '../../../schema/eventSchema';
-import { eventApi } from '../../../apis/eventApi';
+import { useCreateEvent } from '../../../hooks/useEvent';
 import { ROUTES } from '../../../constants';
-import { toast } from 'sonner';
 
 export default function CreateEvent() {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createEventMutation = useCreateEvent();
 
   const {
     register,
@@ -34,13 +33,13 @@ export default function CreateEvent() {
     resolver: zodResolver(createEventSchema),
   });
 
-  const onSubmit = (data: CreateEventFormData) => {
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Tạo sự kiện thành công!');
+  const onSubmit = async (data: CreateEventFormData) => {
+    try {
+      await createEventMutation.mutateAsync(data);
       navigate(ROUTES.ADMIN_DASHBOARD);
-    }, 500);
+    } catch (error) {
+      // Error is handled in the hook
+    }
   };
 
   const eventType = watch('type');
@@ -78,10 +77,10 @@ export default function CreateEvent() {
                   <SelectValue placeholder="Chọn loại sự kiện" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="relief_team">
+                  <SelectItem value="VOLUNTEER">
                     Đội cứu trợ - Tuyển tình nguyện viên
                   </SelectItem>
-                  <SelectItem value="product_donation">
+                  <SelectItem value="DONATION">
                     Quyên góp vật phẩm
                   </SelectItem>
                 </SelectContent>
@@ -151,7 +150,7 @@ export default function CreateEvent() {
             </div>
 
             {/* Location (optional for relief teams) */}
-            {eventType === 'relief_team' && (
+            {eventType === 'VOLUNTEER' && (
               <div className="space-y-2">
                 <Label htmlFor="location">Địa điểm tập trung</Label>
                 <Input
@@ -168,12 +167,12 @@ export default function CreateEvent() {
                 type="button"
                 variant="outline"
                 onClick={() => navigate(ROUTES.ADMIN_EVENTS)}
-                disabled={isSubmitting}
+                disabled={createEventMutation.isPending}
               >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Đang tạo...' : 'Tạo sự kiện'}
+              <Button type="submit" disabled={createEventMutation.isPending}>
+                {createEventMutation.isPending ? 'Đang tạo...' : 'Tạo sự kiện'}
               </Button>
             </div>
           </form>
