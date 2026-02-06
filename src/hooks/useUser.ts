@@ -27,9 +27,13 @@ export const useUsers = (params?: Partial<PaginationParams> & {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: async () => {
+      console.log('[useUsers] Query function called with params:', params);
       const response = await userApi.getUsers(params);
+      console.log('[useUsers] Query response:', response);
       return response;
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 };
 
@@ -51,14 +55,20 @@ export const useCreateUser = () => {
 
   return useMutation({
     mutationFn: async (data: CreateAccountDto) => {
+      console.log('[useCreateUser] Mutation function called with:', data);
       const response = await userApi.createUser(data);
+      console.log('[useCreateUser] API response:', response);
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    onSuccess: async () => {
+      console.log('[useCreateUser] Mutation success, invalidating queries');
+      await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      await queryClient.refetchQueries({ queryKey: userKeys.lists() });
+      console.log('[useCreateUser] Queries invalidated and refetched');
       toast.success('Tạo tài khoản thành công!');
     },
     onError: (error: any) => {
+      console.error('[useCreateUser] Mutation error:', error);
       const message = error?.response?.data?.message || error.message || 'Tạo tài khoản thất bại';
       toast.error(message);
     },
@@ -71,15 +81,21 @@ export const useUpdateUser = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateAccountDto }) => {
+      console.log('[useUpdateUser] Mutation function called with id:', id, 'data:', data);
       const response = await userApi.updateUser(id, data);
+      console.log('[useUpdateUser] API response:', response);
       return response;
     },
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+    onSuccess: async (_response, variables) => {
+      console.log('[useUpdateUser] Mutation success, invalidating queries');
+      await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      await queryClient.refetchQueries({ queryKey: userKeys.lists() });
+      console.log('[useUpdateUser] Queries invalidated and refetched');
       toast.success('Cập nhật tài khoản thành công!');
     },
     onError: (error: any) => {
+      console.error('[useUpdateUser] Mutation error:', error);
       const message = error?.response?.data?.message || error.message || 'Cập nhật tài khoản thất bại';
       toast.error(message);
     },
@@ -92,14 +108,20 @@ export const useDeleteUser = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log('[useDeleteUser] Mutation function called with id:', id);
       const response = await userApi.deleteUser(id);
+      console.log('[useDeleteUser] API response:', response);
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    onSuccess: async () => {
+      console.log('[useDeleteUser] Mutation success, invalidating queries');
+      await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      await queryClient.refetchQueries({ queryKey: userKeys.lists() });
+      console.log('[useDeleteUser] Queries invalidated and refetched');
       toast.success('Xóa tài khoản thành công!');
     },
     onError: (error: any) => {
+      console.error('[useDeleteUser] Mutation error:', error);
       const message = error?.response?.data?.message || error.message || 'Xóa tài khoản thất bại';
       toast.error(message);
     },
@@ -112,15 +134,21 @@ export const useUpdateUserStatus = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateAccountStatusDto }) => {
+      console.log('[useUpdateUserStatus] Mutation function called with id:', id, 'data:', data);
       const response = await userApi.updateUserStatus(id, data);
+      console.log('[useUpdateUserStatus] API response:', response);
       return response;
     },
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+    onSuccess: async (_response, variables) => {
+      console.log('[useUpdateUserStatus] Mutation success, invalidating queries');
+      await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      await queryClient.refetchQueries({ queryKey: userKeys.lists() });
+      console.log('[useUpdateUserStatus] Queries invalidated and refetched');
       toast.success('Cập nhật trạng thái thành công!');
     },
     onError: (error: any) => {
+      console.error('[useUpdateUserStatus] Mutation error:', error);
       const message = error?.response?.data?.message || error.message || 'Cập nhật trạng thái thất bại';
       toast.error(message);
     },

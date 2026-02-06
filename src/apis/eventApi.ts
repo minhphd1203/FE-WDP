@@ -27,7 +27,7 @@ export interface UpdateEventDto {
 }
 
 export interface UpdateEventStatusDto {
-  status: 'OPEN' | 'CLOSED' | 'CANCELLED';
+  status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'CANCELLED';
 }
 
 export interface ApproveRegistrationDto {
@@ -42,17 +42,26 @@ export const eventApi = {
     status?: string;
     search?: string;
   }): Promise<ApiResponse<PaginatedResponse<Event>>> => {
-    return httpClient.get(API_ENDPOINTS.EVENTS, { params });
+    console.log('eventApi.getEvents called with params:', params);
+    console.log('API endpoint:', API_ENDPOINTS.EVENTS);
+    const result = await httpClient.get(API_ENDPOINTS.EVENTS, { params });
+    console.log('eventApi.getEvents result:', result);
+    return result;
   },
 
   // Get event by ID
   getEventById: async (id: string): Promise<ApiResponse<Event>> => {
+    console.log('eventApi.getEventById called with id:', id);
     return httpClient.get(API_ENDPOINTS.EVENT_BY_ID(id));
   },
 
   // Create new event
   createEvent: async (data: CreateEventDto): Promise<ApiResponse<Event>> => {
-    return httpClient.post(API_ENDPOINTS.EVENTS, data);
+    console.log('eventApi.createEvent called with data:', data);
+    console.log('API endpoint:', API_ENDPOINTS.EVENTS);
+    const result = await httpClient.post(API_ENDPOINTS.EVENTS, data);
+    console.log('eventApi.createEvent result:', result);
+    return result;
   },
 
   // Update event
@@ -60,7 +69,7 @@ export const eventApi = {
     id: string,
     data: UpdateEventDto
   ): Promise<ApiResponse<Event>> => {
-    return httpClient.put(API_ENDPOINTS.EVENT_BY_ID(id), data);
+    return httpClient.patch(API_ENDPOINTS.EVENT_BY_ID(id), data);
   },
 
   // Delete event

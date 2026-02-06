@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,11 +32,42 @@ export default function CreateEvent() {
     resolver: zodResolver(createEventSchema),
   });
 
+  // Get current datetime in local timezone for min attribute
+  const getCurrentDateTimeLocal = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const startDate = watch('startDate');
+
   const onSubmit = async (data: CreateEventFormData) => {
+    console.log('Form data before submit:', data);
+    
+    // Convert datetime-local to ISO 8601
+    const formattedData = {
+      ...data,
+      startDate: new Date(data.startDate).toISOString(),
+      endDate: new Date(data.endDate).toISOString(),
+    };
+    
+    console.log('Formatted data:', formattedData);
+    
     try {
-      await createEventMutation.mutateAsync(data);
-      navigate(ROUTES.ADMIN_DASHBOARD);
+      await createEventMutation.mutateAsync(formattedData);
+      console.log('Mutation completed, waiting before navigate...');
+      
+      // Wait a bit for cache to update
+      setTimeout(() => {
+        console.log('Navigating to events list...');
+        navigate(ROUTES.ADMIN_EVENTS);
+      }, 500);
     } catch (error) {
+      console.error('Submit error:', error);
       // Error is handled in the hook
     }
   };
@@ -126,6 +156,7 @@ export default function CreateEvent() {
                 <Input
                   id="startDate"
                   type="datetime-local"
+                  min={getCurrentDateTimeLocal()}
                   {...register('startDate')}
                 />
                 {errors.startDate && (
@@ -139,6 +170,7 @@ export default function CreateEvent() {
                 <Input
                   id="endDate"
                   type="datetime-local"
+                  min={startDate || getCurrentDateTimeLocal()}
                   {...register('endDate')}
                 />
                 {errors.endDate && (
