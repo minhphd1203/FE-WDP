@@ -17,6 +17,7 @@ import AuthLayout from "../layouts/AuthLayout";
 // Admin Pages
 import AdminDashboard from "../pages/admin/Dashboard";
 import CreateEvent from "../pages/admin/CreateEvent";
+import EditEvent from "../pages/admin/EditEvent";
 import EventsList from "../pages/admin/EventsList";
 import UserManagement from "../pages/admin/UserManagement";
 import DonationManagement from "../pages/admin/DonationManagement";
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
           {
             path: "create",
             element: <CreateEvent />,
+          },
+          {
+            path: ":id/edit",
+            element: <EditEvent />,
           },
         ],
       },

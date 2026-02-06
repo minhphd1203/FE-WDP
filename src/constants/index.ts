@@ -37,6 +37,7 @@ export const PRODUCT_CONDITIONS = {
   REFURBISHED: "refurbished",
 } as const;
 
+// @deprecated Use API endpoint /categories instead for dynamic categories
 export const PRODUCT_CATEGORIES = [
   "Thực phẩm",
   "Nước uống",
@@ -71,6 +72,7 @@ export const ROUTES = {
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_EVENTS: "/admin/events",
   ADMIN_CREATE_EVENT: "/admin/events/create",
+  ADMIN_EDIT_EVENT: (id: string) => `/admin/events/${id}/edit`,
   ADMIN_USERS: "/admin/users",
   ADMIN_DONATIONS: "/admin/donations",
   ADMIN_TEAMS: "/admin/teams",
@@ -116,15 +118,29 @@ export const API_ENDPOINTS = {
   PRODUCT_VERIFY: (id: string) => `/products/${id}/verify`,
   PRODUCT_DISTRIBUTE: (id: string) => `/products/${id}/distribute`,
 
-  // Relief Requests
+  // Relief Requests / Rescue Requests
   RELIEF_REQUESTS: "/relief-requests",
   RELIEF_REQUEST_BY_ID: (id: string) => `/relief-requests/${id}`,
   RELIEF_REQUEST_ASSIGN: (id: string) => `/relief-requests/${id}/assign`,
+  RESCUE_REQUESTS: "/rescue-requests",
+  RESCUE_REQUEST_BY_ID: (id: string) => `/rescue-requests/${id}`,
+  RESCUE_REQUEST_ASSIGN: (id: string) => `/rescue-requests/admin/${id}/assignments`,
+  RESCUE_REQUEST_REVIEW: (id: string) => `/rescue-requests/admin/${id}/review`,
 
   // Warehouse
   WAREHOUSE: "/warehouse",
   WAREHOUSE_STATS: "/warehouse/stats",
   WAREHOUSE_EXPORT: "/warehouse/export",
+  WAREHOUSE_STOCKS: "/warehouse/stocks",
+  WAREHOUSE_ALLOCATIONS: "/warehouse/allocations",
+  WAREHOUSE_ALLOCATION_BY_ID: (id: string) => `/warehouse/allocations/${id}`,
+  WAREHOUSE_ALLOCATION_STATUS: (id: string) => `/warehouse/allocations/${id}/status`,
+  WAREHOUSE_RECEIPTS: "/warehouse/receipts",
+  WAREHOUSE_RECEIPT_BY_ID: (id: string) => `/warehouse/receipts/${id}`,
+
+  // Categories
+  CATEGORIES: "/categories",
+  CATEGORY_BY_ID: (id: string) => `/categories/${id}`,
 } as const;
 
 export const PAGINATION_DEFAULTS = {

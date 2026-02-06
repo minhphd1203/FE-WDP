@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Users, Calendar, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Calendar, MapPin, RefreshCw, Filter } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import {
@@ -12,6 +12,13 @@ import {
   TableRow,
 } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
 import { useEvents, useDeleteEvent } from '../../../hooks/useEvent';
 import { ROUTES } from '../../../constants';
 import {
@@ -25,7 +32,14 @@ import {
 
 export default function EventsList() {
   const navigate = useNavigate();
-  const { data: eventsResponse, isLoading, error } = useEvents();
+  
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  
+  const { data: eventsResponse, isLoading, error, refetch } = useEvents({
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    type: typeFilter !== 'all' ? typeFilter : undefined,
+  });
   const deleteEventMutation = useDeleteEvent();
   
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -40,12 +54,43 @@ export default function EventsList() {
 
   // Debug: log response structure
   console.log('Events Response:', eventsResponse);
+  console.log('Events Data:', eventsResponse?.data);
+  console.log('Events Items:', eventsResponse?.data?.items);
+  console.log('Loading:', isLoading);
+  console.log('Error:', error);
   
-  // Try different possible response structures
-  const events = eventsResponse?.data?.items || 
-                 eventsResponse?.data?.data || 
-                 eventsResponse?.data || 
-                 [];
+  // Force refetch on mount
+  useEffect(() => {
+    console.log('EventsList mounted, refetching...');
+    refetch();
+  }, []);
+  
+  // Handle different possible response structures
+  let events: any[] = [];
+  
+  if (eventsResponse?.data?.data) {
+    // Correct API structure: response.data.data
+    events = eventsResponse.data.data;
+  } else if (Array.isArray(eventsResponse?.data)) {
+    // Direct array in data
+    events = eventsResponse.data;
+  } else if (Array.isArray(eventsResponse)) {
+    // Direct array response
+    events = eventsResponse;
+  }
+  
+  console.log('Parsed Events:', events);
+  console.log('Events Count:', events.length);
+  console.log('Meta info:', eventsResponse?.data?.meta);
+  if (events.length > 0) {
+    console.table(events.map(e => ({
+      id: e.id,
+      title: e.title,
+      type: e.type,
+      status: e.status,
+      startDate: e.startDate
+    })));
+  }
 
   const handleDelete = async () => {
     if (!deleteDialog.eventId) return;
@@ -60,12 +105,13 @@ export default function EventsList() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
+      DRAFT: { label: 'Nháp', className: 'bg-yellow-100 text-yellow-800' },
       OPEN: { label: 'Đang mở', className: 'bg-green-100 text-green-800' },
       CLOSED: { label: 'Đã đóng', className: 'bg-gray-100 text-gray-800' },
       CANCELLED: { label: 'Đã hủy', className: 'bg-red-100 text-red-800' },
     };
     
-    const config = statusMap[status] || statusMap.OPEN;
+    const config = statusMap[status] || statusMap.DRAFT;
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
@@ -100,10 +146,22 @@ export default function EventsList() {
   }
 
   if (error) {
+    console.error('Events List Error:', error);
     return (
       <div className="p-6">
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-red-500">Có lỗi xảy ra khi tải danh sách sự kiện</p>
+          <div className="text-center">
+            <p className="text-red-500 mb-2">Có lỗi xảy ra khi tải danh sách sự kiện</p>
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : 'Unknown error'}
+            </p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+            >
+              Thử lại
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -118,27 +176,94 @@ export default function EventsList() {
             Quản lý các sự kiện cứu trợ và quyên góp
           </p>
         </div>
-        <Button onClick={() => navigate(ROUTES.ADMIN_CREATE_EVENT)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Tạo sự kiện mới
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Làm mới
+          </Button>
+          <Button onClick={() => navigate(ROUTES.ADMIN_CREATE_EVENT)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tạo sự kiện mới
+          </Button>
+        </div>
       </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex gap-4 items-center">
+            <Filter className="h-5 w-5 text-muted-foreground" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="DRAFT">Nháp</SelectItem>
+                <SelectItem value="OPEN">Đang mở</SelectItem>
+                <SelectItem value="CLOSED">Đã đóng</SelectItem>
+                <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Loại sự kiện" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="DONATION">Quyên góp</SelectItem>
+                <SelectItem value="VOLUNTEER">Tình nguyện</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {(statusFilter !== 'all' || typeFilter !== 'all') && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                }}
+              >
+                Xóa bộ lọc
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách sự kiện</CardTitle>
+          <CardTitle>Danh sách sự kiện ({events.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {events.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-2">
                 Chưa có sự kiện nào được tạo
               </p>
-              <Button onClick={() => navigate(ROUTES.ADMIN_CREATE_EVENT)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Tạo sự kiện đầu tiên
-              </Button>
+              <p className="text-sm text-muted-foreground mb-4">
+                Kiểm tra Console (F12) để xem debug logs
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  variant="outline"
+                  onClick={() => refetch()}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Làm mới
+                </Button>
+                <Button onClick={() => navigate(ROUTES.ADMIN_CREATE_EVENT)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tạo sự kiện đầu tiên
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -202,7 +327,7 @@ export default function EventsList() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/admin/events/${event.id}/edit`)}
+                            onClick={() => navigate(ROUTES.ADMIN_EDIT_EVENT(event.id))}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>

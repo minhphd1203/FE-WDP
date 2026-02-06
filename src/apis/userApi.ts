@@ -49,7 +49,10 @@ export const userApi = {
     search?: string;
     isActive?: boolean;
   }): Promise<ApiResponse<PaginatedResponse<User>>> => {
-    return httpClient.get(ACCOUNT_ENDPOINTS.ACCOUNTS, { params });
+    console.log('[userApi] getUsers called with params:', params);
+    const response = await httpClient.get(ACCOUNT_ENDPOINTS.ACCOUNTS, { params });
+    console.log('[userApi] getUsers response:', response);
+    return response;
   },
 
   // Get account by ID
@@ -59,7 +62,10 @@ export const userApi = {
 
   // Create new account
   createUser: async (data: CreateAccountDto): Promise<ApiResponse<User>> => {
-    return httpClient.post(ACCOUNT_ENDPOINTS.ACCOUNTS, data);
+    console.log('[userApi] createUser called with data:', data);
+    const response = await httpClient.post(ACCOUNT_ENDPOINTS.ACCOUNTS, data);
+    console.log('[userApi] createUser response:', response);
+    return response;
   },
 
   // Update account
@@ -67,17 +73,26 @@ export const userApi = {
     id: string,
     data: UpdateAccountDto
   ): Promise<ApiResponse<User>> => {
-    return httpClient.put(ACCOUNT_ENDPOINTS.ACCOUNT_BY_ID(id), data);
+    console.log('[userApi] updateUser called with id:', id, 'data:', data);
+    const response = await httpClient.patch(ACCOUNT_ENDPOINTS.ACCOUNT_BY_ID(id), data);
+    console.log('[userApi] updateUser response:', response);
+    return response;
   },
 
   // Delete account
   deleteUser: async (id: string): Promise<ApiResponse<void>> => {
-    return httpClient.delete(ACCOUNT_ENDPOINTS.ACCOUNT_BY_ID(id));
+    console.log('[userApi] deleteUser called with id:', id);
+    const response = await httpClient.delete(ACCOUNT_ENDPOINTS.ACCOUNT_BY_ID(id));
+    console.log('[userApi] deleteUser response:', response);
+    return response;
   },
 
   // Update account status
   updateUserStatus: async (id: string, data: UpdateAccountStatusDto): Promise<ApiResponse<User>> => {
-    return httpClient.put(ACCOUNT_ENDPOINTS.ACCOUNT_STATUS(id), data);
+    console.log('[userApi] updateUserStatus called with id:', id, 'data:', data);
+    const response = await httpClient.patch(ACCOUNT_ENDPOINTS.ACCOUNT_STATUS(id), data);
+    console.log('[userApi] updateUserStatus response:', response);
+    return response;
   },
 
   // Confirm contact

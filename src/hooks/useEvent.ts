@@ -22,9 +22,13 @@ export const useEvents = (params?: Partial<PaginationParams> & {
   return useQuery({
     queryKey: eventKeys.list(params),
     queryFn: async () => {
+      console.log('Fetching events with params:', params);
       const response = await eventApi.getEvents(params);
+      console.log('Events API response:', response);
       return response;
     },
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
   });
 };
 
@@ -46,14 +50,25 @@ export const useCreateEvent = () => {
 
   return useMutation({
     mutationFn: async (data: CreateEventDto) => {
+      console.log('Creating event with data:', data);
       const response = await eventApi.createEvent(data);
+      console.log('Create event response:', response);
       return response;
     },
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    onSuccess: async () => {
+      console.log('Event created successfully, invalidating and refetching queries...');
+      
+      // Invalidate all event queries
+      await queryClient.invalidateQueries({ queryKey: eventKeys.all });
+      
+      // Force refetch immediately
+      await queryClient.refetchQueries({ queryKey: eventKeys.lists() });
+      
+      console.log('Queries invalidated and refetched');
       toast.success('Tạo sự kiện thành công!');
     },
     onError: (error: any) => {
+      console.error('Create event error:', error);
       const message = error?.response?.data?.message || error.message || 'Tạo sự kiện thất bại';
       toast.error(message);
     },
@@ -69,7 +84,7 @@ export const useUpdateEvent = () => {
       const response = await eventApi.updateEvent(id, data);
       return response;
     },
-    onSuccess: (response, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
       queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.id) });
       toast.success('Cập nhật sự kiện thành công!');
@@ -110,7 +125,7 @@ export const useUpdateEventStatus = () => {
       const response = await eventApi.updateEventStatus(id, data);
       return response;
     },
-    onSuccess: (response, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
       queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.id) });
       toast.success('Cập nhật trạng thái sự kiện thành công!');
@@ -131,7 +146,7 @@ export const useRegisterEvent = () => {
       const response = await eventApi.registerForEvent(eventId);
       return response;
     },
-    onSuccess: (response, eventId) => {
+    onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
       queryClient.invalidateQueries({ queryKey: eventKeys.registrations(eventId) });
       toast.success('Đăng ký tham gia sự kiện thành công!');
