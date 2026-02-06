@@ -2,7 +2,7 @@ import httpClient from "../../lib/http";
 import {
   ApproveDonationRequest,
   CreateDonationRequest,
-  DonationData,
+  Donation,
   DonationFilters,
   DonationsResponse,
   RejectDonationRequest,
@@ -21,6 +21,8 @@ const DONATION_ENDPOINTS = {
   ADMIN_DONATION_BY_ID: (id: string) => `/admin/donations/${id}`,
   APPROVE: (id: string) => `/admin/donations/${id}/approve`,
   REJECT: (id: string) => `/admin/donations/${id}/reject`,
+  BULK_APPROVE: "/admin/donations/bulk-approve",
+  BULK_REJECT: "/admin/donations/bulk-reject",
   EVENT_DONATIONS: (eventId: string) => `/events/${eventId}/donations`,
   EVENT_DONATION_BY_ID: (eventId: string, donationId: string) =>
     `/events/${eventId}/donations/${donationId}`,
@@ -48,30 +50,30 @@ export const donationService = {
   },
 
   getDonation: (id: string) =>
-    httpClient.get<ApiResponse<DonationData>>(
+    httpClient.get<ApiResponse<Donation>>(
       DONATION_ENDPOINTS.ADMIN_DONATION_BY_ID(id),
     ),
 
   approveDonation: (id: string, data?: ApproveDonationRequest) =>
-    httpClient.patch<ApiResponse<DonationData>>(
+    httpClient.patch<ApiResponse<Donation>>(
       DONATION_ENDPOINTS.APPROVE(id),
       data || {},
     ),
 
   rejectDonation: (id: string, data: RejectDonationRequest) =>
-    httpClient.patch<ApiResponse<DonationData>>(
+    httpClient.patch<ApiResponse<Donation>>(
       DONATION_ENDPOINTS.REJECT(id),
       data,
     ),
 
   createDonation: (eventId: string, data: CreateDonationRequest) =>
-    httpClient.post<ApiResponse<DonationData>>(
+    httpClient.post<ApiResponse<Donation>>(
       DONATION_ENDPOINTS.EVENT_DONATIONS(eventId),
       data,
     ),
 
   getDonationByEvent: (eventId: string, donationId: string) =>
-    httpClient.get<ApiResponse<DonationData>>(
+    httpClient.get<ApiResponse<Donation>>(
       DONATION_ENDPOINTS.EVENT_DONATION_BY_ID(eventId, donationId),
     ),
 
@@ -87,6 +89,18 @@ export const donationService = {
         : DONATION_ENDPOINTS.MY_DONATIONS(eventId),
     );
   },
+
+  bulkApproveDonations: (ids: string[], note?: string) =>
+    httpClient.patch<ApiResponse<{ count: number }>>(
+      DONATION_ENDPOINTS.BULK_APPROVE,
+      { ids, note },
+    ),
+
+  bulkRejectDonations: (ids: string[], reason: string) =>
+    httpClient.patch<ApiResponse<{ count: number }>>(
+      DONATION_ENDPOINTS.BULK_REJECT,
+      { ids, reason },
+    ),
 };
 
 export default donationService;

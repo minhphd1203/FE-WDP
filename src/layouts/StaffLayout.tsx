@@ -8,6 +8,7 @@ import {
   X,
   LayoutDashboard,
   User,
+  Package,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
@@ -31,6 +32,11 @@ const navigation = [
     name: "Danh sách tình nguyện viên",
     href: ROUTES.STAFF_VOLUNTEERS,
     icon: Send,
+  },
+  {
+    name: "Quản lý kho",
+    href: ROUTES.STAFF_WAREHOUSE,
+    icon: Package,
   },
 ];
 

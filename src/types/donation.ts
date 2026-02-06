@@ -8,65 +8,94 @@ export type DonationStatus =
   | "DELIVERED";
 
 export type ItemCondition = "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+export type ItemStatus =
+  | "SUBMITTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "RECEIVED"
+  | "ALLOCATED"
+  | "DISPATCHED"
+  | "DELIVERED";
 
-export interface DonationItemData {
+// Category interface
+export interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+// Donation Item interface
+export interface DonationItem {
   id: string;
   donationId: string;
-  category: string;
+  categoryId: string;
+  name: string;
+  unit: string;
+  expirationDate: string;
+  status: ItemStatus;
   quantity: number;
   condition: ItemCondition;
-  imageUrls?: string[] | null;
-  note?: string | null;
-  expirationDate?: string | null;
+  imageUrls: string[];
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  category: Category;
+}
+
+// Creator Profile interface
+export interface CreatorProfile {
+  id: string;
+  accountId: string;
+  fullName: string;
+  address: string;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface DonationCreatorProfile {
-  id?: string;
-  fullName?: string;
-  phone?: string;
-  address?: string;
-  avatarUrl?: string;
-}
-
-export interface DonationCreator {
+// Creator interface
+export interface Creator {
   id: string;
-  email?: string;
-  phone?: string;
-  profile?: DonationCreatorProfile;
+  email: string;
+  phone: string | null;
+  passwordHash: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  profile: CreatorProfile;
 }
 
-export interface DonationEvent {
-  id: string;
-  title?: string;
-  type?: "DONATION" | "VOLUNTEER";
-  status?: "OPEN" | "CLOSED" | "COMPLETED" | "DRAFT" | "CANCELED";
-  startDate?: string;
-  endDate?: string;
-}
-
-export interface DonationData {
+// Main Donation interface
+export interface Donation {
   id: string;
   creatorId: string;
   eventId: string;
   status: DonationStatus;
-  note?: string | null;
+  note: string;
   createdAt: string;
   updatedAt: string;
-  items: DonationItemData[];
-  creator?: DonationCreator;
-  event?: DonationEvent;
+  deletedAt: string | null;
+  items: DonationItem[];
+  creator: Creator;
 }
 
+// Pagination meta interface
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+// Donations response interface (chỉ chứa phần "data" field từ API)
 export interface DonationsResponse {
-  data: DonationData[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  };
+  data: Donation[];
+  meta: PaginationMeta;
 }
 
 export interface DonationFilters {

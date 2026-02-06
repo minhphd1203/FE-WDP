@@ -28,6 +28,7 @@ import Warehouse from "../pages/admin/Warehouse";
 import StaffDashboard from "../pages/staff/Dashboard";
 import ProductManagement from "../pages/staff/ProductManagement";
 import VolunteerList from "../pages/staff/VolunteerList";
+import WarehouseManagement from "../pages/staff/WarehouseManagement";
 import UpdateProfile from "../pages/staff/UpdateProfile";
 
 // Auth Pages
@@ -136,6 +137,10 @@ const router = createBrowserRouter([
       {
         path: "volunteers",
         element: <VolunteerList />,
+      },
+      {
+        path: "warehouse",
+        element: <WarehouseManagement />,
       },
       {
         path: "update-profile",
