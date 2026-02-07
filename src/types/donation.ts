@@ -1,0 +1,131 @@
+export type DonationStatus =
+  | "SUBMITTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "RECEIVED"
+  | "ALLOCATED"
+  | "DISPATCHED"
+  | "DELIVERED";
+
+export type ItemCondition = "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+export type ItemStatus =
+  | "SUBMITTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "RECEIVED"
+  | "ALLOCATED"
+  | "DISPATCHED"
+  | "DELIVERED";
+
+// Category interface
+export interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+// Donation Item interface
+export interface DonationItem {
+  id: string;
+  donationId: string;
+  categoryId: string;
+  name: string;
+  unit: string;
+  expirationDate: string;
+  status: ItemStatus;
+  quantity: number;
+  condition: ItemCondition;
+  imageUrls: string[];
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  category: Category;
+}
+
+// Creator Profile interface
+export interface CreatorProfile {
+  id: string;
+  accountId: string;
+  fullName: string;
+  address: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Creator interface
+export interface Creator {
+  id: string;
+  email: string;
+  phone: string | null;
+  passwordHash: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  profile: CreatorProfile;
+}
+
+// Main Donation interface
+export interface Donation {
+  id: string;
+  creatorId: string;
+  eventId: string;
+  status: DonationStatus;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  items: DonationItem[];
+  creator: Creator;
+}
+
+// Pagination meta interface
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+// Donations response interface (chỉ chứa phần "data" field từ API)
+export interface DonationsResponse {
+  data: Donation[];
+  meta: PaginationMeta;
+}
+
+export interface DonationFilters {
+  status?: DonationStatus;
+  eventId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  order?: "ASC" | "DESC";
+}
+
+export interface CreateDonationItemRequest {
+  category: string;
+  quantity: number;
+  condition?: ItemCondition;
+  imageUrls?: string[];
+  note?: string;
+}
+
+export interface CreateDonationRequest {
+  items: CreateDonationItemRequest[];
+  note?: string;
+}
+
+export interface ApproveDonationRequest {
+  note?: string;
+}
+
+export interface RejectDonationRequest {
+  reason: string;
+}

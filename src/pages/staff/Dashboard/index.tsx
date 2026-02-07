@@ -71,7 +71,7 @@ export default function StaffDashboard() {
         <div className="grid gap-4 md:grid-cols-2">
           <Card
             className="cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => navigate(ROUTES.STAFF_VERIFY_PRODUCTS)}
+            onClick={() => navigate(ROUTES.STAFF_PRODUCTS)}
           >
             <CardHeader>
               <div className="w-12 h-12 rounded-lg bg-yellow-500 hover:bg-yellow-600 flex items-center justify-center mb-4">
@@ -88,7 +88,7 @@ export default function StaffDashboard() {
 
           <Card
             className="cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => navigate(ROUTES.STAFF_DISTRIBUTE)}
+            onClick={() => navigate(ROUTES.STAFF_PRODUCTS)}
           >
             <CardHeader>
               <div className="w-12 h-12 rounded-lg bg-green-500 hover:bg-green-600 flex items-center justify-center mb-4">

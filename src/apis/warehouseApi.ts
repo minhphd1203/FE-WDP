@@ -1,5 +1,5 @@
-import { API_ENDPOINTS } from '../constants';
-import httpClient from '../lib/http';
+import { API_ENDPOINTS } from "../constants";
+import httpClient from "../lib/http";
 import {
   ApiResponse,
   WarehouseItem,
@@ -11,14 +11,16 @@ import {
   Receipt,
   AllocationStatus,
   AllocationItem,
-} from '../types';
+} from "../types";
 
 export const warehouseApi = {
   // Get all warehouse items with pagination and filters
-  getWarehouseItems: async (params?: Partial<PaginationParams> & {
-    category?: string;
-    search?: string;
-  }): Promise<ApiResponse<PaginatedResponse<WarehouseItem>>> => {
+  getWarehouseItems: async (
+    params?: Partial<PaginationParams> & {
+      category?: string;
+      search?: string;
+    },
+  ): Promise<ApiResponse<PaginatedResponse<WarehouseItem>>> => {
     return httpClient.get(API_ENDPOINTS.WAREHOUSE, { params });
   },
 
@@ -29,12 +31,11 @@ export const warehouseApi = {
 
   // Export warehouse data to Excel
   exportWarehouse: async (): Promise<Blob> => {
-    const response = await httpClient.getInstance().get(
-      API_ENDPOINTS.WAREHOUSE_EXPORT,
-      {
-        responseType: 'blob',
-      }
-    );
+    const response = await httpClient
+      .getInstance()
+      .get(API_ENDPOINTS.WAREHOUSE_EXPORT, {
+        responseType: "blob",
+      });
     return response.data;
   },
 
@@ -68,7 +69,7 @@ export const warehouseApi = {
   // Update allocation status
   updateAllocationStatus: async (
     id: string,
-    status: AllocationStatus
+    status: AllocationStatus,
   ): Promise<ApiResponse<Allocation>> => {
     return httpClient.patch(API_ENDPOINTS.WAREHOUSE_ALLOCATION_STATUS(id), {
       status,

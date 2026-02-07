@@ -8,6 +8,7 @@ import {
   X,
   LayoutDashboard,
   User,
+  Package,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
@@ -23,14 +24,19 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    name: "Xác minh sản phẩm",
-    href: ROUTES.STAFF_VERIFY_PRODUCTS,
+    name: "Quản lý sản phẩm",
+    href: ROUTES.STAFF_PRODUCTS,
     icon: CheckCircle,
   },
   {
-    name: "Phân phối sản phẩm",
-    href: ROUTES.STAFF_DISTRIBUTE,
+    name: "Danh sách tình nguyện viên",
+    href: ROUTES.STAFF_VOLUNTEERS,
     icon: Send,
+  },
+  {
+    name: "Quản lý kho",
+    href: ROUTES.STAFF_WAREHOUSE,
+    icon: Package,
   },
 ];
 

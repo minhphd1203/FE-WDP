@@ -82,8 +82,10 @@ export const ROUTES = {
   // Staff routes
   STAFF: "/staff",
   STAFF_DASHBOARD: "/staff/dashboard",
-  STAFF_VERIFY_PRODUCTS: "/staff/verify-products",
+  STAFF_PRODUCTS: "/staff/products",
   STAFF_DISTRIBUTE: "/staff/distribute",
+  STAFF_VOLUNTEERS: "/staff/volunteers",
+  STAFF_WAREHOUSE: "/staff/warehouse",
   STAFF_UPDATE_PROFILE: "/staff/update-profile",
 
   // Auth routes
