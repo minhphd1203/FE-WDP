@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Package, Send, Users } from "lucide-react";
@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { productApi } from "../../../apis/productApi";
+
 import { Product } from "../../../types";
 import {
   distributeProductSchema,

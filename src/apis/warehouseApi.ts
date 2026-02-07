@@ -14,6 +14,8 @@ import {
 
 export interface CreateAllocationDto {
   teamId: string;
+  donationId?: string;
+  eventId?: string;
   items: {
     category: string;
     condition: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
@@ -57,6 +59,7 @@ export const warehouseApi = {
     page?: number;
     limit?: number;
     teamId?: string;
+    eventId?: string;
     status?: AllocationStatus;
   }): Promise<ApiResponse<PaginatedResponse<Allocation>>> => {
     return httpClient.get(API_ENDPOINTS.WAREHOUSE_ALLOCATIONS, { params });

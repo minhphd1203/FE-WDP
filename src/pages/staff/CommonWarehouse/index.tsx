@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Receipt, StockItem } from "@/types/warehouse";
 import { warehouseApi } from "@/service/warehouse/api";
-import { TeamSelectorDialog } from "@/components/ui/TeamSelectorDialog";
 import { warehouseApi as warehouseApiNew } from "@/apis/warehouseApi";
+import { TeamSelectorDropdown } from "@/components/ui/TeamSelectorDropdown";
 
 const conditionLabelMap: Record<string, string> = {
   EXCELLENT: "Xuất sắc",
@@ -23,40 +22,29 @@ const conditionClassMap: Record<string, string> = {
   POOR: "bg-red-100 text-red-800",
 };
 
-export default function WarehouseManagement() {
+export default function CommonWarehouse() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [stocks, setStocks] = useState<StockItem[]>([]);
-  const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "common_warehouse" | "team_warehouse" | "stocks" | "receipts"
-  >("common_warehouse");
+  const [activeTab, setActiveTab] = useState<"stocks" | "receipts">("stocks");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [selectedReceiptDetail, setSelectedReceiptDetail] =
     useState<Receipt | null>(null);
   const [isReceiptDetailLoading, setIsReceiptDetailLoading] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [showDistributeForm, setShowDistributeForm] = useState(false);
   const [isDistributing, setIsDistributing] = useState(false);
 
   useEffect(() => {
-    if (activeTab === "common_warehouse") {
-      setPage(1);
+    if (activeTab === "stocks") {
       fetchStocks();
-    } else if (activeTab === "team_warehouse") {
-      setPage(1);
-      if (selectedEventId) {
-        fetchAllocations(selectedEventId);
-      }
-    } else if (activeTab === "stocks") {
-      fetchStocks();
-    } else if (activeTab === "receipts") {
+    } else {
       fetchReceipts();
     }
-  }, [page, activeTab, selectedEventId]);
+  }, [page, activeTab]);
 
   const fetchStocks = async () => {
     setIsLoading(true);
@@ -88,25 +76,6 @@ export default function WarehouseManagement() {
     }
   };
 
-  const fetchAllocations = async (eventId: string) => {
-    setIsLoading(true);
-    try {
-      const response = await warehouseApiNew.getAllocations({
-        page,
-        limit: 10,
-        eventId,
-      });
-      if (response.success) {
-        setAllocations(response.data.data);
-        setTotalPages(response.data.meta.pages);
-      }
-    } catch (error) {
-      toast.error("Không thể tải danh sách phân phối");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const filteredReceipts = receipts.filter((receipt) => {
     const searchLower = searchQuery.toLowerCase();
     const donationMatch = receipt.donationId
@@ -133,7 +102,7 @@ export default function WarehouseManagement() {
     try {
       const response = await warehouseApiNew.getReceipt(receipt.id);
       if (response.success) {
-        setSelectedReceiptDetail(response.data);
+        setSelectedReceiptDetail(response.data as Receipt);
       } else {
         toast.error("Không thể tải chi tiết phiếu nhập");
       }
@@ -146,7 +115,8 @@ export default function WarehouseManagement() {
 
   const handleOpenDistributeDialog = (receipt: Receipt) => {
     setSelectedReceipt(receipt);
-    setIsTeamDialogOpen(true);
+    setShowDistributeForm(true);
+    setSelectedTeamId("");
   };
 
   const handleDistribute = async (teamId: string) => {
@@ -167,18 +137,17 @@ export default function WarehouseManagement() {
       await warehouseApiNew.createAllocation({
         teamId,
         donationId: selectedReceipt.donationId,
-        eventId: selectedEventId || undefined,
+        eventId: selectedReceipt.donation?.eventId,
         items,
       });
 
       toast.success("Phân phối sản phẩm thành công!");
-      setIsTeamDialogOpen(false);
+      setShowDistributeForm(false);
       setSelectedReceipt(null);
+      setSelectedTeamId("");
 
-      // Refresh stocks to show updated quantities
-      if (activeTab === "common_warehouse") {
-        fetchStocks();
-      }
+      // Refresh receipts
+      fetchReceipts();
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message ||
@@ -193,40 +162,14 @@ export default function WarehouseManagement() {
     <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 min-h-screen">
       <div className="mb-8">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-          Quản lý kho
+          Quản lý kho chung
         </h1>
         <p className="text-gray-500 mt-2 text-lg">
           Tồn kho và lịch sử phiếu nhập từ donation
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm mb-6 border-2 border-gray-100 overflow-hidden flex flex-wrap">
-        <button
-          onClick={() => {
-            setActiveTab("common_warehouse");
-            setPage(1);
-          }}
-          className={`flex-1 px-6 py-4 text-sm font-semibold border-b-4 transition-all duration-300 ${
-            activeTab === "common_warehouse"
-              ? "border-emerald-500 text-emerald-600 bg-emerald-50"
-              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          Quản lý kho chung
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("team_warehouse");
-            setPage(1);
-          }}
-          className={`flex-1 px-6 py-4 text-sm font-semibold border-b-4 transition-all duration-300 ${
-            activeTab === "team_warehouse"
-              ? "border-purple-500 text-purple-600 bg-purple-50"
-              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          Quản lý kho của team
-        </button>
+      <div className="bg-white rounded-2xl shadow-sm mb-6 border-2 border-gray-100 overflow-hidden flex">
         <button
           onClick={() => {
             setActiveTab("stocks");
@@ -259,13 +202,9 @@ export default function WarehouseManagement() {
         <Input
           type="text"
           placeholder={
-            activeTab === "common_warehouse"
+            activeTab === "stocks"
               ? "Tìm theo danh mục..."
-              : activeTab === "team_warehouse"
-                ? "Tìm theo danh mục..."
-                : activeTab === "stocks"
-                  ? "Tìm theo danh mục..."
-                  : "Tìm theo donationId hoặc danh mục..."
+              : "Tìm theo donationId hoặc danh mục..."
           }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -273,7 +212,7 @@ export default function WarehouseManagement() {
         />
       </div>
 
-      {activeTab === "common_warehouse" || activeTab === "stocks" ? (
+      {activeTab === "stocks" ? (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-100">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100">
@@ -341,128 +280,7 @@ export default function WarehouseManagement() {
             </tbody>
           </table>
         </div>
-      ) : activeTab === "team_warehouse" ? (
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm p-6 border-2 border-gray-100">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Chọn sự kiện để xem phân phối
-            </label>
-            <input
-              type="text"
-              placeholder="Nhập Event ID..."
-              value={selectedEventId}
-              onChange={(e) => {
-                setSelectedEventId(e.target.value);
-                setPage(1);
-              }}
-              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-
-          {selectedEventId && (
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-100">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      Mã phân phối
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      Đội
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      Danh mục
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      Tình trạng
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      Số lượng
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      Ngày tạo
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {isLoading ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-6 py-4 text-center text-gray-500"
-                      >
-                        Đang tải...
-                      </td>
-                    </tr>
-                  ) : allocations.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-6 py-4 text-center text-gray-500"
-                      >
-                        Chưa có phân phối cho sự kiện này
-                      </td>
-                    </tr>
-                  ) : (
-                    allocations.map((allocation) =>
-                      allocation.items?.map((item, index) => (
-                        <tr
-                          key={`${allocation.id}-${index}`}
-                          className="hover:bg-gray-50"
-                        >
-                          {index === 0 && (
-                            <>
-                              <td
-                                rowSpan={allocation.items?.length || 1}
-                                className="px-6 py-4 font-medium text-gray-900"
-                              >
-                                {allocation.id.substring(0, 8)}...
-                              </td>
-                              <td
-                                rowSpan={allocation.items?.length || 1}
-                                className="px-6 py-4 text-gray-600"
-                              >
-                                {allocation.teamName || allocation.teamId}
-                              </td>
-                            </>
-                          )}
-                          <td className="px-6 py-4 text-gray-900">
-                            {item.category}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                conditionClassMap[item.condition] ||
-                                "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {conditionLabelMap[item.condition] ||
-                                item.condition}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-gray-700">
-                            {item.quantity}
-                          </td>
-                          {index === 0 && (
-                            <td
-                              rowSpan={allocation.items?.length || 1}
-                              className="px-6 py-4 text-gray-600"
-                            >
-                              {new Date(
-                                allocation.createdAt,
-                              ).toLocaleDateString("vi-VN")}
-                            </td>
-                          )}
-                        </tr>
-                      )),
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      ) : activeTab === "receipts" ? (
+      ) : (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-100">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100">
@@ -525,7 +343,7 @@ export default function WarehouseManagement() {
                             className="flex items-center gap-2 text-sm"
                           >
                             <span className="font-medium text-gray-900">
-                              {item.category?.name || item.categoryId}
+                              {item.category?.name || "Chưa phân loại"}
                             </span>
                             <span className="text-gray-500">
                               × {item.quantity}
@@ -534,24 +352,23 @@ export default function WarehouseManagement() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
+                    <td className="px-6 py-4 flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenReceiptDetail(receipt)}
+                      >
+                        Chi tiết
+                      </Button>
+                      {receipt.donation?.status === "RECEIVED" && (
                         <Button
-                          variant="outline"
                           size="sm"
-                          onClick={() => handleOpenReceiptDetail(receipt)}
-                          className="rounded-lg"
-                        >
-                          Chi tiết
-                        </Button>
-                        <Button
-                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
                           onClick={() => handleOpenDistributeDialog(receipt)}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm rounded-xl transition-all duration-300"
                         >
                           Phân phối
                         </Button>
-                      </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -559,7 +376,7 @@ export default function WarehouseManagement() {
             </tbody>
           </table>
         </div>
-      ) : null}
+      )}
 
       {totalPages > 1 && (
         <div className="mt-4 flex justify-center gap-2">
@@ -583,21 +400,89 @@ export default function WarehouseManagement() {
         </div>
       )}
 
-      <TeamSelectorDialog
-        open={isTeamDialogOpen}
-        onClose={() => {
-          setIsTeamDialogOpen(false);
-          setSelectedReceipt(null);
-        }}
-        onConfirm={handleDistribute}
-        isLoading={isDistributing}
-      />
+      {showDistributeForm && selectedReceipt && (
+        <div className="bg-white rounded-2xl shadow-sm border-2 border-emerald-100 p-6 mt-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Phân phối sản phẩm
+            </h3>
+            <p className="text-sm text-gray-600">
+              Mã phiếu: {selectedReceipt.id.substring(0, 12)}... • Donation ID:{" "}
+              {selectedReceipt.donationId.substring(0, 12)}...
+            </p>
+          </div>
 
-      {/* Receipt Detail Modal */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Chọn đội cứu hộ
+              </label>
+              <TeamSelectorDropdown
+                value={selectedTeamId}
+                onChange={(teamId) => setSelectedTeamId(teamId)}
+                disabled={isDistributing}
+              />
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-xs font-semibold text-gray-600 mb-3 uppercase">
+                Sản phẩm sẽ được phân phối
+              </p>
+              <div className="space-y-2">
+                {selectedReceipt.items?.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div>
+                      <span className="font-medium text-gray-900">
+                        {item.category?.name || "Chưa phân loại"}
+                      </span>
+                      <span
+                        className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                          conditionClassMap[item.condition] ||
+                          "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {conditionLabelMap[item.condition] || item.condition}
+                      </span>
+                    </div>
+                    <span className="text-gray-600 font-semibold">
+                      ×{item.quantity}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDistributeForm(false);
+                  setSelectedReceipt(null);
+                  setSelectedTeamId("");
+                }}
+                disabled={isDistributing}
+                className="rounded-xl"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={() => handleDistribute(selectedTeamId)}
+                disabled={!selectedTeamId || isDistributing}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-sm"
+              >
+                {isDistributing ? "Đang phân phối..." : "Xác nhận phân phối"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedReceiptDetail && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
             <div className="sticky top-0 bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">
                 Chi tiết phiếu nhập
@@ -616,7 +501,7 @@ export default function WarehouseManagement() {
                   Đang tải chi tiết phiếu nhập...
                 </div>
               )}
-              {/* Receipt Summary */}
+
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
@@ -642,7 +527,6 @@ export default function WarehouseManagement() {
                 </div>
               </div>
 
-              {/* Created By Info */}
               {selectedReceiptDetail.createdBy && (
                 <div className="border rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
@@ -680,7 +564,6 @@ export default function WarehouseManagement() {
                 </div>
               )}
 
-              {/* Donation Info */}
               {selectedReceiptDetail.donation && (
                 <div className="border rounded-lg p-4 bg-amber-50 border-amber-200">
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
@@ -703,7 +586,6 @@ export default function WarehouseManagement() {
                 </div>
               )}
 
-              {/* Items List */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Vật phẩm nhập ({selectedReceiptDetail.items?.length || 0})
@@ -759,7 +641,6 @@ export default function WarehouseManagement() {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
               <Button
                 onClick={() => setSelectedReceiptDetail(null)}
