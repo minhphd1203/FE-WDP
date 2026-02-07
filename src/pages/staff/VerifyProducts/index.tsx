@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, XCircle, Eye, Package } from "lucide-react";
@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { productApi } from "../../../apis/productApi";
+
 import { Product } from "../../../types";
 import {
   verifyProductSchema,
@@ -52,7 +52,7 @@ export default function VerifyProducts() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
 
   // Lọc các sự kiện đang hoạt động (active)
-  const activeEvents = mockEvents.filter((event) => event.status === "active");
+  const activeEvents = mockEvents.filter((event) => event.status === "OPEN");
 
   // Filter pending products by selected event
   const pendingProducts = products.filter((p) => {

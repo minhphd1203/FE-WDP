@@ -6,7 +6,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  Calendar,
   Package,
   User,
 } from "lucide-react";
@@ -22,6 +21,7 @@ import { EventData } from "../../../types/event";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { toast } from "sonner";
+import { CustomSelect } from "../../../components/ui/CustomSelect";
 
 export default function ProductManagement() {
   const [donations, setDonations] = useState<Donation[]>([]);
@@ -60,6 +60,7 @@ export default function ProductManagement() {
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(
     null,
   );
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -459,7 +460,8 @@ export default function ProductManagement() {
                 {selectedDonation.items.map((item, index) => (
                   <div
                     key={item.id}
-                    className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                    className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => setSelectedItem(item)}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50">
                       {/* Image */}
@@ -619,6 +621,183 @@ export default function ProductManagement() {
     );
   };
 
+  // Item Detail Modal Component
+  const ItemDetailModal = () => {
+    if (!selectedItem) return null;
+
+    const conditionLabelMap: Record<string, string> = {
+      EXCELLENT: "Xuất sắc",
+      GOOD: "Tốt",
+      FAIR: "Bình thường",
+      POOR: "Kém",
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Chi tiết vật phẩm
+            </h2>
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Image */}
+            {selectedItem.imageUrls && selectedItem.imageUrls.length > 0 && (
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Ảnh sản phẩm</p>
+                <img
+                  src={selectedItem.imageUrls[0]}
+                  alt={selectedItem.name}
+                  className="w-full h-64 object-cover rounded-lg border border-gray-200"
+                />
+              </div>
+            )}
+
+            {/* Basic Info */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Tên sản phẩm</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {selectedItem.name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Danh mục</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {selectedItem.category?.name || "Không xác định"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Số lượng</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {selectedItem.quantity} {selectedItem.unit}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Trạng thái sản phẩm</p>
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
+                      selectedItem.status === "APPROVED"
+                        ? "bg-green-100 text-green-800"
+                        : selectedItem.status === "SUBMITTED"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : selectedItem.status === "RECEIVED"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {selectedItem.status === "APPROVED"
+                      ? "Đã duyệt"
+                      : selectedItem.status === "SUBMITTED"
+                        ? "Chờ duyệt"
+                        : selectedItem.status === "RECEIVED"
+                          ? "Đã nhận"
+                          : selectedItem.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Details Grid */}
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Thông tin chi tiết
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Tình trạng</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {conditionLabelMap[selectedItem.condition] ||
+                      selectedItem.condition}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Hạn sử dụng</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {new Date(selectedItem.expirationDate).toLocaleDateString(
+                      "vi-VN",
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Mã sản phẩm</p>
+                  <p className="font-mono text-sm text-gray-900 mt-1">
+                    {selectedItem.id.substring(0, 12)}...
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Ngày tạo</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {new Date(selectedItem.createdAt).toLocaleDateString(
+                      "vi-VN",
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Ngày cập nhật</p>
+                  <p className="font-semibold text-gray-900 mt-1">
+                    {new Date(selectedItem.updatedAt).toLocaleDateString(
+                      "vi-VN",
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Note */}
+            {selectedItem.note && (
+              <div className="border rounded-lg p-4 bg-amber-50 border-amber-200">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                  Ghi chú
+                </h3>
+                <p className="text-gray-700">{selectedItem.note}</p>
+              </div>
+            )}
+
+            {/* Image Gallery */}
+            {selectedItem.imageUrls && selectedItem.imageUrls.length > 1 && (
+              <div className="border rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  Ảnh khác ({selectedItem.imageUrls.length})
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {selectedItem.imageUrls.map((url: string, index: number) => (
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`${selectedItem.name} ${index + 1}`}
+                      className="w-full h-24 object-cover rounded border border-gray-300 hover:opacity-75 transition"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
+            <Button
+              onClick={() => setSelectedItem(null)}
+              variant="outline"
+              className="rounded-lg"
+            >
+              Đóng
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Approve Dialog Component
   const ApproveDialog = () => {
     if (!showApproveDialog && !showBulkApproveDialog) return null;
@@ -727,56 +906,53 @@ export default function ProductManagement() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
           Quản lý sản phẩm
         </h1>
-        <p className="text-gray-500">
+        <p className="text-gray-500 mt-2 text-lg">
           Duyệt, phân phối và quản lý sản phẩm quyên góp
         </p>
       </div>
 
       {/* Event Selector */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
           Chọn sự kiện
         </label>
-        <select
-          className="w-full md:w-96 px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+        <CustomSelect
+          options={events.map((event) => ({
+            value: event.id,
+            label: `${event.title} - ${new Date(event.startDate).toLocaleDateString("vi-VN")} ${event.type === "DONATION" ? "(Quyên góp)" : "(Tình nguyện)"}`,
+          }))}
           value={selectedEvent?.id || ""}
-          onChange={(e) => {
-            const event = events.find((ev) => ev.id === e.target.value);
+          onChange={(value) => {
+            const event = events.find((ev) => ev.id === value);
             if (event) {
               setSelectedEvent(event);
               setFilters((prev) => ({ ...prev, eventId: event.id }));
               setPage(1);
             }
           }}
-        >
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title} -{" "}
-              {new Date(event.startDate).toLocaleDateString("vi-VN")}
-              {event.type === "DONATION" ? " (Quyên góp)" : " (Tình nguyện)"}
-            </option>
-          ))}
-        </select>
+          placeholder="Chọn sự kiện..."
+          className="max-w-2xl"
+        />
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm mb-6 border-b flex">
+      <div className="bg-white rounded-2xl shadow-sm mb-6 border-2 border-gray-100 overflow-hidden flex">
         <button
           onClick={() => {
             setActiveTab("pending");
             setPage(1);
             setSelectedIds(new Set());
           }}
-          className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+          className={`flex-1 px-6 py-4 text-sm font-semibold border-b-4 transition-all duration-300 ${
             activeTab === "pending"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-600 hover:text-gray-900"
+              ? "border-amber-500 text-amber-600 bg-amber-50"
+              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
           Chờ duyệt ({donations.filter((d) => d.status === "SUBMITTED").length})
@@ -787,10 +963,10 @@ export default function ProductManagement() {
             setPage(1);
             setSelectedIds(new Set());
           }}
-          className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+          className={`flex-1 px-6 py-4 text-sm font-semibold border-b-4 transition-all duration-300 ${
             activeTab === "approved"
-              ? "border-green-500 text-green-600"
-              : "border-transparent text-gray-600 hover:text-gray-900"
+              ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
           Đã duyệt ({donations.filter((d) => d.status !== "SUBMITTED").length})
@@ -798,8 +974,12 @@ export default function ProductManagement() {
       </div>
 
       {/* Actions */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-wrap gap-3">
-        <Button onClick={() => setShowFilters(!showFilters)} variant="outline">
+      <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 flex flex-wrap gap-3 border-2 border-gray-100">
+        <Button
+          onClick={() => setShowFilters(!showFilters)}
+          variant="outline"
+          className="rounded-xl"
+        >
           <ChevronDown className="h-4 w-4 mr-2" />
           Bộ lọc
         </Button>
@@ -807,25 +987,33 @@ export default function ProductManagement() {
           <>
             <Button
               onClick={handleBulkApprove}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-xl shadow-sm"
             >
               Duyệt ({selectedIds.size})
             </Button>
             <Button
               onClick={handleBulkReject}
               variant="outline"
-              className="border-red-500 text-red-600 hover:bg-red-50"
+              className="border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-xl"
             >
               Từ chối ({selectedIds.size})
             </Button>
-            <Button onClick={() => setSelectedIds(new Set())} variant="outline">
+            <Button
+              onClick={() => setSelectedIds(new Set())}
+              variant="outline"
+              className="rounded-xl"
+            >
               <X className="h-4 w-4 mr-2" />
               Xoá chọn
             </Button>
           </>
         )}
         {selectedIds.size > 0 && activeTab === "approved" && (
-          <Button onClick={() => setSelectedIds(new Set())} variant="outline">
+          <Button
+            onClick={() => setSelectedIds(new Set())}
+            variant="outline"
+            className="rounded-xl"
+          >
             <X className="h-4 w-4 mr-2" />
             Xoá chọn
           </Button>
@@ -834,10 +1022,10 @@ export default function ProductManagement() {
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100 space-y-5">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Tìm kiếm
             </label>
             <Input
@@ -848,73 +1036,70 @@ export default function ProductManagement() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
+              className="rounded-xl"
             />
           </div>
 
           {/* Sort Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Sắp xếp theo
               </label>
-              <select
-                className="w-full px-3 py-2 border rounded-md"
+              <CustomSelect
+                options={[
+                  { value: "createdAt", label: "Ngày gửi" },
+                  { value: "expirationDate", label: "HSD" },
+                ]}
                 value={sortBy}
-                onChange={(e) =>
-                  setSortBy(
-                    e.target.value as "status" | "createdAt" | "expirationDate",
-                  )
+                onChange={(value) =>
+                  setSortBy(value as "status" | "createdAt" | "expirationDate")
                 }
-              >
-                <option value="createdAt">Ngày gửi</option>
-                <option value="expirationDate">HSD</option>
-              </select>
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Thứ tự
               </label>
-              <select
-                className="w-full px-3 py-2 border rounded-md"
+              <CustomSelect
+                options={[
+                  { value: "DESC", label: "Giảm dần" },
+                  { value: "ASC", label: "Tăng dần" },
+                ]}
                 value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as "ASC" | "DESC")}
-              >
-                <option value="DESC">Giảm dần</option>
-                <option value="ASC">Tăng dần</option>
-              </select>
+                onChange={(value) => setSortOrder(value as "ASC" | "DESC")}
+              />
             </div>
           </div>
 
           {/* Existing Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Trạng thái
               </label>
-              <select
-                className="px-3 py-2 border rounded-md w-full"
+              <CustomSelect
+                options={[
+                  { value: "", label: "Tất cả" },
+                  { value: "SUBMITTED", label: "Chờ duyệt" },
+                  { value: "APPROVED", label: "Đã duyệt" },
+                  { value: "REJECTED", label: "Từ chối" },
+                  { value: "RECEIVED", label: "Đã nhận" },
+                  { value: "ALLOCATED", label: "Đã phân bổ" },
+                  { value: "DISPATCHED", label: "Đã gửi" },
+                  { value: "DELIVERED", label: "Đã giao" },
+                ]}
                 value={filters.status || ""}
-                onChange={(e) =>
+                onChange={(value) =>
                   setFilters({
                     ...filters,
-                    status: (e.target.value || undefined) as
-                      | DonationStatus
-                      | undefined,
+                    status: (value || undefined) as DonationStatus | undefined,
                   })
                 }
-              >
-                <option value="">Tất cả</option>
-                <option value="SUBMITTED">Chờ duyệt</option>
-                <option value="APPROVED">Đã duyệt</option>
-                <option value="REJECTED">Từ chối</option>
-                <option value="RECEIVED">Đã nhận</option>
-                <option value="ALLOCATED">Đã phân bổ</option>
-                <option value="DISPATCHED">Đã gửi</option>
-                <option value="DELIVERED">Đã giao</option>
-              </select>
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Từ ngày
               </label>
               <Input
@@ -923,40 +1108,46 @@ export default function ProductManagement() {
                 onChange={(e) =>
                   setFilters({ ...filters, from: e.target.value })
                 }
+                className="rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Đến ngày
               </label>
               <Input
                 type="date"
                 value={filters.to || ""}
                 onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+                className="rounded-xl"
               />
             </div>
-            <Button
-              onClick={() => {
-                setFilters((prev) => ({
-                  eventId: prev.eventId || selectedEvent?.id,
-                }));
-                setSearchQuery("");
-                setSortBy("createdAt");
-                setSortOrder("DESC");
-              }}
-            >
-              Reset
-            </Button>
+            <div className="flex items-end">
+              <Button
+                onClick={() => {
+                  setFilters((prev) => ({
+                    eventId: prev.eventId || selectedEvent?.id,
+                  }));
+                  setSearchQuery("");
+                  setSortBy("createdAt");
+                  setSortOrder("DESC");
+                }}
+                variant="outline"
+                className="w-full rounded-xl border-2 hover:bg-gray-50"
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Donations Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto border-2 border-gray-100">
+        <table className="w-full min-w-max">
+          <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100 sticky top-0">
             <tr>
-              <th className="px-6 py-3 text-left">
+              <th className="px-6 py-4 text-left whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={
@@ -964,28 +1155,29 @@ export default function ProductManagement() {
                     filteredAndSortedDonations.length > 0
                   }
                   onChange={toggleSelectAll}
+                  className="rounded"
                 />
               </th>
 
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 Người gửi
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 Số lượng
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 Trạng thái
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 Ngày gửi
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 HSD
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 Ghi chú
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
                 Hành động
               </th>
             </tr>
@@ -1013,10 +1205,6 @@ export default function ProductManagement() {
                   donation.creator?.phone ||
                   "Ẩn danh";
 
-                const itemsNames = donation.items
-                  .map((item) => item.name)
-                  .join(", ");
-
                 const totalQuantity = donation.items.reduce(
                   (sum, item) => sum + item.quantity,
                   0,
@@ -1033,22 +1221,33 @@ export default function ProductManagement() {
                 };
 
                 const statusClassMap: Record<DonationStatus, string> = {
-                  SUBMITTED: "bg-yellow-100 text-yellow-800",
-                  APPROVED: "bg-green-100 text-green-800",
-                  REJECTED: "bg-red-100 text-red-800",
-                  RECEIVED: "bg-blue-100 text-blue-800",
-                  ALLOCATED: "bg-blue-100 text-blue-800",
-                  DISPATCHED: "bg-blue-100 text-blue-800",
-                  DELIVERED: "bg-blue-100 text-blue-800",
+                  SUBMITTED:
+                    "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 border border-amber-200",
+                  APPROVED:
+                    "bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 border border-emerald-200",
+                  REJECTED:
+                    "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
+                  RECEIVED:
+                    "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border border-blue-200",
+                  ALLOCATED:
+                    "bg-gradient-to-r from-purple-100 to-violet-100 text-purple-700 border border-purple-200",
+                  DISPATCHED:
+                    "bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-700 border border-cyan-200",
+                  DELIVERED:
+                    "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200",
                 };
 
                 return (
-                  <tr key={donation.id} className="hover:bg-gray-50">
+                  <tr
+                    key={donation.id}
+                    className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200"
+                  >
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(donation.id)}
                         onChange={() => toggleSelect(donation.id)}
+                        className="rounded"
                       />
                     </td>
 
@@ -1063,7 +1262,7 @@ export default function ProductManagement() {
                     <td className="px-6 py-4">{totalQuantity}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        className={`px-3 py-1.5 rounded-xl text-sm font-semibold ${
                           statusClassMap[donation.status]
                         }`}
                       >
@@ -1080,9 +1279,12 @@ export default function ProductManagement() {
                           ).toLocaleDateString("vi-VN")
                         : "Không có"}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 max-w-xs">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p
+                          className="font-medium text-gray-900 truncate"
+                          title={donation.note || ""}
+                        >
                           {donation.note || "(Không có ghi chú)"}
                         </p>
                       </div>
@@ -1093,7 +1295,7 @@ export default function ProductManagement() {
                           size="sm"
                           onClick={() => setSelectedDonation(donation)}
                           variant="outline"
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 rounded-xl border-2"
                         >
                           <Eye className="h-4 w-4" />
                           Chi tiết
@@ -1103,7 +1305,7 @@ export default function ProductManagement() {
                             <Button
                               size="sm"
                               onClick={() => handleApproveDonation(donation.id)}
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-xl shadow-sm"
                             >
                               Duyệt
                             </Button>
@@ -1111,6 +1313,7 @@ export default function ProductManagement() {
                               size="sm"
                               onClick={() => handleRejectDonation(donation.id)}
                               variant="outline"
+                              className="border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-xl"
                             >
                               Từ chối
                             </Button>
@@ -1133,6 +1336,7 @@ export default function ProductManagement() {
                                 );
                               }}
                               variant="outline"
+                              className="rounded-xl border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                             >
                               Phân phối
                             </Button>
@@ -1150,21 +1354,23 @@ export default function ProductManagement() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-6 flex justify-center items-center gap-3">
           <Button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             variant="outline"
+            className="rounded-xl border-2"
           >
             Trước
           </Button>
-          <span className="flex items-center px-4">
+          <span className="flex items-center px-4 py-2 bg-white rounded-xl border-2 border-gray-100 font-semibold text-gray-700">
             Trang {page} / {totalPages}
           </span>
           <Button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
             variant="outline"
+            className="rounded-xl border-2"
           >
             Sau
           </Button>
@@ -1173,6 +1379,7 @@ export default function ProductManagement() {
 
       {/* Detail Modal */}
       <DonationDetailModal />
+      <ItemDetailModal />
 
       {/* Approve/Reject Dialogs */}
       <ApproveDialog />

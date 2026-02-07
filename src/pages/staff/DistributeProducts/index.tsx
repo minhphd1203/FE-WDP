@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Package, Send, Users } from "lucide-react";
-import { mockProducts, mockCurrentUser, mockEvents } from "../../../mocks/data";
+import { mockProducts, mockEvents } from "../../../mocks/data";
 import {
   Table,
   TableBody,
@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { productApi } from "../../../apis/productApi";
+
 import { Product } from "../../../types";
 import {
   distributeProductSchema,
@@ -50,7 +50,7 @@ export default function DistributeProducts() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
 
   // Lọc các sự kiện đang hoạt động (active)
-  const activeEvents = mockEvents.filter((event) => event.status === "active");
+  const activeEvents = mockEvents.filter((event) => event.status === "OPEN");
 
   // Filter verified products by selected event
   const verifiedProducts = products.filter((p) => {

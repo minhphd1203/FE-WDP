@@ -248,20 +248,63 @@ export enum ItemCondition {
 }
 
 export interface AllocationItem {
+  id: string;
+  allocationId?: string;
   category: string;
   condition: ItemCondition;
   quantity: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountProfile {
+  id: string;
+  accountId: string;
+  fullName: string;
+  address?: string;
+  avatarUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Account {
+  id: string;
+  email: string;
+  phone?: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  profile?: AccountProfile;
+}
+
+export interface AllocationTeam {
+  id: string;
+  name: string;
+  area?: string;
+  teamSize?: number;
+  accountId?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface Allocation {
   id: string;
   teamId: string;
   teamName?: string;
+  createdById?: string;
+  donationId?: string;
+  eventId?: string;
   items: AllocationItem[];
   status: AllocationStatus;
   createdAt: string;
   updatedAt: string;
   deliveredAt?: string;
+  team?: AllocationTeam;
+  createdBy?: Account;
 }
 
 // Warehouse Receipt Types

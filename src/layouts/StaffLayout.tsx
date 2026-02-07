@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   User,
   Package,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
@@ -17,7 +18,17 @@ import { cn } from "../lib/utils";
 import { authService } from "../service/auth/api";
 import { CurrentUserData } from "../types/auth";
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  submenu?: Array<{
+    name: string;
+    href: string;
+  }>;
+}
+
+const navigation: NavigationItem[] = [
   {
     name: "Dashboard",
     href: ROUTES.STAFF_DASHBOARD,
@@ -35,8 +46,11 @@ const navigation = [
   },
   {
     name: "Quản lý kho",
-    href: ROUTES.STAFF_WAREHOUSE,
     icon: Package,
+    submenu: [
+      { name: "Quản lý kho chung", href: ROUTES.STAFF_WAREHOUSE_COMMON },
+      { name: "Quản lý kho của team", href: ROUTES.STAFF_WAREHOUSE_TEAM },
+    ],
   },
 ];
 
@@ -46,6 +60,7 @@ export default function StaffLayout() {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUserData | null>(null);
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -85,6 +100,23 @@ export default function StaffLayout() {
     logout();
   };
 
+  const toggleMenu = (name: string) => {
+    const next = new Set(expandedMenus);
+    // If this menu is already expanded, close it
+    if (next.has(name)) {
+      next.delete(name);
+    } else {
+      // Close all other menus and open only this one
+      next.clear();
+      next.add(name);
+    }
+    setExpandedMenus(next);
+  };
+
+  const isSubmenuItemActive = (submenu: (typeof navigation)[0]["submenu"]) => {
+    return submenu?.some((item) => location.pathname === item.href) || false;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
@@ -111,11 +143,64 @@ export default function StaffLayout() {
             {/* Navigation */}
             <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
               {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
+                const isActive = item.href
+                  ? location.pathname === item.href
+                  : false;
+                const hasSubmenu = item.submenu && item.submenu.length > 0;
+                const isExpanded = expandedMenus.has(item.name);
+                const submenuActive = isSubmenuItemActive(item.submenu);
+
+                if (hasSubmenu) {
+                  return (
+                    <div key={item.name}>
+                      <button
+                        onClick={() => {
+                          toggleMenu(item.name);
+                          setSidebarOpen(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
+                          submenuActive || isExpanded
+                            ? "bg-primary text-primary-foreground"
+                            : "text-gray-700 hover:bg-gray-100",
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.name}
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 ml-auto transition-transform",
+                            isExpanded ? "rotate-180" : "",
+                          )}
+                        />
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-4 space-y-1 border-l border-gray-200 pl-3 mt-1">
+                          {item.submenu?.map((subitem) => (
+                            <Link
+                              key={subitem.name}
+                              to={subitem.href}
+                              onClick={() => setSidebarOpen(false)}
+                              className={cn(
+                                "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                location.pathname === subitem.href
+                                  ? "bg-primary/20 text-primary"
+                                  : "text-gray-600 hover:bg-gray-100",
+                              )}
+                            >
+                              {subitem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.name}
-                    to={item.href}
+                    to={item.href || "#"}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
@@ -187,11 +272,60 @@ export default function StaffLayout() {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = item.href
+                ? location.pathname === item.href
+                : false;
+              const hasSubmenu = item.submenu && item.submenu.length > 0;
+              const isExpanded = expandedMenus.has(item.name);
+              const submenuActive = isSubmenuItemActive(item.submenu);
+
+              if (hasSubmenu) {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
+                        submenuActive || isExpanded
+                          ? "bg-primary text-primary-foreground"
+                          : "text-gray-700 hover:bg-gray-100",
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.name}
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 ml-auto transition-transform",
+                          isExpanded ? "rotate-180" : "",
+                        )}
+                      />
+                    </button>
+                    {isExpanded && (
+                      <div className="ml-4 space-y-1 border-l border-gray-200 pl-3 mt-1">
+                        {item.submenu?.map((subitem) => (
+                          <Link
+                            key={subitem.name}
+                            to={subitem.href}
+                            className={cn(
+                              "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                              location.pathname === subitem.href
+                                ? "bg-primary/20 text-primary"
+                                : "text-gray-600 hover:bg-gray-100",
+                            )}
+                          >
+                            {subitem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.name}
-                  to={item.href}
+                  to={item.href || "#"}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     isActive
@@ -248,7 +382,10 @@ export default function StaffLayout() {
       <div className="lg:pl-64">
         {/* Top bar */}
         <div className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-4 shadow-sm lg:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="text-primary hover:text-primary/80">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-primary hover:text-primary/80"
+          >
             <Menu className="h-6 w-6" />
           </button>
           <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />

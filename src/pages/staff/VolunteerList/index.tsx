@@ -6,6 +6,7 @@ import { VolunteerRegistration } from "../../../types/volunteer";
 import { EventData } from "../../../types/event";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
+import { CustomSelect } from "../../../components/ui/CustomSelect";
 import { toast } from "sonner";
 
 export default function VolunteerList() {
@@ -80,68 +81,69 @@ export default function VolunteerList() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
           Danh sách tình nguyện viên
         </h1>
-        <p className="text-gray-500">
+        <p className="text-gray-500 mt-2 text-lg">
           Quản lý người đăng ký tham gia hoạt động cứu trợ
         </p>
       </div>
 
       {/* Event Selector */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
           Chọn sự kiện
         </label>
-        <select
-          className="w-full md:w-96 px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+        <CustomSelect
+          options={events.map((event) => ({
+            value: event.id,
+            label: `${event.title} - ${new Date(event.startDate).toLocaleDateString("vi-VN")}`,
+          }))}
           value={selectedEvent?.id || ""}
-          onChange={(e) => {
-            const event = events.find((ev) => ev.id === e.target.value);
+          onChange={(value) => {
+            const event = events.find((ev) => ev.id === value);
             if (event) {
               setSelectedEvent(event);
               setPage(1);
             }
           }}
-        >
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title} -{" "}
-              {new Date(event.startDate).toLocaleDateString("vi-VN")}
-            </option>
-          ))}
-        </select>
+          placeholder="Chọn sự kiện..."
+          className="max-w-2xl"
+        />
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Tìm kiếm
+        </label>
         <Input
           type="text"
           placeholder="Tìm kiếm theo tên, email, số điện thoại..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-md"
+          className="max-w-md rounded-xl"
         />
       </div>
 
       {/* Volunteers Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-100">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Tình nguyện viên
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Thông tin liên hệ
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Địa chỉ
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Ngày đăng ký
               </th>
             </tr>
@@ -163,7 +165,10 @@ export default function VolunteerList() {
               </tr>
             ) : (
               filteredVolunteers.map((volunteer) => (
-                <tr key={volunteer.id} className="hover:bg-gray-50">
+                <tr
+                  key={volunteer.id}
+                  className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {volunteer.account?.profile?.avatarUrl ? (
@@ -173,7 +178,7 @@ export default function VolunteerList() {
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                           <User className="h-5 w-5 text-gray-600" />
                         </div>
                       )}
@@ -228,21 +233,23 @@ export default function VolunteerList() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-6 flex justify-center items-center gap-3">
           <Button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             variant="outline"
+            className="rounded-xl border-2"
           >
             Trước
           </Button>
-          <span className="flex items-center px-4">
+          <span className="flex items-center px-4 py-2 bg-white rounded-xl border-2 border-gray-100 font-semibold text-gray-700">
             Trang {page} / {totalPages}
           </span>
           <Button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
             variant="outline"
+            className="rounded-xl border-2"
           >
             Sau
           </Button>

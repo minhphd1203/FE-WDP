@@ -23,6 +23,39 @@ export interface ReceiptItem {
   category?: ReceiptCategory;
 }
 
+export interface Donation {
+  id: string;
+  creatorId: string;
+  eventId: string;
+  status: "SUBMITTED" | "RECEIVED" | "ALLOCATED" | "DISPATCHED" | "DELIVERED";
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface AccountProfile {
+  id: string;
+  accountId: string;
+  fullName: string;
+  address?: string;
+  avatarUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Account {
+  id: string;
+  email: string;
+  phone?: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  profile?: AccountProfile;
+}
+
 export interface Receipt {
   id: string;
   donationId: string;
@@ -30,6 +63,8 @@ export interface Receipt {
   createdAt: string;
   updatedAt?: string;
   items?: ReceiptItem[];
+  donation?: Donation;
+  createdBy?: Account;
 }
 
 export interface CreateReceiptResponse {

@@ -29,7 +29,8 @@ import Warehouse from "../pages/admin/Warehouse";
 import StaffDashboard from "../pages/staff/Dashboard";
 import ProductManagement from "../pages/staff/ProductManagement";
 import VolunteerList from "../pages/staff/VolunteerList";
-import WarehouseManagement from "../pages/staff/WarehouseManagement";
+import CommonWarehouse from "../pages/staff/CommonWarehouse";
+import TeamWarehouse from "../pages/staff/TeamWarehouse";
 import UpdateProfile from "../pages/staff/UpdateProfile";
 
 // Auth Pages
@@ -145,7 +146,20 @@ const router = createBrowserRouter([
       },
       {
         path: "warehouse",
-        element: <WarehouseManagement />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to={ROUTES.STAFF_WAREHOUSE_COMMON} replace />,
+          },
+          {
+            path: "common",
+            element: <CommonWarehouse />,
+          },
+          {
+            path: "team",
+            element: <TeamWarehouse />,
+          },
+        ],
       },
       {
         path: "update-profile",
