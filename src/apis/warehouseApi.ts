@@ -10,8 +10,16 @@ import {
   Allocation,
   Receipt,
   AllocationStatus,
-  AllocationItem,
 } from "../types";
+
+export interface CreateAllocationDto {
+  teamId: string;
+  items: {
+    category: string;
+    condition: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+    quantity: number;
+  }[];
+}
 
 export const warehouseApi = {
   // Get all warehouse items with pagination and filters
@@ -59,10 +67,10 @@ export const warehouseApi = {
     return httpClient.get(API_ENDPOINTS.WAREHOUSE_ALLOCATION_BY_ID(id));
   },
 
-  // Create new allocation
-  createAllocation: async (data: {
-    items: AllocationItem[];
-  }): Promise<ApiResponse<Allocation>> => {
+  // Create new allocation (distribute to team)
+  createAllocation: async (
+    data: CreateAllocationDto,
+  ): Promise<ApiResponse<Allocation>> => {
     return httpClient.post(API_ENDPOINTS.WAREHOUSE_ALLOCATIONS, data);
   },
 

@@ -1,7 +1,7 @@
-import httpClient from '../lib/http';
+import httpClient from "../lib/http";
 
 const TEAM_ENDPOINTS = {
-  BASE: '/admin/teams',
+  BASE: "/admin/teams",
   BY_ID: (id: string) => `/admin/teams/${id}`,
 };
 
@@ -10,9 +10,11 @@ export interface Team {
   name: string;
   area: string;
   teamSize: number;
+  accountId: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
 }
 
 export interface CreateTeamDto {
@@ -43,9 +45,11 @@ export interface ListTeamsResponse {
 }
 
 // List all teams
-export const listTeams = async (params?: ListTeamsParams): Promise<ListTeamsResponse> => {
+export const listTeams = async (
+  params?: ListTeamsParams,
+): Promise<ListTeamsResponse> => {
   const response = await httpClient.get(TEAM_ENDPOINTS.BASE, { params });
-  
+
   // Handle different response structures
   if (response.data.items) {
     return response.data;
@@ -69,7 +73,7 @@ export const listTeams = async (params?: ListTeamsParams): Promise<ListTeamsResp
       limit: response.data.data.length,
     };
   }
-  
+
   return {
     items: [],
     total: 0,
@@ -91,7 +95,10 @@ export const createTeam = async (data: CreateTeamDto): Promise<Team> => {
 };
 
 // Update team
-export const updateTeam = async (id: string, data: UpdateTeamDto): Promise<Team> => {
+export const updateTeam = async (
+  id: string,
+  data: UpdateTeamDto,
+): Promise<Team> => {
   const response = await httpClient.patch(TEAM_ENDPOINTS.BY_ID(id), data);
   return response.data.data || response.data;
 };

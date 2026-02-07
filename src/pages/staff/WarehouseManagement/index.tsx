@@ -5,6 +5,8 @@ import { Input } from "../../../components/ui/input";
 import { toast } from "sonner";
 import { Receipt, StockItem } from "@/types/warehouse";
 import { warehouseApi } from "@/service/warehouse/api";
+import { TeamSelectorDialog } from "@/components/ui/TeamSelectorDialog";
+import { warehouseApi as warehouseApiNew } from "@/apis/warehouseApi";
 
 const conditionLabelMap: Record<string, string> = {
   EXCELLENT: "Xuất sắc",
@@ -31,6 +33,9 @@ export default function WarehouseManagement() {
   const [expandedReceipts, setExpandedReceipts] = useState<Set<string>>(
     new Set(),
   );
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+  const [isDistributing, setIsDistributing] = useState(false);
 
   useEffect(() => {
     if (activeTab === "stocks") {
@@ -98,6 +103,49 @@ export default function WarehouseManagement() {
       next.add(receiptId);
     }
     setExpandedReceipts(next);
+  };
+
+  const handleOpenDistributeDialog = (receipt: Receipt) => {
+    setSelectedReceipt(receipt);
+    setIsTeamDialogOpen(true);
+  };
+
+  const handleDistribute = async (teamId: string) => {
+    if (!selectedReceipt?.items || selectedReceipt.items.length === 0) {
+      toast.error("Phiếu nhập không có sản phẩm để phân phối");
+      return;
+    }
+
+    setIsDistributing(true);
+    try {
+      // Map receipt items to allocation items format
+      const items = selectedReceipt.items.map((item) => ({
+        category: item.category?.name || item.categoryId,
+        condition: item.condition as any,
+        quantity: item.quantity,
+      }));
+
+      await warehouseApiNew.createAllocation({
+        teamId,
+        items,
+      });
+
+      toast.success("Phân phối sản phẩm thành công!");
+      setIsTeamDialogOpen(false);
+      setSelectedReceipt(null);
+
+      // Refresh stocks to show updated quantities
+      if (activeTab === "stocks") {
+        fetchStocks();
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Không thể phân phối sản phẩm. Vui lòng thử lại.",
+      );
+    } finally {
+      setIsDistributing(false);
+    }
   };
 
   return (
@@ -238,7 +286,7 @@ export default function WarehouseManagement() {
                   Sản phẩm
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                  Chi tiết
+                  Hành động
                 </th>
               </tr>
             </thead>
@@ -293,13 +341,22 @@ export default function WarehouseManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleReceiptDetail(receipt.id)}
-                      >
-                        {expandedReceipts.has(receipt.id) ? "Ẩn" : "Xem"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleReceiptDetail(receipt.id)}
+                        >
+                          {expandedReceipts.has(receipt.id) ? "Ẩn" : "Xem"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleOpenDistributeDialog(receipt)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Phân phối
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -364,6 +421,16 @@ export default function WarehouseManagement() {
           </Button>
         </div>
       )}
+
+      <TeamSelectorDialog
+        open={isTeamDialogOpen}
+        onClose={() => {
+          setIsTeamDialogOpen(false);
+          setSelectedReceipt(null);
+        }}
+        onConfirm={handleDistribute}
+        isLoading={isDistributing}
+      />
     </div>
   );
 }

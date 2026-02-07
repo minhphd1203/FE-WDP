@@ -52,7 +52,7 @@ export default function VerifyProducts() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
 
   // Lọc các sự kiện đang hoạt động (active)
-  const activeEvents = mockEvents.filter((event) => event.status === "active");
+  const activeEvents = mockEvents.filter((event) => event.status === "OPEN");
 
   // Filter pending products by selected event
   const pendingProducts = products.filter((p) => {
