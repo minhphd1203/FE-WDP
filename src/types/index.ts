@@ -17,6 +17,24 @@ export enum RequestStatus {
   REJECTED = "rejected",
 }
 
+export enum RescueRequestStatus {
+  NEW = "NEW",
+  REVIEWED = "REVIEWED",
+  ASSIGNED = "ASSIGNED",
+  ACCEPTED = "ACCEPTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  DONE = "DONE",
+  CANCELED = "CANCELED",
+  REJECTED = "REJECTED",
+}
+
+export enum RescueRequestPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  CRITICAL = "CRITICAL",
+}
+
 export enum ProductStatus {
   PENDING = "pending",
   VERIFIED = "verified",
@@ -27,11 +45,13 @@ export enum ProductStatus {
 export interface User {
   id: string;
   email: string;
-  name: string;
-  fullName?: string;
-  phone?: string;
+  name?: string;
+  fullName: string;
+  phone: string;
   role: UserRole;
   avatar?: string;
+  avatarUrl?: string;
+  address?: string;
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -70,7 +90,7 @@ export interface Event {
   location?: string;
   createdBy: string;
   createdByName: string;
-  status: "active" | "completed" | "cancelled";
+  status: "DRAFT" | "OPEN" | "CLOSED" | "CANCELLED";
   teamId?: string;
   team?: ReliefTeam;
   registrations?: EventRegistration[];
@@ -124,8 +144,8 @@ export interface ReliefRequest {
   requesterName: string;
   requesterEmail: string;
   requesterPhone: string;
-  eventId?: string; // ID của sự kiện liên quan
-  eventName?: string; // Tên sự kiện liên quan
+  eventId?: string;
+  eventName?: string;
   location: {
     address: string;
     district?: string;
@@ -135,18 +155,33 @@ export interface ReliefRequest {
       lng: number;
     };
   };
-  urgency: "low" | "medium" | "high" | "critical";
-  status: RequestStatus;
-  assignedTeamId?: string;
-  assignedTeamName?: string;
+  priority: RescueRequestPriority;
+  status: RescueRequestStatus;
+  assignedTeams?: Array<{
+    teamId: string;
+    teamName?: string;
+    assignedAt?: string;
+  }>;
   assignedBy?: string;
   assignedByName?: string;
-  assignedAt?: string;
   completedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewNote?: string;
   notes?: string;
   images?: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AssignTeamsDto {
+  teamIds: string[];
+}
+
+export interface ReviewRescueRequestDto {
+  status: RescueRequestStatus;
+  priority: RescueRequestPriority;
+  note?: string;
 }
 
 export interface WarehouseItem {
@@ -189,9 +224,88 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
+// Warehouse Allocation Types
+export enum AllocationStatus {
+  PENDING = "PENDING",
+  IN_TRANSIT = "IN_TRANSIT",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum ItemCondition {
+  EXCELLENT = "EXCELLENT",
+  GOOD = "GOOD",
+  FAIR = "FAIR",
+}
+
+export interface AllocationItem {
+  category: string;
+  condition: ItemCondition;
+  quantity: number;
+}
+
+export interface Allocation {
+  id: string;
+  teamId: string;
+  teamName?: string;
+  items: AllocationItem[];
+  status: AllocationStatus;
+  createdAt: string;
+  updatedAt: string;
+  deliveredAt?: string;
+}
+
+// Warehouse Receipt Types
+export interface Receipt {
+  id: string;
+  donationId: string;
+  donorName?: string;
+  items?: ReceiptItem[];
+  receivedAt: string;
+  createdAt: string;
+  notes?: string;
+}
+
+export interface ReceiptItem {
+  category: string;
+  quantity: number;
+  condition: ItemCondition;
+  productName?: string;
+}
+
+// Warehouse Stock Types
+export interface Stock {
+  id: string;
+  category: string;
+  condition: ItemCondition;
+  quantity: number;
+  lastUpdated: string;
+}
+
+// Category Types
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryDto {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateCategoryDto {
+  name?: string;
+  description?: string;
 }

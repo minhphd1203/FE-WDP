@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { warehouseApi } from "../../../apis/warehouseApi";
-import { Receipt, StockItem } from "../../../types/warehouse";
+
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { toast } from "sonner";
+import { Receipt, StockItem } from "@/types/warehouse";
+import { warehouseApi } from "@/service/warehouse/api";
 
 const conditionLabelMap: Record<string, string> = {
   EXCELLENT: "Xuất sắc",

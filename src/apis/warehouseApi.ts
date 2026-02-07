@@ -6,13 +6,12 @@ import {
   WarehouseStats,
   PaginatedResponse,
   PaginationParams,
+  Stock,
+  Allocation,
+  Receipt,
+  AllocationStatus,
+  AllocationItem,
 } from "../types";
-import {
-  CreateReceiptRequest,
-  CreateReceiptResponse,
-  ReceiptListResponse,
-  StockListResponse,
-} from "../types/warehouse";
 
 export const warehouseApi = {
   // Get all warehouse items with pagination and filters
@@ -40,25 +39,60 @@ export const warehouseApi = {
     return response.data;
   },
 
-  // Create receipt from approved donation (nhập hàng vào kho)
-  createReceipt: async (
-    data: CreateReceiptRequest,
-  ): Promise<CreateReceiptResponse> => {
-    return httpClient.post("/warehouse/receipts", data);
+  // Get warehouse stocks
+  getStocks: async (): Promise<ApiResponse<Stock[]>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_STOCKS);
   },
 
-  // Get receipts list
-  getReceipts: async (page = 1, limit = 10): Promise<ReceiptListResponse> => {
-    return httpClient.get(`/warehouse/receipts?page=${page}&limit=${limit}`);
+  // Get allocations with pagination and filters
+  getAllocations: async (params?: {
+    page?: number;
+    limit?: number;
+    teamId?: string;
+    status?: AllocationStatus;
+  }): Promise<ApiResponse<PaginatedResponse<Allocation>>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_ALLOCATIONS, { params });
   },
 
-  // Get stocks list
-  getStocks: async (page = 1, limit = 10): Promise<StockListResponse> => {
-    return httpClient.get(`/warehouse/stocks?page=${page}&limit=${limit}`);
+  // Get single allocation by ID
+  getAllocation: async (id: string): Promise<ApiResponse<Allocation>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_ALLOCATION_BY_ID(id));
   },
 
-  // Get receipt by ID
-  getReceiptById: async (receiptId: string): Promise<CreateReceiptResponse> => {
-    return httpClient.get(`/warehouse/receipts/${receiptId}`);
+  // Create new allocation
+  createAllocation: async (data: {
+    items: AllocationItem[];
+  }): Promise<ApiResponse<Allocation>> => {
+    return httpClient.post(API_ENDPOINTS.WAREHOUSE_ALLOCATIONS, data);
+  },
+
+  // Update allocation status
+  updateAllocationStatus: async (
+    id: string,
+    status: AllocationStatus,
+  ): Promise<ApiResponse<Allocation>> => {
+    return httpClient.patch(API_ENDPOINTS.WAREHOUSE_ALLOCATION_STATUS(id), {
+      status,
+    });
+  },
+
+  // Get receipts with pagination
+  getReceipts: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<PaginatedResponse<Receipt>>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_RECEIPTS, { params });
+  },
+
+  // Get single receipt by ID
+  getReceipt: async (id: string): Promise<ApiResponse<Receipt>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_RECEIPT_BY_ID(id));
+  },
+
+  // Create warehouse receipt from approved donation
+  createReceipt: async (data: {
+    donationId: string;
+  }): Promise<ApiResponse<Receipt>> => {
+    return httpClient.post(API_ENDPOINTS.WAREHOUSE_RECEIPTS, data);
   },
 };

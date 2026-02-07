@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, UserPlus, Edit, Trash2, Ban, CheckCircle } from 'lucide-react';
@@ -55,7 +55,7 @@ export default function UserManagement() {
     userName: '',
   });
 
-  const { data: usersResponse, isLoading } = useUsers({
+  const { data: usersResponse, isLoading, refetch: refetchUsers } = useUsers({
     search: searchQuery,
     role: roleFilter === 'all' ? undefined : roleFilter,
   });
@@ -64,9 +64,12 @@ export default function UserManagement() {
   const deleteUserMutation = useDeleteUser();
   const updateStatusMutation = useUpdateUserStatus();
 
-  const users = usersResponse?.data?.items || usersResponse?.data?.data || usersResponse?.data || [];
+  const users = (usersResponse?.data?.data || usersResponse?.data || []) as any[];
 
-  // Form for create user
+  useEffect(() => {
+    refetchUsers();
+  }, [refetchUsers]);
+
   const {
     register: registerCreate,
     handleSubmit: handleSubmitCreate,
@@ -77,13 +80,13 @@ export default function UserManagement() {
     resolver: zodResolver(createAccountSchema),
   });
 
-  // Form for edit user
   const {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     formState: { errors: errorsEdit },
     setValue: setValueEdit,
     reset: resetEdit,
+    watch: watchEdit,
   } = useForm<UpdateAccountFormData>({
     resolver: zodResolver(updateAccountSchema),
   });
@@ -91,6 +94,8 @@ export default function UserManagement() {
   const onSubmitCreate = async (data: CreateAccountFormData) => {
     try {
       await createUserMutation.mutateAsync(data);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await refetchUsers();
       setIsCreateDialogOpen(false);
       resetCreate();
     } catch (error) {
@@ -102,6 +107,8 @@ export default function UserManagement() {
     if (!editingUser) return;
     try {
       await updateUserMutation.mutateAsync({ id: editingUser.id, data });
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await refetchUsers();
       setEditingUser(null);
       resetEdit();
     } catch (error) {
@@ -113,6 +120,8 @@ export default function UserManagement() {
     if (!deleteDialog.userId) return;
     try {
       await deleteUserMutation.mutateAsync(deleteDialog.userId);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await refetchUsers();
       setDeleteDialog({ open: false, userId: null, userName: '' });
     } catch (error) {
       // Error handled in hook
@@ -125,6 +134,8 @@ export default function UserManagement() {
         id: userId, 
         data: { isActive: !currentStatus } 
       });
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await refetchUsers();
     } catch (error) {
       // Error handled in hook
     }
@@ -132,12 +143,19 @@ export default function UserManagement() {
 
   const handleEditUser = (user: any) => {
     setEditingUser(user);
-    setValueEdit('email', user.email);
-    setValueEdit('phone', user.phone);
-    setValueEdit('fullName', user.fullName || user.name);
-    setValueEdit('role', user.role);
-    setValueEdit('address', user.address || '');
-    setValueEdit('avatarUrl', user.avatarUrl || '');
+    const fullName = user.profile?.fullName || user.fullName || '';
+    const phone = user.phone || '';
+    const avatarUrl = user.profile?.avatarUrl || user.avatarUrl || '';
+    const address = user.profile?.address || user.address || '';
+    
+    resetEdit({
+      email: user.email || '',
+      phone: phone,
+      fullName: fullName,
+      role: user.role,
+      address: address,
+      avatarUrl: avatarUrl,
+    });
   };
 
   const getRoleBadge = (role: string) => {
@@ -169,7 +187,6 @@ export default function UserManagement() {
         </Button>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-4">
@@ -199,12 +216,9 @@ export default function UserManagement() {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Danh sách tài khoản ({users.length})
-          </CardTitle>
+          <CardTitle>Danh sách tài khoản ({users.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -214,6 +228,7 @@ export default function UserManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Avatar</TableHead>
                     <TableHead>Họ tên</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Số điện thoại</TableHead>
@@ -224,55 +239,72 @@ export default function UserManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user: any) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.fullName || user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.phone || '-'}</TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>
-                        <Badge className={user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                          {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{user.address || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleStatus(user.id, user.isActive)}
-                          >
-                            {user.isActive ? (
-                              <Ban className="h-4 w-4 text-orange-500" />
-                            ) : (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setDeleteDialog({
+                  {users.map((user: any) => {
+                    const fullName = user.profile?.fullName || user.fullName || user.name || '';
+                    const phone = user.phone || user.phoneNumber || '';
+                    const avatarUrl = user.profile?.avatarUrl || user.avatarUrl || '';
+                    const address = user.profile?.address || user.address || '';
+                    
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          {avatarUrl ? (
+                            <img 
+                              src={avatarUrl} 
+                              alt="Avatar" 
+                              className="h-10 w-10 rounded-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=?';
+                              }}
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold">
+                              {(fullName || user.email || '?').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {fullName || <span className="text-gray-400 italic">Chưa cập nhật</span>}
+                        </TableCell>
+                        <TableCell>{user.email || '-'}</TableCell>
+                        <TableCell>{phone || <span className="text-gray-400">-</span>}</TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>
+                          <Badge className={user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {address || <span className="text-gray-400">-</span>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditUser(user)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleToggleStatus(user.id, user.isActive)}>
+                              {user.isActive ? (
+                                <Ban className="h-4 w-4 text-orange-500" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              )}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setDeleteDialog({
                                 open: true,
                                 userId: user.id,
-                                userName: user.fullName || user.name,
-                              })
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                                userName: fullName || user.email,
+                              })}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -284,7 +316,6 @@ export default function UserManagement() {
         </CardContent>
       </Card>
 
-      {/* Create User Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -299,7 +330,6 @@ export default function UserManagement() {
                   <p className="text-sm text-red-500">{errorsCreate.fullName.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="role">Vai trò *</Label>
                 <Select onValueChange={(value) => setValueCreate('role', value as any)}>
@@ -317,7 +347,6 @@ export default function UserManagement() {
                 )}
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email *</Label>
@@ -326,7 +355,6 @@ export default function UserManagement() {
                   <p className="text-sm text-red-500">{errorsCreate.email.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="phone">Số điện thoại *</Label>
                 <Input id="phone" {...registerCreate('phone')} placeholder="0901234567" />
@@ -335,7 +363,6 @@ export default function UserManagement() {
                 )}
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu *</Label>
               <Input id="password" type="password" {...registerCreate('password')} placeholder="Ít nhất 8 ký tự, 1 hoa, 1 thường, 1 số, 1 ký tự đặc biệt" />
@@ -343,7 +370,6 @@ export default function UserManagement() {
                 <p className="text-sm text-red-500">{errorsCreate.password.message}</p>
               )}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="address">Địa chỉ</Label>
               <Textarea id="address" {...registerCreate('address')} rows={2} />
@@ -351,7 +377,6 @@ export default function UserManagement() {
                 <p className="text-sm text-red-500">{errorsCreate.address.message}</p>
               )}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="avatarUrl">URL Avatar</Label>
               <Input id="avatarUrl" {...registerCreate('avatarUrl')} placeholder="https://example.com/avatar.jpg" />
@@ -359,7 +384,6 @@ export default function UserManagement() {
                 <p className="text-sm text-red-500">{errorsCreate.avatarUrl.message}</p>
               )}
             </div>
-
             <DialogFooter>
               <Button
                 type="button"
@@ -379,8 +403,15 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
-      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+      <Dialog 
+        open={!!editingUser} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingUser(null);
+            resetEdit();
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa tài khoản</DialogTitle>
@@ -394,15 +425,14 @@ export default function UserManagement() {
                   <p className="text-sm text-red-500">{errorsEdit.fullName.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="edit-role">Vai trò</Label>
                 <Select 
-                  value={editingUser?.role} 
+                  value={watchEdit('role') || editingUser?.role} 
                   onValueChange={(value) => setValueEdit('role', value as any)}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn vai trò" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USER">User</SelectItem>
@@ -415,7 +445,6 @@ export default function UserManagement() {
                 )}
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-email">Email</Label>
@@ -424,7 +453,6 @@ export default function UserManagement() {
                   <p className="text-sm text-red-500">{errorsEdit.email.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Số điện thoại</Label>
                 <Input id="edit-phone" {...registerEdit('phone')} />
@@ -433,7 +461,6 @@ export default function UserManagement() {
                 )}
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="edit-address">Địa chỉ</Label>
               <Textarea id="edit-address" {...registerEdit('address')} rows={2} />
@@ -441,7 +468,6 @@ export default function UserManagement() {
                 <p className="text-sm text-red-500">{errorsEdit.address.message}</p>
               )}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="edit-avatarUrl">URL Avatar</Label>
               <Input id="edit-avatarUrl" {...registerEdit('avatarUrl')} />
@@ -449,7 +475,6 @@ export default function UserManagement() {
                 <p className="text-sm text-red-500">{errorsEdit.avatarUrl.message}</p>
               )}
             </div>
-
             <DialogFooter>
               <Button
                 type="button"
@@ -469,7 +494,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog.open} onOpenChange={(open) => 
         setDeleteDialog({ ...deleteDialog, open })
       }>

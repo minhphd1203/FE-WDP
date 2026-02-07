@@ -27,6 +27,14 @@ class HttpClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        console.log('[HttpClient] Request:', {
+          method: config.method?.toUpperCase(),
+          url: config.url,
+          baseURL: config.baseURL,
+          fullURL: `${config.baseURL}${config.url}`,
+          data: config.data,
+          params: config.params,
+        });
         return config;
       },
       (error) => {
@@ -36,8 +44,23 @@ class HttpClient {
 
     // Response interceptor
     this.instance.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log('[HttpClient] Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.config.url,
+          data: response.data,
+        });
+        return response;
+      },
       (error) => {
+        console.error('[HttpClient] Error:', {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: error.config?.url,
+          data: error.response?.data,
+        });
         if (error.response?.status === 401) {
           store.dispatch(logout());
           window.location.href = '/auth/login';

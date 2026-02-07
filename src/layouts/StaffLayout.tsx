@@ -98,11 +98,11 @@ export default function StaffLayout() {
           className="fixed inset-0 bg-black/50"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg">
+        <div className="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-50 to-white shadow-lg border-r border-blue-100">
           <div className="flex h-full flex-col">
             {/* Sidebar header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-xl font-bold text-primary">Staff Panel</h2>
+            <div className="flex items-center justify-between p-4 border-b border-blue-100 bg-white">
+              <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
               <button onClick={() => setSidebarOpen(false)}>
                 <X className="h-6 w-6" />
               </button>
@@ -178,10 +178,10 @@ export default function StaffLayout() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-1 bg-white border-r">
+        <div className="flex flex-col flex-1 bg-gradient-to-b from-blue-50 to-white border-r border-blue-100">
           {/* Sidebar header */}
-          <div className="flex items-center h-16 px-4 border-b">
-            <h2 className="text-xl font-bold text-primary">Staff Panel</h2>
+          <div className="flex items-center justify-center h-16 px-4 border-b border-blue-100 bg-white">
+            <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
           </div>
 
           {/* Navigation */}
@@ -247,11 +247,11 @@ export default function StaffLayout() {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-4 lg:hidden">
-          <button onClick={() => setSidebarOpen(true)}>
+        <div className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-4 shadow-sm lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="text-primary hover:text-primary/80">
             <Menu className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-bold text-primary">Staff Panel</h1>
+          <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
         </div>
 
         {/* Page content */}

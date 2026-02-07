@@ -3,7 +3,6 @@ import {
   VolunteerRegistration,
   ApproveVolunteerRequest,
   RejectVolunteerRequest,
-  VolunteersResponse,
 } from "../../types/volunteer";
 import { ApiResponse } from "../../types";
 
@@ -20,7 +19,7 @@ export const volunteerService = {
     params.append("limit", limit.toString());
     if (status) params.append("status", status);
 
-    return httpClient.get<ApiResponse<VolunteersResponse>>(
+    return httpClient.get<ApiResponse<VolunteerRegistration>>(
       `${VOLUNTEER_ENDPOINTS.REGISTRATIONS}?${params.toString()}`,
     );
   },
