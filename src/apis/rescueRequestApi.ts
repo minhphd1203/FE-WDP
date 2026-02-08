@@ -8,6 +8,7 @@ import {
   RescueRequestPriority,
   AssignTeamsDto,
   ReviewRescueRequestDto,
+  CancelRescueRequestDto,
 } from '../types';
 
 export interface RescueRequestFilters {
@@ -49,5 +50,13 @@ export const rescueRequestApi = {
     data: ReviewRescueRequestDto
   ): Promise<ApiResponse<ReliefRequest>> => {
     return httpClient.patch(API_ENDPOINTS.RESCUE_REQUEST_REVIEW(id), data);
+  },
+
+  // Cancel rescue request
+  cancelRequest: async (
+    id: string,
+    data?: CancelRescueRequestDto
+  ): Promise<ApiResponse<ReliefRequest>> => {
+    return httpClient.patch(API_ENDPOINTS.RESCUE_REQUEST_CANCEL(id), data);
   },
 };

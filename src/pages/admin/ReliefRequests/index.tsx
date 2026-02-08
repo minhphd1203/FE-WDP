@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Search, MapPin, AlertTriangle, Eye, Users } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  AlertTriangle,
+  Eye,
+  Users,
+  RefreshCw,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -38,25 +45,34 @@ import {
   useRescueRequests,
   useAssignTeams,
   useReviewRequest,
+  useCancelRequest,
 } from "../../../hooks/useRescueRequest";
 import { useTeams } from "../../../hooks/useTeam";
-import { ReliefRequest, RescueRequestStatus, RescueRequestPriority } from "../../../types";
+import {
+  ReliefRequest,
+  RescueRequestStatus,
+  RescueRequestPriority,
+} from "../../../types";
 import { formatDate } from "../../../lib/utils";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ReliefRequests() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(
+    null,
+  );
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
-  
+
   const limit = 20;
-  
+
   // Review form state
   const [reviewForm, setReviewForm] = useState({
     status: RescueRequestStatus.REVIEWED,
@@ -65,10 +81,20 @@ export default function ReliefRequests() {
   });
 
   // Fetch data
-  const { data: requestsData, isLoading } = useRescueRequests({
+  const {
+    data: requestsData,
+    isLoading,
+    error,
+  } = useRescueRequests({
     q: searchQuery || undefined,
-    status: statusFilter !== "all" ? (statusFilter as RescueRequestStatus) : undefined,
-    priority: priorityFilter !== "all" ? (priorityFilter as RescueRequestPriority) : undefined,
+    status:
+      statusFilter !== "all"
+        ? (statusFilter as RescueRequestStatus)
+        : undefined,
+    priority:
+      priorityFilter !== "all"
+        ? (priorityFilter as RescueRequestPriority)
+        : undefined,
     page,
     limit,
     sortBy: "createdAt",
@@ -80,11 +106,28 @@ export default function ReliefRequests() {
 
   const assignTeamsMutation = useAssignTeams();
   const reviewRequestMutation = useReviewRequest();
-  
+  const cancelRequestMutation = useCancelRequest();
+
   const assignTeamsLoading = assignTeamsMutation.isPending;
   const reviewRequestLoading = reviewRequestMutation.isPending;
+  const cancelRequestLoading = cancelRequestMutation.isPending;
 
   const requests = requestsData?.items || [];
+
+  console.log("Requests data:", requestsData);
+  console.log("Requests array:", requests);
+  console.log("Is loading:", isLoading);
+  console.log("Error:", error);
+  
+  // Debug: Log first request structure
+  if (requests.length > 0) {
+    console.log("First request structure:", JSON.stringify(requests[0], null, 2));
+  }
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["rescue-requests"] });
+    toast.success("Đang tải lại dữ liệu...");
+  };
 
   const handleAssignTeams = async () => {
     if (!selectedRequest || selectedTeamIds.length === 0) {
@@ -109,10 +152,19 @@ export default function ReliefRequests() {
     if (!selectedRequest) return;
 
     try {
-      await reviewRequestMutation.mutateAsync({
-        id: selectedRequest.id,
-        data: reviewForm,
-      });
+      // If status is CANCELED, use cancel endpoint
+      if (reviewForm.status === RescueRequestStatus.CANCELED) {
+        await cancelRequestMutation.mutateAsync({
+          id: selectedRequest.id,
+          data: { reason: reviewForm.note },
+        });
+      } else {
+        // Otherwise use review endpoint
+        await reviewRequestMutation.mutateAsync({
+          id: selectedRequest.id,
+          data: reviewForm,
+        });
+      }
       setIsReviewDialogOpen(false);
       setSelectedRequest(null);
       setReviewForm({
@@ -129,7 +181,7 @@ export default function ReliefRequests() {
     setSelectedTeamIds((prev) =>
       prev.includes(teamId)
         ? prev.filter((id) => id !== teamId)
-        : [...prev, teamId]
+        : [...prev, teamId],
     );
   };
 
@@ -195,6 +247,24 @@ export default function ReliefRequests() {
     return labels[priority] || priority;
   };
 
+  const getDefaultReviewStatus = (
+    currentStatus: RescueRequestStatus,
+  ): RescueRequestStatus => {
+    switch (currentStatus) {
+      case RescueRequestStatus.NEW:
+      case RescueRequestStatus.REVIEWED:
+        return RescueRequestStatus.REVIEWED;
+      case RescueRequestStatus.ASSIGNED:
+        return RescueRequestStatus.ACCEPTED;
+      case RescueRequestStatus.ACCEPTED:
+        return RescueRequestStatus.IN_PROGRESS;
+      case RescueRequestStatus.IN_PROGRESS:
+        return RescueRequestStatus.DONE;
+      default:
+        return RescueRequestStatus.REVIEWED;
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -204,11 +274,29 @@ export default function ReliefRequests() {
             Quản lý và xử lý các yêu cầu cứu trợ từ người dân
           </p>
         </div>
+        <Button onClick={handleRefresh} variant="outline" disabled={isLoading}>
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+          />
+          Làm mới
+        </Button>
       </div>
 
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
+          {/* Debug info - Remove in production */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+              <p>
+                <strong>Debug Info:</strong>
+              </p>
+              <p>Loading: {isLoading ? "Yes" : "No"}</p>
+              <p>Total: {requestsData?.total || 0}</p>
+              <p>Items: {requests?.length || 0}</p>
+              <p>Error: {error ? "Yes" : "No"}</p>
+            </div>
+          )}
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -227,9 +315,13 @@ export default function ReliefRequests() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả mức độ</SelectItem>
-                <SelectItem value={RescueRequestPriority.CRITICAL}>Khẩn cấp</SelectItem>
+                <SelectItem value={RescueRequestPriority.CRITICAL}>
+                  Khẩn cấp
+                </SelectItem>
                 <SelectItem value={RescueRequestPriority.HIGH}>Cao</SelectItem>
-                <SelectItem value={RescueRequestPriority.MEDIUM}>Trung bình</SelectItem>
+                <SelectItem value={RescueRequestPriority.MEDIUM}>
+                  Trung bình
+                </SelectItem>
                 <SelectItem value={RescueRequestPriority.LOW}>Thấp</SelectItem>
               </SelectContent>
             </Select>
@@ -240,13 +332,27 @@ export default function ReliefRequests() {
               <SelectContent>
                 <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value={RescueRequestStatus.NEW}>Mới</SelectItem>
-                <SelectItem value={RescueRequestStatus.REVIEWED}>Đã đánh giá</SelectItem>
-                <SelectItem value={RescueRequestStatus.ASSIGNED}>Đã phân công</SelectItem>
-                <SelectItem value={RescueRequestStatus.ACCEPTED}>Đã chấp nhận</SelectItem>
-                <SelectItem value={RescueRequestStatus.IN_PROGRESS}>Đang thực hiện</SelectItem>
-                <SelectItem value={RescueRequestStatus.DONE}>Hoàn thành</SelectItem>
-                <SelectItem value={RescueRequestStatus.CANCELED}>Đã hủy</SelectItem>
-                <SelectItem value={RescueRequestStatus.REJECTED}>Từ chối</SelectItem>
+                <SelectItem value={RescueRequestStatus.REVIEWED}>
+                  Đã đánh giá
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.ASSIGNED}>
+                  Đã phân công
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.ACCEPTED}>
+                  Đã chấp nhận
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
+                  Đang thực hiện
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.DONE}>
+                  Hoàn thành
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.CANCELED}>
+                  Đã hủy
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.REJECTED}>
+                  Từ chối
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -261,8 +367,22 @@ export default function ReliefRequests() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Đang tải...</div>
+          {error ? (
+            <div className="text-center py-8">
+              <p className="text-red-500 mb-2">Có lỗi xảy ra khi tải dữ liệu</p>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                size="sm"
+              >
+                Thử lại
+              </Button>
+            </div>
+          ) : isLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-2"></div>
+              <p>Đang tải danh sách đơn cứu trợ...</p>
+            </div>
           ) : requests.length > 0 ? (
             <Table>
               <TableHeader>
@@ -291,14 +411,24 @@ export default function ReliefRequests() {
                                 : "text-yellow-600"
                           }`}
                         />
-                        <span className="line-clamp-2">{request.title}</span>
+                        <span className="line-clamp-2">
+                          {(request as any).title || (request as any).description?.substring(0, 50) || "Không có tiêu đề"}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{request.requesterName}</p>
+                        <p className="font-medium">
+                          {(request as any).requesterName || 
+                           (request as any).requester?.name || 
+                           (request as any).user?.name || 
+                           "N/A"}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {request.requesterPhone}
+                          {(request as any).requesterPhone || 
+                           (request as any).requester?.phone || 
+                           (request as any).user?.phone || 
+                           "N/A"}
                         </p>
                       </div>
                     </TableCell>
@@ -306,7 +436,9 @@ export default function ReliefRequests() {
                       <div className="flex items-start gap-1">
                         <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                         <span className="text-sm line-clamp-2">
-                          {request.location.address}
+                          {(request as any).location?.address || 
+                           (request as any).address || 
+                           "N/A"}
                         </span>
                       </div>
                     </TableCell>
@@ -321,7 +453,8 @@ export default function ReliefRequests() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {request.assignedTeams && request.assignedTeams.length > 0 ? (
+                      {request.assignedTeams &&
+                      request.assignedTeams.length > 0 ? (
                         <div className="text-sm">
                           {request.assignedTeams.map((team) => (
                             <div key={team.teamId}>
@@ -335,9 +468,7 @@ export default function ReliefRequests() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {formatDate(request.createdAt)}
-                    </TableCell>
+                    <TableCell>{formatDate(request.createdAt)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -357,7 +488,7 @@ export default function ReliefRequests() {
                             onClick={() => {
                               setSelectedRequest(request);
                               setReviewForm({
-                                status: RescueRequestStatus.REVIEWED,
+                                status: getDefaultReviewStatus(request.status),
                                 priority: request.priority,
                                 note: "",
                               });
@@ -367,7 +498,27 @@ export default function ReliefRequests() {
                             Đánh giá
                           </Button>
                         )}
-                        {(request.status === RescueRequestStatus.REVIEWED || 
+                        {(request.status === RescueRequestStatus.ASSIGNED ||
+                          request.status === RescueRequestStatus.ACCEPTED ||
+                          request.status ===
+                            RescueRequestStatus.IN_PROGRESS) && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setReviewForm({
+                                status: getDefaultReviewStatus(request.status),
+                                priority: request.priority,
+                                note: "",
+                              });
+                              setIsReviewDialogOpen(true);
+                            }}
+                          >
+                            Cập nhật
+                          </Button>
+                        )}
+                        {(request.status === RescueRequestStatus.REVIEWED ||
                           request.status === RescueRequestStatus.ASSIGNED) && (
                           <Button
                             variant="outline"
@@ -416,7 +567,7 @@ export default function ReliefRequests() {
               size="sm"
               onClick={() =>
                 setPage((p) =>
-                  Math.min(Math.ceil(requestsData.total / limit), p + 1)
+                  Math.min(Math.ceil(requestsData.total / limit), p + 1),
                 )
               }
               disabled={page >= Math.ceil(requestsData.total / limit)}
@@ -436,10 +587,10 @@ export default function ReliefRequests() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Đơn yêu cầu: <strong>{selectedRequest?.title}</strong>
+                Đơn yêu cầu: <strong>{(selectedRequest as any)?.title || (selectedRequest as any)?.description?.substring(0, 50) || "Không có tiêu đề"}</strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Địa điểm: {selectedRequest?.location.address}
+                Địa điểm: {(selectedRequest as any)?.location?.address || (selectedRequest as any)?.address || "N/A"}
               </p>
             </div>
 
@@ -513,15 +664,19 @@ export default function ReliefRequests() {
       <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Đánh giá đơn yêu cầu</DialogTitle>
+            <DialogTitle>
+              {selectedRequest?.status === RescueRequestStatus.NEW
+                ? "Đánh giá đơn yêu cầu"
+                : "Cập nhật trạng thái"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Đơn yêu cầu: <strong>{selectedRequest?.title}</strong>
+                Đơn yêu cầu: <strong>{(selectedRequest as any)?.title || (selectedRequest as any)?.description?.substring(0, 50) || "Không có tiêu đề"}</strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Người yêu cầu: {selectedRequest?.requesterName}
+                Người yêu cầu: {(selectedRequest as any)?.requesterName || (selectedRequest as any)?.requester?.name || (selectedRequest as any)?.user?.name || "N/A"}
               </p>
             </div>
 
@@ -540,49 +695,112 @@ export default function ReliefRequests() {
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={RescueRequestStatus.REVIEWED}>
-                    Đã đánh giá - Chấp nhận
-                  </SelectItem>
-                  <SelectItem value={RescueRequestStatus.REJECTED}>
-                    Từ chối
-                  </SelectItem>
+                  {selectedRequest?.status === RescueRequestStatus.NEW && (
+                    <>
+                      <SelectItem value={RescueRequestStatus.REVIEWED}>
+                        Đã đánh giá - Chấp nhận
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.REJECTED}>
+                        Từ chối
+                      </SelectItem>
+                    </>
+                  )}
+                  {selectedRequest?.status === RescueRequestStatus.REVIEWED && (
+                    <>
+                      <SelectItem value={RescueRequestStatus.REVIEWED}>
+                        Đã đánh giá - Chấp nhận
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.REJECTED}>
+                        Từ chối
+                      </SelectItem>
+                    </>
+                  )}
+                  {selectedRequest?.status === RescueRequestStatus.ASSIGNED && (
+                    <>
+                      <SelectItem value={RescueRequestStatus.ACCEPTED}>
+                        Chấp nhận
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
+                        Đang thực hiện
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.REJECTED}>
+                        Từ chối
+                      </SelectItem>
+                    </>
+                  )}
+                  {selectedRequest?.status === RescueRequestStatus.ACCEPTED && (
+                    <>
+                      <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
+                        Đang thực hiện
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.DONE}>
+                        Hoàn thành
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.CANCELED}>
+                        Hủy
+                      </SelectItem>
+                    </>
+                  )}
+                  {selectedRequest?.status ===
+                    RescueRequestStatus.IN_PROGRESS && (
+                    <>
+                      <SelectItem value={RescueRequestStatus.DONE}>
+                        Hoàn thành
+                      </SelectItem>
+                      <SelectItem value={RescueRequestStatus.CANCELED}>
+                        Hủy
+                      </SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Mức độ ưu tiên *</Label>
-              <Select
-                value={reviewForm.priority}
-                onValueChange={(value) =>
-                  setReviewForm((prev) => ({
-                    ...prev,
-                    priority: value as RescueRequestPriority,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn mức độ" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={RescueRequestPriority.CRITICAL}>
-                    Khẩn cấp
-                  </SelectItem>
-                  <SelectItem value={RescueRequestPriority.HIGH}>
-                    Cao
-                  </SelectItem>
-                  <SelectItem value={RescueRequestPriority.MEDIUM}>
-                    Trung bình
-                  </SelectItem>
-                  <SelectItem value={RescueRequestPriority.LOW}>Thấp</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {reviewForm.status !== RescueRequestStatus.CANCELED && (
+              <div className="space-y-2">
+                <Label>Mức độ ưu tiên *</Label>
+                <Select
+                  value={reviewForm.priority}
+                  onValueChange={(value) =>
+                    setReviewForm((prev) => ({
+                      ...prev,
+                      priority: value as RescueRequestPriority,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn mức độ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={RescueRequestPriority.CRITICAL}>
+                      Khẩn cấp
+                    </SelectItem>
+                    <SelectItem value={RescueRequestPriority.HIGH}>
+                      Cao
+                    </SelectItem>
+                    <SelectItem value={RescueRequestPriority.MEDIUM}>
+                      Trung bình
+                    </SelectItem>
+                    <SelectItem value={RescueRequestPriority.LOW}>
+                      Thấp
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
-              <Label>Ghi chú đánh giá</Label>
+              <Label>
+                {reviewForm.status === RescueRequestStatus.CANCELED
+                  ? "Lý do hủy"
+                  : "Ghi chú đánh giá"}
+              </Label>
               <Textarea
-                placeholder="Nhập ghi chú về đánh giá của bạn..."
+                placeholder={
+                  reviewForm.status === RescueRequestStatus.CANCELED
+                    ? "Nhập lý do hủy đơn cứu trợ..."
+                    : "Nhập ghi chú về đánh giá của bạn..."
+                }
                 value={reviewForm.note}
                 onChange={(e) =>
                   setReviewForm((prev) => ({ ...prev, note: e.target.value }))
@@ -607,8 +825,13 @@ export default function ReliefRequests() {
             >
               Hủy
             </Button>
-            <Button onClick={handleReviewRequest} disabled={reviewRequestLoading}>
-              {reviewRequestLoading ? "Đang xử lý..." : "Xác nhận"}
+            <Button
+              onClick={handleReviewRequest}
+              disabled={reviewRequestLoading || cancelRequestLoading}
+            >
+              {reviewRequestLoading || cancelRequestLoading
+                ? "Đang xử lý..."
+                : "Xác nhận"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -628,18 +851,24 @@ export default function ReliefRequests() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Tiêu đề</Label>
-                      <p className="font-medium">{selectedRequest.title}</p>
+                      <p className="font-medium">{(selectedRequest as any).title || (selectedRequest as any).description?.substring(0, 50) || "Không có tiêu đề"}</p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground">Trạng thái</Label>
+                      <Label className="text-muted-foreground">
+                        Trạng thái
+                      </Label>
                       <div className="mt-1">
-                        <Badge className={getStatusColor(selectedRequest.status)}>
+                        <Badge
+                          className={getStatusColor(selectedRequest.status)}
+                        >
                           {getStatusLabel(selectedRequest.status)}
                         </Badge>
                       </div>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground">Mức độ ưu tiên</Label>
+                      <Label className="text-muted-foreground">
+                        Mức độ ưu tiên
+                      </Label>
                       <div className="mt-1">
                         <Badge
                           className={getPriorityColor(selectedRequest.priority)}
@@ -660,11 +889,13 @@ export default function ReliefRequests() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Họ tên</Label>
-                      <p>{selectedRequest.requesterName}</p>
+                      <p>{(selectedRequest as any).requesterName || (selectedRequest as any).requester?.name || (selectedRequest as any).user?.name || "N/A"}</p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground">Số điện thoại</Label>
-                      <p>{selectedRequest.requesterPhone}</p>
+                      <Label className="text-muted-foreground">
+                        Số điện thoại
+                      </Label>
+                      <p>{(selectedRequest as any).requesterPhone || (selectedRequest as any).requester?.phone || (selectedRequest as any).user?.phone || "N/A"}</p>
                     </div>
                   </div>
                 </div>
@@ -674,29 +905,35 @@ export default function ReliefRequests() {
                   <div className="space-y-2">
                     <div>
                       <Label className="text-muted-foreground">Địa chỉ</Label>
-                      <p>{selectedRequest.location.address}</p>
+                      <p>{(selectedRequest as any).location?.address || (selectedRequest as any).address || "N/A"}</p>
                     </div>
-                    {selectedRequest.location.district && (
+                    {(selectedRequest as any).location?.district && (
                       <div>
-                        <Label className="text-muted-foreground">Quận/Huyện</Label>
-                        <p>{selectedRequest.location.district}</p>
+                        <Label className="text-muted-foreground">
+                          Quận/Huyện
+                        </Label>
+                        <p>{(selectedRequest as any).location?.district}</p>
                       </div>
                     )}
-                    {selectedRequest.location.city && (
+                    {(selectedRequest as any).location?.city && (
                       <div>
-                        <Label className="text-muted-foreground">Tỉnh/Thành phố</Label>
-                        <p>{selectedRequest.location.city}</p>
+                        <Label className="text-muted-foreground">
+                          Tỉnh/Thành phố
+                        </Label>
+                        <p>{(selectedRequest as any).location?.city}</p>
                       </div>
                     )}
-                    {selectedRequest.location.coordinates && (
+                    {(selectedRequest as any).location?.coordinates && (
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label className="text-muted-foreground">Vĩ độ</Label>
-                          <p>{selectedRequest.location.coordinates.lat}</p>
+                          <p>{(selectedRequest as any).location?.coordinates?.lat}</p>
                         </div>
                         <div>
-                          <Label className="text-muted-foreground">Kinh độ</Label>
-                          <p>{selectedRequest.location.coordinates.lng}</p>
+                          <Label className="text-muted-foreground">
+                            Kinh độ
+                          </Label>
+                          <p>{(selectedRequest as any).location?.coordinates?.lng}</p>
                         </div>
                       </div>
                     )}
@@ -710,26 +947,29 @@ export default function ReliefRequests() {
                   </p>
                 </div>
 
-                {selectedRequest.images && selectedRequest.images.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Hình ảnh đính kèm</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      {selectedRequest.images.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`Image ${index + 1}`}
-                          className="w-full h-32 object-cover rounded border"
-                        />
-                      ))}
+                {selectedRequest.images &&
+                  selectedRequest.images.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Hình ảnh đính kèm</h3>
+                      <div className="grid grid-cols-3 gap-2">
+                        {selectedRequest.images.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded border"
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {selectedRequest.assignedTeams &&
                   selectedRequest.assignedTeams.length > 0 && (
                     <div>
-                      <h3 className="font-semibold mb-2">Đội cứu trợ được phân công</h3>
+                      <h3 className="font-semibold mb-2">
+                        Đội cứu trợ được phân công
+                      </h3>
                       <div className="space-y-2">
                         {selectedRequest.assignedTeams.map((team) => (
                           <div
@@ -758,16 +998,22 @@ export default function ReliefRequests() {
                     <h3 className="font-semibold mb-2">Thông tin đánh giá</h3>
                     <div className="border rounded p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label className="text-muted-foreground">Người đánh giá</Label>
+                        <Label className="text-muted-foreground">
+                          Người đánh giá
+                        </Label>
                         <p>{selectedRequest.reviewedBy}</p>
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label className="text-muted-foreground">Thời gian</Label>
+                        <Label className="text-muted-foreground">
+                          Thời gian
+                        </Label>
                         <p>{formatDate(selectedRequest.reviewedAt!)}</p>
                       </div>
                       {selectedRequest.reviewNote && (
                         <div>
-                          <Label className="text-muted-foreground">Ghi chú</Label>
+                          <Label className="text-muted-foreground">
+                            Ghi chú
+                          </Label>
                           <p className="text-sm mt-1 whitespace-pre-wrap">
                             {selectedRequest.reviewNote}
                           </p>

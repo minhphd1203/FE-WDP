@@ -86,8 +86,6 @@ export const ROUTES = {
   STAFF_DISTRIBUTE: "/staff/distribute",
   STAFF_VOLUNTEERS: "/staff/volunteers",
   STAFF_WAREHOUSE: "/staff/warehouse",
-  STAFF_WAREHOUSE_COMMON: "/staff/warehouse/common",
-  STAFF_WAREHOUSE_TEAM: "/staff/warehouse/team",
   STAFF_UPDATE_PROFILE: "/staff/update-profile",
 
   // Auth routes
@@ -128,9 +126,9 @@ export const API_ENDPOINTS = {
   RELIEF_REQUEST_ASSIGN: (id: string) => `/relief-requests/${id}/assign`,
   RESCUE_REQUESTS: "/rescue-requests",
   RESCUE_REQUEST_BY_ID: (id: string) => `/rescue-requests/${id}`,
-  RESCUE_REQUEST_ASSIGN: (id: string) =>
-    `/rescue-requests/admin/${id}/assignments`,
+  RESCUE_REQUEST_ASSIGN: (id: string) => `/rescue-requests/admin/${id}/assignments`,
   RESCUE_REQUEST_REVIEW: (id: string) => `/rescue-requests/admin/${id}/review`,
+  RESCUE_REQUEST_CANCEL: (id: string) => `/rescue-requests/${id}/cancel`,
 
   // Warehouse
   WAREHOUSE: "/warehouse",
@@ -139,8 +137,7 @@ export const API_ENDPOINTS = {
   WAREHOUSE_STOCKS: "/warehouse/stocks",
   WAREHOUSE_ALLOCATIONS: "/warehouse/allocations",
   WAREHOUSE_ALLOCATION_BY_ID: (id: string) => `/warehouse/allocations/${id}`,
-  WAREHOUSE_ALLOCATION_STATUS: (id: string) =>
-    `/warehouse/allocations/${id}/status`,
+  WAREHOUSE_ALLOCATION_STATUS: (id: string) => `/warehouse/allocations/${id}/status`,
   WAREHOUSE_RECEIPTS: "/warehouse/receipts",
   WAREHOUSE_RECEIPT_BY_ID: (id: string) => `/warehouse/receipts/${id}`,
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Truck, FileText, Box } from "lucide-react";
+import { Package, FileText, Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,168 +17,119 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../../../components/ui/dialog";
-import { Label } from "../../../components/ui/label";
-import { Input } from "../../../components/ui/input";
-import { CategorySelect } from "../../../components/ui/category-select";
-import { useWarehouse } from "../../../hooks/useWarehouse";
+import { warehouseApi } from "../../../service/warehouse/api";
 import { formatDate } from "../../../lib/utils";
 import { toast } from "sonner";
-import { AllocationStatus, ItemCondition, AllocationItem } from "../../../types";
 
-type Tab = "stocks" | "allocations" | "receipts";
+type Tab = "stocks" | "receipts";
 
 export default function Warehouse() {
   const [activeTab, setActiveTab] = useState<Tab>("stocks");
-  const [isCreateAllocationOpen, setIsCreateAllocationOpen] = useState(false);
-  const [isCreateReceiptOpen, setIsCreateReceiptOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [stocks, setStocks] = useState<any[]>([]);
+  const [receipts, setReceipts] = useState<any[]>([]);
+  const [isLoadingStocks, setIsLoadingStocks] = useState(false);
+  const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
+  const [stockPage, setStockPage] = useState(1);
+  const [receiptPage, setReceiptPage] = useState(1);
 
-  const {
-    stocks,
-    allocations,
-    receipts,
-    isLoading,
-    fetchStocks,
-    fetchAllocations,
-    fetchReceipts,
-    createAllocation,
-    updateAllocationStatus,
-    createReceipt,
-  } = useWarehouse();
-
-  // Allocation form state
-  const [allocationForm, setAllocationForm] = useState<{
-    items: AllocationItem[];
-  }>({
-    items: [],
-  });
-
-  // Receipt form state
-  const [receiptForm, setReceiptForm] = useState({
-    donationId: "",
-  });
-
-  // Temporary item form for allocation
-  const [tempItem, setTempItem] = useState<AllocationItem>({
-    category: "",
-    condition: ItemCondition.GOOD,
-    quantity: 0,
-  });
+  // Dialog states
+  const [selectedStock, setSelectedStock] = useState<any>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   useEffect(() => {
     fetchStocks();
-    fetchAllocations();
     fetchReceipts();
   }, []);
 
-  const handleAddItem = () => {
-    if (!tempItem.category || tempItem.quantity <= 0) {
-      toast.error("Vui lòng điền đầy đủ thông tin mặt hàng");
-      return;
-    }
-    setAllocationForm({
-      ...allocationForm,
-      items: [...allocationForm.items, tempItem],
-    });
-    setTempItem({
-      category: "",
-      condition: ItemCondition.GOOD,
-      quantity: 0,
-    });
-    toast.success("Đã thêm mặt hàng");
-  };
-
-  const handleRemoveItem = (index: number) => {
-    setAllocationForm({
-      ...allocationForm,
-      items: allocationForm.items.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleCreateAllocation = async () => {
-    if ((allocationForm.items?.length || 0) === 0) {
-      toast.error("Vui lòng thêm ít nhất một mặt hàng");
-      return;
-    }
-
+  const fetchStocks = async () => {
+    setIsLoadingStocks(true);
     try {
-      await createAllocation(allocationForm);
-      setIsCreateAllocationOpen(false);
-      setAllocationForm({ items: [] });
-    } catch (error) {
-      // Error handled in hook
+      const response = await warehouseApi.getStocks(stockPage, 20);
+      console.log("Stocks response:", response);
+      if (response.success && response.data) {
+        setStocks(response.data.data || []);
+      }
+    } catch (error: any) {
+      toast.error("Không thể tải danh sách tồn kho");
+      console.error("Error fetching stocks:", error);
+    } finally {
+      setIsLoadingStocks(false);
     }
   };
 
-  const handleCreateReceipt = async () => {
-    if (!receiptForm.donationId) {
-      toast.error("Vui lòng nhập ID quyên góp");
-      return;
-    }
-
+  const fetchReceipts = async () => {
+    setIsLoadingReceipts(true);
     try {
-      await createReceipt(receiptForm.donationId);
-      setIsCreateReceiptOpen(false);
-      setReceiptForm({ donationId: "" });
-    } catch (error) {
-      // Error handled in hook
+      const response = await warehouseApi.getReceipts(receiptPage, 20);
+      console.log("Receipts response:", response);
+      if (response.success && response.data) {
+        setReceipts(response.data.data || []);
+      }
+    } catch (error: any) {
+      toast.error("Không thể tải danh sách biên lai");
+      console.error("Error fetching receipts:", error);
+    } finally {
+      setIsLoadingReceipts(false);
     }
   };
 
-  const handleUpdateStatus = async (id: string, status: AllocationStatus) => {
+  const handleViewStockDetail = (stock: any) => {
+    setSelectedStock(stock);
+    setIsStockDialogOpen(true);
+  };
+
+  const handleViewReceiptDetail = async (receipt: any) => {
+    setIsLoadingDetail(true);
+    setIsReceiptDialogOpen(true);
     try {
-      await updateAllocationStatus(id, status);
-    } catch (error) {
-      // Error handled in hook
+      const response = await warehouseApi.getReceiptById(receipt.id);
+      console.log("Receipt detail response:", response);
+      if (response.success && response.data) {
+        setSelectedReceipt(response.data);
+      } else {
+        setSelectedReceipt(receipt);
+      }
+    } catch (error: any) {
+      console.error("Error fetching receipt detail:", error);
+      setSelectedReceipt(receipt);
+      toast.error("Không thể tải chi tiết biên lai");
+    } finally {
+      setIsLoadingDetail(false);
     }
   };
 
-  const getStatusColor = (status: AllocationStatus) => {
-    switch (status) {
-      case AllocationStatus.PENDING:
-        return "bg-yellow-100 text-yellow-800";
-      case AllocationStatus.IN_TRANSIT:
-        return "bg-blue-100 text-blue-800";
-      case AllocationStatus.DELIVERED:
-        return "bg-green-100 text-green-800";
-      case AllocationStatus.CANCELLED:
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  const getConditionBadge = (condition: string) => {
+    const conditionColors: Record<string, string> = {
+      EXCELLENT: "bg-green-100 text-green-800",
+      GOOD: "bg-blue-100 text-blue-800",
+      FAIR: "bg-yellow-100 text-yellow-800",
+      POOR: "bg-red-100 text-red-800",
+    };
 
-  const getConditionBadge = (condition: ItemCondition) => {
-    switch (condition) {
-      case ItemCondition.EXCELLENT:
-        return <Badge className="bg-green-100 text-green-800">Tuyệt vời</Badge>;
-      case ItemCondition.GOOD:
-        return <Badge className="bg-blue-100 text-blue-800">Tốt</Badge>;
-      case ItemCondition.FAIR:
-        return <Badge className="bg-yellow-100 text-yellow-800">Khá</Badge>;
-      default:
-        return <Badge>-</Badge>;
-    }
-  };
+    const conditionLabels: Record<string, string> = {
+      EXCELLENT: "Xuất sắc",
+      GOOD: "Tốt",
+      FAIR: "Khá",
+      POOR: "Kém",
+    };
 
-  const filteredAllocations =
-    statusFilter === "all"
-      ? (allocations || [])
-      : (allocations || []).filter((a) => a.status === statusFilter);
+    return (
+      <Badge
+        className={conditionColors[condition] || "bg-gray-100 text-gray-800"}
+      >
+        {conditionLabels[condition] || condition}
+      </Badge>
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -186,7 +137,7 @@ export default function Warehouse() {
         <div>
           <h1 className="text-3xl font-bold">Quản lý Kho</h1>
           <p className="text-muted-foreground mt-1">
-            Quản lý tồn kho, phân bổ và biên lai nhập kho
+            Quản lý tồn kho và biên lai nhập kho
           </p>
         </div>
       </div>
@@ -201,19 +152,8 @@ export default function Warehouse() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Box className="inline h-4 w-4 mr-2" />
+          <Package className="inline h-4 w-4 mr-2" />
           Tồn kho
-        </button>
-        <button
-          onClick={() => setActiveTab("allocations")}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === "allocations"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Truck className="inline h-4 w-4 mr-2" />
-          Phân bổ
         </button>
         <button
           onClick={() => setActiveTab("receipts")}
@@ -238,29 +178,52 @@ export default function Warehouse() {
             </Button>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoadingStocks ? (
               <div className="text-center py-8">Đang tải...</div>
             ) : (stocks?.length || 0) > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>ID</TableHead>
                     <TableHead>Danh mục</TableHead>
                     <TableHead>Tình trạng</TableHead>
                     <TableHead>Số lượng</TableHead>
                     <TableHead>Cập nhật lần cuối</TableHead>
+                    <TableHead>Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(stocks || []).map((stock) => (
+                  {stocks.map((stock: any) => (
                     <TableRow key={stock.id}>
+                      <TableCell className="font-mono text-xs">
+                        {stock.id?.substring(0, 8) || "N/A"}...
+                      </TableCell>
                       <TableCell className="font-medium">
-                        {stock.category}
+                        {stock.category?.name || stock.categoryName || "-"}
                       </TableCell>
-                      <TableCell>{getConditionBadge(stock.condition)}</TableCell>
                       <TableCell>
-                        <span className="font-semibold">{stock.quantity}</span>
+                        {getConditionBadge(stock.condition || "GOOD")}
                       </TableCell>
-                      <TableCell>{formatDate(stock.lastUpdated)}</TableCell>
+                      <TableCell>
+                        <span className="font-semibold">
+                          {stock.quantity || 0}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {stock.lastUpdated || stock.updatedAt
+                          ? formatDate(stock.lastUpdated || stock.updatedAt)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewStockDetail(stock)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Chi tiết
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -274,301 +237,17 @@ export default function Warehouse() {
         </Card>
       )}
 
-      {/* Allocations Tab */}
-      {activeTab === "allocations" && (
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div className="flex gap-4">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Lọc theo trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                      <SelectItem value={AllocationStatus.PENDING}>
-                        Đang chờ
-                      </SelectItem>
-                      <SelectItem value={AllocationStatus.IN_TRANSIT}>
-                        Đang vận chuyển
-                      </SelectItem>
-                      <SelectItem value={AllocationStatus.DELIVERED}>
-                        Đã giao
-                      </SelectItem>
-                      <SelectItem value={AllocationStatus.CANCELLED}>
-                        Đã hủy
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Dialog
-                  open={isCreateAllocationOpen}
-                  onOpenChange={setIsCreateAllocationOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Tạo phân bổ mới
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Tạo phân bổ mới</DialogTitle>
-                      <DialogDescription>
-                        Tạo phân bổ vật phẩm cho đội cứu trợ
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Thêm mặt hàng</Label>
-                        <div className="grid grid-cols-4 gap-2">
-                          <CategorySelect
-                            value={tempItem.category}
-                            onValueChange={(value) =>
-                              setTempItem({ ...tempItem, category: value })
-                            }
-                            placeholder="Chọn danh mục..."
-                          />
-                          <Select
-                            value={tempItem.condition}
-                            onValueChange={(value: ItemCondition) =>
-                              setTempItem({ ...tempItem, condition: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={ItemCondition.EXCELLENT}>
-                                Tuyệt vời
-                              </SelectItem>
-                              <SelectItem value={ItemCondition.GOOD}>Tốt</SelectItem>
-                              <SelectItem value={ItemCondition.FAIR}>Khá</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            type="number"
-                            placeholder="Số lượng"
-                            value={tempItem.quantity || ""}
-                            onChange={(e) =>
-                              setTempItem({
-                                ...tempItem,
-                                quantity: parseInt(e.target.value) || 0,
-                              })
-                            }
-                          />
-                          <Button onClick={handleAddItem} type="button">
-                            Thêm
-                          </Button>
-                        </div>
-                      </div>
-
-                      {(allocationForm.items?.length || 0) > 0 && (
-                        <div className="space-y-2">
-                          <Label>Danh sách mặt hàng</Label>
-                          <div className="border rounded-md">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Danh mục</TableHead>
-                                  <TableHead>Tình trạng</TableHead>
-                                  <TableHead>Số lượng</TableHead>
-                                  <TableHead></TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {(allocationForm.items || []).map((item, index) => (
-                                  <TableRow key={index}>
-                                    <TableCell>{item.category}</TableCell>
-                                    <TableCell>
-                                      {getConditionBadge(item.condition)}
-                                    </TableCell>
-                                    <TableCell>{item.quantity}</TableCell>
-                                    <TableCell>
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleRemoveItem(index)}
-                                      >
-                                        Xóa
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsCreateAllocationOpen(false)}
-                      >
-                        Hủy
-                      </Button>
-                      <Button onClick={handleCreateAllocation} disabled={isLoading}>
-                        Tạo phân bổ
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Danh sách phân bổ ({filteredAllocations?.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">Đang tải...</div>
-              ) : (filteredAllocations?.length || 0) > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Đội</TableHead>
-                      <TableHead>Số mặt hàng</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Ngày tạo</TableHead>
-                      <TableHead>Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(filteredAllocations || []).map((allocation) => (
-                      <TableRow key={allocation.id}>
-                        <TableCell className="font-mono text-xs">
-                          {allocation.id.substring(0, 8)}...
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {allocation.teamName || allocation.teamId}
-                        </TableCell>
-                        <TableCell>{allocation.items?.length || 0}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(allocation.status)}>
-                            {allocation.status === AllocationStatus.PENDING
-                              ? "Đang chờ"
-                              : allocation.status === AllocationStatus.IN_TRANSIT
-                                ? "Đang vận chuyển"
-                                : allocation.status === AllocationStatus.DELIVERED
-                                  ? "Đã giao"
-                                  : "Đã hủy"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(allocation.createdAt)}</TableCell>
-                        <TableCell>
-                          {allocation.status === AllocationStatus.PENDING && (
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  handleUpdateStatus(
-                                    allocation.id,
-                                    AllocationStatus.IN_TRANSIT
-                                  )
-                                }
-                              >
-                                Vận chuyển
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() =>
-                                  handleUpdateStatus(
-                                    allocation.id,
-                                    AllocationStatus.CANCELLED
-                                  )
-                                }
-                              >
-                                Hủy
-                              </Button>
-                            </div>
-                          )}
-                          {allocation.status === AllocationStatus.IN_TRANSIT && (
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                handleUpdateStatus(
-                                  allocation.id,
-                                  AllocationStatus.DELIVERED
-                                )
-                              }
-                            >
-                              Đã giao
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Không có phân bổ nào
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Receipts Tab */}
       {activeTab === "receipts" && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Biên lai nhập kho ({receipts?.length || 0})</CardTitle>
-            <Dialog
-              open={isCreateReceiptOpen}
-              onOpenChange={setIsCreateReceiptOpen}
-            >
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tạo biên lai mới
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Tạo biên lai nhập kho</DialogTitle>
-                  <DialogDescription>
-                    Tạo biên lai từ quyên góp đã được phê duyệt
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="donationId">ID quyên góp</Label>
-                    <Input
-                      id="donationId"
-                      placeholder="550e8400-e29b-41d4-a716-446655440000"
-                      value={receiptForm.donationId}
-                      onChange={(e) =>
-                        setReceiptForm({ donationId: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsCreateReceiptOpen(false)}
-                  >
-                    Hủy
-                  </Button>
-                  <Button onClick={handleCreateReceipt} disabled={isLoading}>
-                    Tạo biên lai
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={fetchReceipts} variant="outline" size="sm">
+              Làm mới
+            </Button>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoadingReceipts ? (
               <div className="text-center py-8">Đang tải...</div>
             ) : (receipts?.length || 0) > 0 ? (
               <Table>
@@ -579,20 +258,39 @@ export default function Warehouse() {
                     <TableHead>Người quyên góp</TableHead>
                     <TableHead>Ngày nhận</TableHead>
                     <TableHead>Ngày tạo</TableHead>
+                    <TableHead>Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(receipts || []).map((receipt) => (
+                  {receipts.map((receipt: any) => (
                     <TableRow key={receipt.id}>
                       <TableCell className="font-mono text-xs">
-                        {receipt.id.substring(0, 8)}...
+                        {receipt.id?.substring(0, 8) || "N/A"}...
                       </TableCell>
                       <TableCell className="font-mono text-xs">
-                        {receipt.donationId.substring(0, 8)}...
+                        {receipt.donationId?.substring(0, 8) || "N/A"}...
                       </TableCell>
                       <TableCell>{receipt.donorName || "-"}</TableCell>
-                      <TableCell>{formatDate(receipt.receivedAt)}</TableCell>
-                      <TableCell>{formatDate(receipt.createdAt)}</TableCell>
+                      <TableCell>
+                        {receipt.receivedAt
+                          ? formatDate(receipt.receivedAt)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {receipt.createdAt
+                          ? formatDate(receipt.createdAt)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewReceiptDetail(receipt)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Chi tiết
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -605,6 +303,213 @@ export default function Warehouse() {
           </CardContent>
         </Card>
       )}
+
+      {/* Stock Detail Dialog */}
+      <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Chi tiết tồn kho</DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về sản phẩm trong kho
+            </DialogDescription>
+          </DialogHeader>
+          {selectedStock && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    ID
+                  </p>
+                  <p className="text-sm font-mono">{selectedStock.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Danh mục
+                  </p>
+                  <p className="text-sm">
+                    {selectedStock.category?.name ||
+                      selectedStock.categoryName ||
+                      "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Số lượng
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {selectedStock.quantity || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Tình trạng
+                  </p>
+                  <div className="mt-1">
+                    {getConditionBadge(selectedStock.condition || "GOOD")}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Ngày tạo
+                  </p>
+                  <p className="text-sm">
+                    {selectedStock.createdAt
+                      ? formatDate(selectedStock.createdAt)
+                      : "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Cập nhật lần cuối
+                  </p>
+                  <p className="text-sm">
+                    {selectedStock.lastUpdated || selectedStock.updatedAt
+                      ? formatDate(
+                          selectedStock.lastUpdated || selectedStock.updatedAt,
+                        )
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+
+              {selectedStock.location && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Vị trí
+                  </p>
+                  <p className="text-sm">{selectedStock.location}</p>
+                </div>
+              )}
+
+              {selectedStock.note && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Ghi chú
+                  </p>
+                  <p className="text-sm">{selectedStock.note}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Detail Dialog */}
+      <Dialog open={isReceiptDialogOpen} onOpenChange={setIsReceiptDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết biên lai nhập kho</DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về biên lai nhập kho
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingDetail ? (
+            <div className="text-center py-8">Đang tải...</div>
+          ) : selectedReceipt ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    ID Biên lai
+                  </p>
+                  <p className="text-sm font-mono">{selectedReceipt.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    ID Quyên góp
+                  </p>
+                  <p className="text-sm font-mono">
+                    {selectedReceipt.donationId || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Người quyên góp
+                  </p>
+                  <p className="text-sm">{selectedReceipt.donorName || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Ngày nhận
+                  </p>
+                  <p className="text-sm">
+                    {selectedReceipt.receivedAt
+                      ? formatDate(selectedReceipt.receivedAt)
+                      : "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Ngày tạo
+                  </p>
+                  <p className="text-sm">
+                    {selectedReceipt.createdAt
+                      ? formatDate(selectedReceipt.createdAt)
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+
+              {selectedReceipt.items && selectedReceipt.items.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Danh sách sản phẩm ({selectedReceipt.items.length})
+                  </p>
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tên sản phẩm</TableHead>
+                          <TableHead>Danh mục</TableHead>
+                          <TableHead>Số lượng</TableHead>
+                          <TableHead>Đơn vị</TableHead>
+                          <TableHead>Tình trạng</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedReceipt.items.map(
+                          (item: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">
+                                {item.name || "-"}
+                              </TableCell>
+                              <TableCell>
+                                {item.category?.name || "-"}
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-semibold">
+                                  {item.quantity || 0}
+                                </span>
+                              </TableCell>
+                              <TableCell>{item.unit || "-"}</TableCell>
+                              <TableCell>
+                                {getConditionBadge(item.condition || "GOOD")}
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {selectedReceipt.note && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Ghi chú
+                  </p>
+                  <p className="text-sm">{selectedReceipt.note}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Không có dữ liệu
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
