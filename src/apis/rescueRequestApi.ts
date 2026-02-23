@@ -45,6 +45,11 @@ export const rescueRequestApi = {
     return httpClient.post(API_ENDPOINTS.RESCUE_REQUEST_ASSIGN(id), data);
   },
 
+  // Get assignments for a rescue request (Admin only)
+  getAssignments: async (id: string): Promise<ApiResponse<any>> => {
+    return httpClient.get(API_ENDPOINTS.RESCUE_REQUEST_ASSIGN(id));
+  },
+
   // Review rescue request (Admin only)
   reviewRequest: async (
     id: string,

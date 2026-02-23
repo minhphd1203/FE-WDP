@@ -138,40 +138,45 @@ export interface Product {
 
 export interface ReliefRequest {
   id: string;
-  title: string;
-  description: string;
-  requesterId: string;
-  requesterName: string;
-  requesterEmail: string;
-  requesterPhone: string;
-  eventId?: string;
-  eventName?: string;
-  location: {
-    address: string;
-    district?: string;
-    city?: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  };
+  creatorId: string | null;
+  guestName: string;
+  guestPhone: string;
+  address: string;
+  latitude: string;
+  longitude: string;
   priority: RescueRequestPriority;
   status: RescueRequestStatus;
-  assignedTeams?: Array<{
-    teamId: string;
-    teamName?: string;
-    assignedAt?: string;
-  }>;
-  assignedBy?: string;
-  assignedByName?: string;
-  completedAt?: string;
-  reviewedAt?: string;
-  reviewedBy?: string;
-  reviewNote?: string;
-  notes?: string;
-  images?: string[];
+  note: string;
+  requiredTeams: number;
+  estimatedPeople: number | null;
   createdAt: string;
   updatedAt: string;
+  assignedTeams: Array<{
+    assignmentId: string;
+    teamId: string;
+    teamName: string;
+    status: string;
+    respondedAt: string | null;
+  }>;
+  isAssigned: boolean;
+  teamSummary: {
+    required: number;
+    assigned: number;
+    accepted: number;
+    isFulfilled: boolean;
+  };
+  
+  // Deprecated fields for backward compatibility
+  /** @deprecated Use guestName instead */
+  title?: string;
+  /** @deprecated Use note instead */
+  description?: string;
+  /** @deprecated Use guestName instead */
+  requesterName?: string;
+  /** @deprecated Not available in API */
+  requesterEmail?: string;
+  /** @deprecated Not available in API */
+  images?: string[];
 }
 
 export interface AssignTeamsDto {
@@ -182,6 +187,7 @@ export interface ReviewRescueRequestDto {
   status: RescueRequestStatus;
   priority: RescueRequestPriority;
   note?: string;
+  requiredTeams?: number;
 }
 
 export interface CancelRescueRequestDto {

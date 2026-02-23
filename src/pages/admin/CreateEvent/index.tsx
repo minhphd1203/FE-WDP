@@ -7,6 +7,7 @@ import { Input } from '../../../components/ui/input';
 import { Textarea } from '../../../components/ui/textarea';
 import { Label } from '../../../components/ui/label';
 import LocationAutocomplete from '../../../components/ui/location-autocomplete';
+import { GoogleMapsSetupAlert } from '../../../components/ui/google-maps-setup-alert';
 import {
   Select,
   SelectContent,
@@ -184,14 +185,18 @@ export default function CreateEvent() {
 
             {/* Location (optional for relief teams) */}
             {eventType === 'VOLUNTEER' && (
-              <div className="space-y-2">
-                <Label htmlFor="location">Địa điểm tập trung</Label>
-                <LocationAutocomplete
-                  value={watch('location') || ''}
-                  onChange={(value) => setValue('location', value)}
-                  placeholder="Nhập địa điểm tập trung của đội"
-                  error={errors.location?.message}
-                />
+              <div className="space-y-4">
+                <GoogleMapsSetupAlert />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="location">Địa điểm tập trung</Label>
+                  <LocationAutocomplete
+                    value={watch('location') || ''}
+                    onChange={(value) => setValue('location', value)}
+                    placeholder="Nhập địa điểm tập trung của đội"
+                    error={errors.location?.message}
+                  />
+                </div>
               </div>
             )}
 

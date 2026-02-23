@@ -70,6 +70,19 @@ export const useRescueRequest = (id: string) => {
   });
 };
 
+// Get assignments for a rescue request
+export const useRescueRequestAssignments = (id: string | null) => {
+  return useQuery({
+    queryKey: [...RESCUE_REQUEST_KEYS.detail(id || ''), 'assignments'],
+    queryFn: async () => {
+      if (!id) return null;
+      const response = await rescueRequestApi.getAssignments(id);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+};
+
 // Assign teams to rescue request
 export const useAssignTeams = () => {
   const queryClient = useQueryClient();

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:maps": "powershell -ExecutionPolicy Bypass -File check-maps-config.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

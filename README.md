@@ -116,12 +116,61 @@ src/
 npm install
 ```
 
-### Bước 2: Chạy development server
+### Bước 2: Cấu hình Environment Variables
+```bash
+# Copy file .env.example thành .env
+cp .env.example .env
+```
+
+Chỉnh sửa file `.env` với các thông tin cần thiết:
+```env
+VITE_API_BASE_URL=http://localhost:3000
+VITE_GOOGLE_MAPS_API_KEY=your_actual_google_maps_api_key
+```
+
+#### Cấu hình Google Maps API (Tùy chọn)
+
+Để sử dụng tính năng chọn địa điểm trên bản đồ khi tạo sự kiện:
+
+1. **Tạo Google Cloud Project**:
+   - Truy cập [Google Cloud Console](https://console.cloud.google.com)
+   - Tạo project mới hoặc chọn project có sẵn
+
+2. **Enable các API cần thiết**:
+   - Maps JavaScript API
+   - Places API
+   - Geocoding API
+
+3. **Tạo API Key**:
+   - Vào [Credentials](https://console.cloud.google.com/apis/credentials)
+   - Tạo API key mới
+   - Giới hạn key để bảo mật (HTTP referrers, IP addresses)
+
+4. **Cập nhật `.env`**:
+   ```env
+   VITE_GOOGLE_MAPS_API_KEY=AIzaSyC...your_actual_key
+   ```
+
+**Lưu ý**: Nếu không cấu hình Google Maps API, bạn vẫn có thể nhập địa chỉ bằng text thông thường, chỉ không có autocomplete và map interactive.
+
+#### Kiểm tra cấu hình
+
+Để kiểm tra xem Google Maps API đã được cấu hình đúng chưa:
+
+```bash
+npm run check:maps
+```
+
+Script sẽ hiển thị:
+- ✅ Đã cấu hình: Hiển thị thông tin API key và các tính năng có sẵn
+- ❌ Chưa cấu hình: Hiển thị hướng dẫn cài đặt
+
+### Bước 3: Chạy development server
 ```bash
 npm run dev
 ```
 
-### Bước 3: Mở trình duyệt
+### Bước 4: Mở trình duyệt
 ```
 http://localhost:3000
 ```
@@ -153,6 +202,9 @@ npm run build
 
 # Preview production build
 npm run preview
+
+# Kiểm tra cấu hình Google Maps API
+npm run check:maps
 ```
 
 ## 📊 Dữ liệu Demo

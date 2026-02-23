@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Search, CheckCircle, XCircle, Eye, Filter, X } from 'lucide-react';
+import { Search, Eye, Filter, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -20,7 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import {
@@ -30,22 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { Textarea } from '../../../components/ui/textarea';
-import { Checkbox } from '../../../components/ui/checkbox';
-import { 
-  useDonations, 
-  useApproveDonation, 
-  useRejectDonation,
-  useBulkApproveDonations,
-  useBulkRejectDonations
-} from '../../../hooks/useDonation';
+import { useDonations } from '../../../hooks/useDonation';
 import { useEvents } from '../../../hooks/useEvent';
-import { 
-  rejectDonationSchema, 
-  bulkRejectDonationsSchema,
-  RejectDonationFormData,
-  BulkRejectDonationsFormData
-} from '../../../schema/donationSchema';
 import { Donation } from '../../../types/donation';
 
 export default function DonationManagement() {
@@ -55,25 +38,6 @@ export default function DonationManagement() {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
-  const [approveDialog, setApproveDialog] = useState<{
-    open: boolean;
-    donationId: string | null;
-    isBulk: boolean;
-  }>({
-    open: false,
-    donationId: null,
-    isBulk: false,
-  });
-  const [rejectDialog, setRejectDialog] = useState<{
-    open: boolean;
-    donationId: string | null;
-    isBulk: boolean;
-  }>({
-    open: false,
-    donationId: null,
-    isBulk: false,
-  });
   const [detailDialog, setDetailDialog] = useState<{
     open: boolean;
     donation: Donation | null;
@@ -81,7 +45,6 @@ export default function DonationManagement() {
     open: false,
     donation: null,
   });
-  const [approveNote, setApproveNote] = useState('');
 
   const { data: donationsResponse, isLoading } = useDonations({
     search: searchQuery,
@@ -91,121 +54,31 @@ export default function DonationManagement() {
     to: toDate || undefined,
   });
   const { data: eventsResponse } = useEvents({ status: 'OPEN' });
-  const approveMutation = useApproveDonation();
-  const rejectMutation = useRejectDonation();
-  const bulkApproveMutation = useBulkApproveDonations();
-  const bulkRejectMutation = useBulkRejectDonations();
 
   const donations = donationsResponse?.data?.data || [];
   const events = eventsResponse?.data?.data || [];
 
-  // Form for reject
-  const {
-    register: registerReject,
-    handleSubmit: handleSubmitReject,
-    formState: { errors: errorsReject },
-    reset: resetReject,
-  } = useForm<RejectDonationFormData>({
-    resolver: zodResolver(rejectDonationSchema),
-  });
-
-  // Form for bulk reject
-  const {
-    register: registerBulkReject,
-    handleSubmit: handleSubmitBulkReject,
-    formState: { errors: errorsBulkReject },
-    reset: resetBulkReject,
-  } = useForm<BulkRejectDonationsFormData>({
-    resolver: zodResolver(bulkRejectDonationsSchema),
-  });
-
-  const handleApprove = async () => {
-    if (approveDialog.isBulk) {
-      try {
-        await bulkApproveMutation.mutateAsync({
-          ids: selectedDonations,
-          note: approveNote || undefined,
-        });
-        setApproveDialog({ open: false, donationId: null, isBulk: false });
-        setApproveNote('');
-        setSelectedDonations([]);
-      } catch (error) {
-        // Error handled in hook
-      }
-    } else if (approveDialog.donationId) {
-      try {
-        await approveMutation.mutateAsync({
-          id: approveDialog.donationId,
-          data: { note: approveNote || undefined },
-        });
-        setApproveDialog({ open: false, donationId: null, isBulk: false });
-        setApproveNote('');
-      } catch (error) {
-        // Error handled in hook
-      }
-    }
-  };
-
-  const onSubmitReject = async (data: RejectDonationFormData) => {
-    if (rejectDialog.donationId) {
-      try {
-        await rejectMutation.mutateAsync({
-          id: rejectDialog.donationId,
-          data,
-        });
-        setRejectDialog({ open: false, donationId: null, isBulk: false });
-        resetReject();
-      } catch (error) {
-        // Error handled in hook
-      }
-    }
-  };
-
-  const onSubmitBulkReject = async (data: BulkRejectDonationsFormData) => {
-    try {
-      await bulkRejectMutation.mutateAsync({
-        ...data,
-        ids: selectedDonations,
-      });
-      setRejectDialog({ open: false, donationId: null, isBulk: false });
-      resetBulkReject();
-      setSelectedDonations([]);
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedDonations(donations.filter((d: Donation) => d.status === 'PENDING').map((d: Donation) => d.id));
-    } else {
-      setSelectedDonations([]);
-    }
-  };
-
-  const handleSelectOne = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedDonations([...selectedDonations, id]);
-    } else {
-      setSelectedDonations(selectedDonations.filter((sid) => sid !== id));
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
+      SUBMITTED: 'bg-yellow-100 text-yellow-800',
       APPROVED: 'bg-green-100 text-green-800',
       REJECTED: 'bg-red-100 text-red-800',
+      RECEIVED: 'bg-blue-100 text-blue-800',
+      ALLOCATED: 'bg-purple-100 text-purple-800',
+      DISPATCHED: 'bg-indigo-100 text-indigo-800',
+      DELIVERED: 'bg-teal-100 text-teal-800',
     };
     const labels: Record<string, string> = {
-      PENDING: 'Chờ duyệt',
+      SUBMITTED: 'Chờ duyệt',
       APPROVED: 'Đã duyệt',
       REJECTED: 'Từ chối',
+      RECEIVED: 'Đã nhận',
+      ALLOCATED: 'Đã phân bổ',
+      DISPATCHED: 'Đang vận chuyển',
+      DELIVERED: 'Đã giao',
     };
-    return <Badge className={variants[status] || variants.PENDING}>{labels[status] || status}</Badge>;
+    return <Badge className={variants[status] || variants.SUBMITTED}>{labels[status] || status}</Badge>;
   };
-
-  const pendingDonations = donations.filter((d: Donation) => d.status === 'PENDING');
 
   const handleClearFilters = () => {
     setEventFilter('all');
@@ -225,27 +98,9 @@ export default function DonationManagement() {
         <div>
           <h1 className="text-3xl font-bold">Quản lý Donation</h1>
           <p className="text-muted-foreground mt-1">
-            Phê duyệt và quản lý các donation từ người dùng
+            Xem và theo dõi các donation từ người dùng
           </p>
         </div>
-        {selectedDonations.length > 0 && (
-          <div className="flex gap-2">
-            <Button
-              variant="default"
-              onClick={() => setApproveDialog({ open: true, donationId: null, isBulk: true })}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Phê duyệt {selectedDonations.length} donation
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setRejectDialog({ open: true, donationId: null, isBulk: true })}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Từ chối {selectedDonations.length} donation
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Filters */}
@@ -257,7 +112,7 @@ export default function DonationManagement() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Tìm kiếm theo tên người donate, email..."
+                    placeholder="Tìm kiếm theo email, số điện thoại..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -270,9 +125,13 @@ export default function DonationManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                  <SelectItem value="SUBMITTED">Chờ duyệt</SelectItem>
                   <SelectItem value="APPROVED">Đã duyệt</SelectItem>
                   <SelectItem value="REJECTED">Từ chối</SelectItem>
+                  <SelectItem value="RECEIVED">Đã nhận</SelectItem>
+                  <SelectItem value="ALLOCATED">Đã phân bổ</SelectItem>
+                  <SelectItem value="DISPATCHED">Đang vận chuyển</SelectItem>
+                  <SelectItem value="DELIVERED">Đã giao</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -348,11 +207,6 @@ export default function DonationManagement() {
         <CardHeader>
           <CardTitle>
             Danh sách donations ({donations.length})
-            {pendingDonations.length > 0 && (
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                ({pendingDonations.length} chờ duyệt)
-              </span>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -363,13 +217,6 @@ export default function DonationManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50px]">
-                      <Checkbox
-                        checked={selectedDonations.length === pendingDonations.length && pendingDonations.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Người donate</TableHead>
                     <TableHead>Email/SĐT</TableHead>
                     <TableHead>Sự kiện</TableHead>
                     <TableHead>Số vật phẩm</TableHead>
@@ -382,54 +229,25 @@ export default function DonationManagement() {
                   {donations.map((donation: Donation) => (
                     <TableRow key={donation.id}>
                       <TableCell>
-                        {donation.status === 'PENDING' && (
-                          <Checkbox
-                            checked={selectedDonations.includes(donation.id)}
-                            onCheckedChange={(checked) => handleSelectOne(donation.id, checked as boolean)}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{donation.donorName}</TableCell>
-                      <TableCell>
                         <div className="text-sm">
-                          {donation.donorEmail && <div>{donation.donorEmail}</div>}
-                          {donation.donorPhone && <div>{donation.donorPhone}</div>}
+                          {donation.creator?.email && <div>{donation.creator.email}</div>}
+                          {donation.creator?.phone && <div>{donation.creator.phone}</div>}
                         </div>
                       </TableCell>
-                      <TableCell>{donation.eventTitle || '-'}</TableCell>
+                      <TableCell>{donation.title || '-'}</TableCell>
                       <TableCell>{donation.items?.length || 0} items</TableCell>
                       <TableCell>{getStatusBadge(donation.status)}</TableCell>
                       <TableCell>
                         {new Date(donation.createdAt).toLocaleDateString('vi-VN')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDetailDialog({ open: true, donation })}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {donation.status === 'PENDING' && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setApproveDialog({ open: true, donationId: donation.id, isBulk: false })}
-                              >
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setRejectDialog({ open: true, donationId: donation.id, isBulk: false })}
-                              >
-                                <XCircle className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDetailDialog({ open: true, donation })}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -444,103 +262,6 @@ export default function DonationManagement() {
         </CardContent>
       </Card>
 
-      {/* Approve Dialog */}
-      <Dialog open={approveDialog.open} onOpenChange={(open) => 
-        !open && setApproveDialog({ open: false, donationId: null, isBulk: false })
-      }>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {approveDialog.isBulk ? `Phê duyệt ${selectedDonations.length} donations` : 'Phê duyệt donation'}
-            </DialogTitle>
-            <DialogDescription>
-              Xác nhận phê duyệt donation này. Bạn có thể thêm ghi chú (không bắt buộc).
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="approve-note">Ghi chú</Label>
-              <Textarea
-                id="approve-note"
-                value={approveNote}
-                onChange={(e) => setApproveNote(e.target.value)}
-                placeholder="Ví dụ: Approved - all items received in good condition"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setApproveDialog({ open: false, donationId: null, isBulk: false });
-                setApproveNote('');
-              }}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handleApprove}
-              disabled={approveMutation.isPending || bulkApproveMutation.isPending}
-            >
-              {approveMutation.isPending || bulkApproveMutation.isPending ? 'Đang xử lý...' : 'Phê duyệt'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reject Dialog */}
-      <Dialog open={rejectDialog.open} onOpenChange={(open) => 
-        !open && setRejectDialog({ open: false, donationId: null, isBulk: false })
-      }>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {rejectDialog.isBulk ? `Từ chối ${selectedDonations.length} donations` : 'Từ chối donation'}
-            </DialogTitle>
-            <DialogDescription>
-              Vui lòng nhập lý do từ chối donation này.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={rejectDialog.isBulk ? handleSubmitBulkReject(onSubmitBulkReject) : handleSubmitReject(onSubmitReject)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reject-reason">Lý do từ chối *</Label>
-              <Textarea
-                id="reject-reason"
-                {...(rejectDialog.isBulk ? registerBulkReject('reason') : registerReject('reason'))}
-                placeholder="Ví dụ: Some items are damaged or expired"
-                rows={4}
-              />
-              {(rejectDialog.isBulk ? errorsBulkReject.reason : errorsReject.reason) && (
-                <p className="text-sm text-red-500">
-                  {(rejectDialog.isBulk ? errorsBulkReject.reason : errorsReject.reason)?.message}
-                </p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setRejectDialog({ open: false, donationId: null, isBulk: false });
-                  resetReject();
-                  resetBulkReject();
-                }}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={rejectMutation.isPending || bulkRejectMutation.isPending}
-              >
-                {rejectMutation.isPending || bulkRejectMutation.isPending ? 'Đang xử lý...' : 'Từ chối'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* Detail Dialog */}
       <Dialog open={detailDialog.open} onOpenChange={(open) => 
         !open && setDetailDialog({ open: false, donation: null })
@@ -554,7 +275,10 @@ export default function DonationManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Người donate</Label>
-                  <p className="font-medium">{detailDialog.donation.donorName}</p>
+                  <p className="font-medium">
+                    {detailDialog.donation.creator?.profile?.fullName || 
+                     detailDialog.donation.creator?.email || 'Ẩn danh'}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Trạng thái</Label>
@@ -562,23 +286,23 @@ export default function DonationManagement() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                {detailDialog.donation.donorEmail && (
+                {detailDialog.donation.creator?.email && (
                   <div>
                     <Label className="text-muted-foreground">Email</Label>
-                    <p>{detailDialog.donation.donorEmail}</p>
+                    <p>{detailDialog.donation.creator.email}</p>
                   </div>
                 )}
-                {detailDialog.donation.donorPhone && (
+                {detailDialog.donation.creator?.phone && (
                   <div>
                     <Label className="text-muted-foreground">Số điện thoại</Label>
-                    <p>{detailDialog.donation.donorPhone}</p>
+                    <p>{detailDialog.donation.creator.phone}</p>
                   </div>
                 )}
               </div>
-              {detailDialog.donation.eventTitle && (
+              {detailDialog.donation.creator?.profile?.address && (
                 <div>
-                  <Label className="text-muted-foreground">Sự kiện</Label>
-                  <p>{detailDialog.donation.eventTitle}</p>
+                  <Label className="text-muted-foreground">Địa chỉ</Label>
+                  <p>{detailDialog.donation.creator.profile.address}</p>
                 </div>
               )}
               <div>
@@ -587,6 +311,11 @@ export default function DonationManagement() {
                   {detailDialog.donation.items.map((item, index) => (
                     <div key={index} className="border rounded-lg p-3">
                       <div className="font-medium">{item.name}</div>
+                      {item.category && (
+                        <div className="text-sm text-muted-foreground">
+                          Danh mục: {item.category.name}
+                        </div>
+                      )}
                       <div className="text-sm text-muted-foreground">
                         Số lượng: {item.quantity} {item.unit}
                       </div>
@@ -595,9 +324,14 @@ export default function DonationManagement() {
                           Tình trạng: {item.condition}
                         </div>
                       )}
-                      {item.description && (
+                      {item.expirationDate && (
                         <div className="text-sm text-muted-foreground">
-                          Mô tả: {item.description}
+                          Hạn sử dụng: {new Date(item.expirationDate).toLocaleDateString('vi-VN')}
+                        </div>
+                      )}
+                      {item.note && (
+                        <div className="text-sm text-muted-foreground">
+                          Ghi chú: {item.note}
                         </div>
                       )}
                     </div>

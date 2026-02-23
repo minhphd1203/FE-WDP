@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Users, Calendar, MapPin, RefreshCw, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, MapPin, RefreshCw, Filter } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import {
@@ -319,16 +319,6 @@ export default function EventsList() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {event.type === 'VOLUNTEER' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/admin/events/${event.id}/registrations`)}
-                            >
-                              <Users className="h-4 w-4 mr-1" />
-                              Đăng ký
-                            </Button>
-                          )}
                           <Button
                             variant="outline"
                             size="sm"

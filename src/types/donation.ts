@@ -77,6 +77,7 @@ export interface Donation {
   id: string;
   creatorId: string;
   eventId: string;
+  title: string;
   status: DonationStatus;
   note: string | null;
   reason: string | null;
@@ -85,10 +86,10 @@ export interface Donation {
   deletedAt: string | null;
   items: DonationItem[];
   creator: Creator;
-  donorName?: string;
-  donorEmail?: string;
-  donorPhone?: string;
-  eventTitle?: string;
+  donorName?: string; // deprecated
+  donorEmail?: string; // deprecated
+  donorPhone?: string; // deprecated
+  eventTitle?: string; // deprecated
 }
 
 // Pagination meta interface
