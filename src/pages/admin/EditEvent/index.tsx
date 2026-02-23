@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Textarea } from '../../../components/ui/textarea';
 import { Label } from '../../../components/ui/label';
+import LocationAutocomplete from '../../../components/ui/location-autocomplete';
 import {
   Select,
   SelectContent,
@@ -33,6 +34,8 @@ export default function EditEvent() {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<UpdateEventFormData>({
     resolver: zodResolver(updateEventSchema),
   });
@@ -226,11 +229,12 @@ export default function EditEvent() {
 
               {/* Location */}
               <div className="space-y-2">
-                <Label htmlFor="location">Địa điểm</Label>
-                <Input
-                  id="location"
+                <Label htmlFor="location">Địa điểm tập trung</Label>
+                <LocationAutocomplete
+                  value={watch('location') || ''}
+                  onChange={(value) => setValue('location', value)}
                   placeholder="Nhập địa điểm tập trung"
-                  {...register('location')}
+                  error={errors.location?.message}
                 />
               </div>
 

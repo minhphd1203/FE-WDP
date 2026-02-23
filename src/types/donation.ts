@@ -1,5 +1,6 @@
 export type DonationStatus =
   | "SUBMITTED"
+  | "PENDING"
   | "APPROVED"
   | "REJECTED"
   | "RECEIVED"
@@ -40,6 +41,7 @@ export interface DonationItem {
   condition: ItemCondition;
   imageUrls: string[];
   note: string;
+  description?: string;
   createdAt: string;
   updatedAt: string;
   category: Category;
@@ -76,12 +78,17 @@ export interface Donation {
   creatorId: string;
   eventId: string;
   status: DonationStatus;
-  note: string;
+  note: string | null;
+  reason: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
   items: DonationItem[];
   creator: Creator;
+  donorName?: string;
+  donorEmail?: string;
+  donorPhone?: string;
+  eventTitle?: string;
 }
 
 // Pagination meta interface
@@ -92,17 +99,28 @@ export interface PaginationMeta {
   pages: number;
 }
 
-// Donations response interface (chỉ chứa phần "data" field từ API)
-export interface DonationsResponse {
+// Donations data response (nested data structure)
+export interface DonationsData {
   data: Donation[];
   meta: PaginationMeta;
 }
 
+// Donations response interface (full API response)
+export interface DonationsResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: DonationsData;
+  timestamp: string;
+}
+
 export interface DonationFilters {
-  status?: DonationStatus;
+  status?: string;
   eventId?: string;
+  creatorId?: string;
   from?: string;
   to?: string;
+  search?: string;
   page?: number;
   limit?: number;
   sortBy?: string;

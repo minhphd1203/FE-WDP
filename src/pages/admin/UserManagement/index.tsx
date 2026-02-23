@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Search, UserPlus, Edit, Trash2, Ban, CheckCircle } from 'lucide-react';
+import { Search, UserPlus, Edit, Ban, CheckCircle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -35,7 +35,6 @@ import {
   useUsers, 
   useCreateUser, 
   useUpdateUser, 
-  useDeleteUser,
   useUpdateUserStatus 
 } from '../../../hooks/useUser';
 import { createAccountSchema, updateAccountSchema, CreateAccountFormData, UpdateAccountFormData } from '../../../schema/userSchema';
@@ -45,15 +44,6 @@ export default function UserManagement() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    userId: string | null;
-    userName: string;
-  }>({
-    open: false,
-    userId: null,
-    userName: '',
-  });
 
   const { data: usersResponse, isLoading, refetch: refetchUsers } = useUsers({
     search: searchQuery,
@@ -61,7 +51,6 @@ export default function UserManagement() {
   });
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
-  const deleteUserMutation = useDeleteUser();
   const updateStatusMutation = useUpdateUserStatus();
 
   const users = (usersResponse?.data?.data || usersResponse?.data || []) as any[];
@@ -111,18 +100,6 @@ export default function UserManagement() {
       await refetchUsers();
       setEditingUser(null);
       resetEdit();
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteDialog.userId) return;
-    try {
-      await deleteUserMutation.mutateAsync(deleteDialog.userId);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      await refetchUsers();
-      setDeleteDialog({ open: false, userId: null, userName: '' });
     } catch (error) {
       // Error handled in hook
     }
@@ -288,17 +265,6 @@ export default function UserManagement() {
                               ) : (
                                 <CheckCircle className="h-4 w-4 text-green-500" />
                               )}
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setDeleteDialog({
-                                open: true,
-                                userId: user.id,
-                                userName: fullName || user.email,
-                              })}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
                           </div>
                         </TableCell>
@@ -491,34 +457,6 @@ export default function UserManagement() {
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => 
-        setDeleteDialog({ ...deleteDialog, open })
-      }>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa tài khoản</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa tài khoản "{deleteDialog.userName}"? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialog({ open: false, userId: null, userName: '' })}
-            >
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteUserMutation.isPending}
-            >
-              {deleteUserMutation.isPending ? 'Đang xóa...' : 'Xóa'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

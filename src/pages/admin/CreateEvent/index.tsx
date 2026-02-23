@@ -6,6 +6,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Textarea } from '../../../components/ui/textarea';
 import { Label } from '../../../components/ui/label';
+import LocationAutocomplete from '../../../components/ui/location-autocomplete';
 import {
   Select,
   SelectContent,
@@ -185,10 +186,11 @@ export default function CreateEvent() {
             {eventType === 'VOLUNTEER' && (
               <div className="space-y-2">
                 <Label htmlFor="location">Địa điểm tập trung</Label>
-                <Input
-                  id="location"
+                <LocationAutocomplete
+                  value={watch('location') || ''}
+                  onChange={(value) => setValue('location', value)}
                   placeholder="Nhập địa điểm tập trung của đội"
-                  {...register('location')}
+                  error={errors.location?.message}
                 />
               </div>
             )}

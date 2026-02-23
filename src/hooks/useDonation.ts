@@ -19,10 +19,16 @@ export const donationKeys = {
 };
 
 // Hook to get donations list
-export const useDonations = (params?: Partial<PaginationParams> & {
+export const useDonations = (params?: {
   status?: string;
   search?: string;
   eventId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  order?: 'ASC' | 'DESC';
 }) => {
   return useQuery({
     queryKey: donationKeys.list(params),

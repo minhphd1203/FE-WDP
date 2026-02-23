@@ -48,6 +48,7 @@ import {
   useCancelRequest,
 } from "../../../hooks/useRescueRequest";
 import { useTeams } from "../../../hooks/useTeam";
+import { useEvents } from "../../../hooks/useEvent";
 import {
   ReliefRequest,
   RescueRequestStatus,
@@ -62,6 +63,7 @@ export default function ReliefRequests() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(
     null,
@@ -80,13 +82,19 @@ export default function ReliefRequests() {
     note: "",
   });
 
-  // Fetch data
+  // Fetch all events (not just OPEN, including all types)
+  const { data: eventsResponse } = useEvents({});
+
+  const events = eventsResponse?.data?.data || [];
+
+  // Fetch data - không bắt buộc phải có eventId
   const {
     data: requestsData,
     isLoading,
     error,
   } = useRescueRequests({
     q: searchQuery || undefined,
+    eventId: selectedEventId || undefined, // Optional now
     status:
       statusFilter !== "all"
         ? (statusFilter as RescueRequestStatus)
@@ -118,10 +126,13 @@ export default function ReliefRequests() {
   console.log("Requests array:", requests);
   console.log("Is loading:", isLoading);
   console.log("Error:", error);
-  
+
   // Debug: Log first request structure
   if (requests.length > 0) {
-    console.log("First request structure:", JSON.stringify(requests[0], null, 2));
+    console.log(
+      "First request structure:",
+      JSON.stringify(requests[0], null, 2),
+    );
   }
 
   const handleRefresh = () => {
@@ -285,76 +296,107 @@ export default function ReliefRequests() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          {/* Debug info - Remove in production */}
-          {process.env.NODE_ENV === "development" && (
-            <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
-              <p>
-                <strong>Debug Info:</strong>
-              </p>
-              <p>Loading: {isLoading ? "Yes" : "No"}</p>
-              <p>Total: {requestsData?.total || 0}</p>
-              <p>Items: {requests?.length || 0}</p>
-              <p>Error: {error ? "Yes" : "No"}</p>
+          <div className="space-y-4">
+            {/* Event Selector */}
+            <div className="flex items-center gap-4">
+              <Label className="text-sm font-medium whitespace-nowrap">
+                Sự kiện (tùy chọn):
+              </Label>
+              <Select
+                value={selectedEventId || "all"}
+                onValueChange={(value) =>
+                  setSelectedEventId(value === "all" ? null : value)
+                }
+              >
+                <SelectTrigger className="w-full max-w-md">
+                  <SelectValue placeholder="Tất cả sự kiện" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả sự kiện</SelectItem>
+                  {events.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      Không có sự kiện nào
+                    </SelectItem>
+                  ) : (
+                    events.map((event: any) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        [
+                        {event.type === "VOLUNTEER"
+                          ? "Đội cứu trợ"
+                          : "Quyên góp"}
+                        ] {event.title} -{" "}
+                        {new Date(event.startDate).toLocaleDateString("vi-VN")}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm kiếm theo địa chỉ..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+
+            {/* Other Filters */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm kiếm theo địa chỉ..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Mức độ ưu tiên" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả mức độ</SelectItem>
+                  <SelectItem value={RescueRequestPriority.CRITICAL}>
+                    Khẩn cấp
+                  </SelectItem>
+                  <SelectItem value={RescueRequestPriority.HIGH}>
+                    Cao
+                  </SelectItem>
+                  <SelectItem value={RescueRequestPriority.MEDIUM}>
+                    Trung bình
+                  </SelectItem>
+                  <SelectItem value={RescueRequestPriority.LOW}>
+                    Thấp
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value={RescueRequestStatus.NEW}>Mới</SelectItem>
+                  <SelectItem value={RescueRequestStatus.REVIEWED}>
+                    Đã đánh giá
+                  </SelectItem>
+                  <SelectItem value={RescueRequestStatus.ASSIGNED}>
+                    Đã phân công
+                  </SelectItem>
+                  <SelectItem value={RescueRequestStatus.ACCEPTED}>
+                    Đã chấp nhận
+                  </SelectItem>
+                  <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
+                    Đang thực hiện
+                  </SelectItem>
+                  <SelectItem value={RescueRequestStatus.DONE}>
+                    Hoàn thành
+                  </SelectItem>
+                  <SelectItem value={RescueRequestStatus.CANCELED}>
+                    Đã hủy
+                  </SelectItem>
+                  <SelectItem value={RescueRequestStatus.REJECTED}>
+                    Từ chối
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Mức độ ưu tiên" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả mức độ</SelectItem>
-                <SelectItem value={RescueRequestPriority.CRITICAL}>
-                  Khẩn cấp
-                </SelectItem>
-                <SelectItem value={RescueRequestPriority.HIGH}>Cao</SelectItem>
-                <SelectItem value={RescueRequestPriority.MEDIUM}>
-                  Trung bình
-                </SelectItem>
-                <SelectItem value={RescueRequestPriority.LOW}>Thấp</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value={RescueRequestStatus.NEW}>Mới</SelectItem>
-                <SelectItem value={RescueRequestStatus.REVIEWED}>
-                  Đã đánh giá
-                </SelectItem>
-                <SelectItem value={RescueRequestStatus.ASSIGNED}>
-                  Đã phân công
-                </SelectItem>
-                <SelectItem value={RescueRequestStatus.ACCEPTED}>
-                  Đã chấp nhận
-                </SelectItem>
-                <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
-                  Đang thực hiện
-                </SelectItem>
-                <SelectItem value={RescueRequestStatus.DONE}>
-                  Hoàn thành
-                </SelectItem>
-                <SelectItem value={RescueRequestStatus.CANCELED}>
-                  Đã hủy
-                </SelectItem>
-                <SelectItem value={RescueRequestStatus.REJECTED}>
-                  Từ chối
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -412,23 +454,25 @@ export default function ReliefRequests() {
                           }`}
                         />
                         <span className="line-clamp-2">
-                          {(request as any).title || (request as any).description?.substring(0, 50) || "Không có tiêu đề"}
+                          {(request as any).title ||
+                            (request as any).description?.substring(0, 50) ||
+                            "Không có tiêu đề"}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {(request as any).requesterName || 
-                           (request as any).requester?.name || 
-                           (request as any).user?.name || 
-                           "N/A"}
+                          {(request as any).requesterName ||
+                            (request as any).requester?.name ||
+                            (request as any).user?.name ||
+                            "N/A"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {(request as any).requesterPhone || 
-                           (request as any).requester?.phone || 
-                           (request as any).user?.phone || 
-                           "N/A"}
+                          {(request as any).requesterPhone ||
+                            (request as any).requester?.phone ||
+                            (request as any).user?.phone ||
+                            "N/A"}
                         </p>
                       </div>
                     </TableCell>
@@ -436,9 +480,9 @@ export default function ReliefRequests() {
                       <div className="flex items-start gap-1">
                         <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                         <span className="text-sm line-clamp-2">
-                          {(request as any).location?.address || 
-                           (request as any).address || 
-                           "N/A"}
+                          {(request as any).location?.address ||
+                            (request as any).address ||
+                            "N/A"}
                         </span>
                       </div>
                     </TableCell>
@@ -539,7 +583,11 @@ export default function ReliefRequests() {
             </Table>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              Không có đơn yêu cầu nào
+              <p>
+                {selectedEventId
+                  ? "Sự kiện này chưa có đơn cứu hộ nào"
+                  : "Không có đơn yêu cầu nào"}
+              </p>
             </div>
           )}
         </CardContent>
@@ -587,10 +635,18 @@ export default function ReliefRequests() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Đơn yêu cầu: <strong>{(selectedRequest as any)?.title || (selectedRequest as any)?.description?.substring(0, 50) || "Không có tiêu đề"}</strong>
+                Đơn yêu cầu:{" "}
+                <strong>
+                  {(selectedRequest as any)?.title ||
+                    (selectedRequest as any)?.description?.substring(0, 50) ||
+                    "Không có tiêu đề"}
+                </strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Địa điểm: {(selectedRequest as any)?.location?.address || (selectedRequest as any)?.address || "N/A"}
+                Địa điểm:{" "}
+                {(selectedRequest as any)?.location?.address ||
+                  (selectedRequest as any)?.address ||
+                  "N/A"}
               </p>
             </div>
 
@@ -673,10 +729,19 @@ export default function ReliefRequests() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Đơn yêu cầu: <strong>{(selectedRequest as any)?.title || (selectedRequest as any)?.description?.substring(0, 50) || "Không có tiêu đề"}</strong>
+                Đơn yêu cầu:{" "}
+                <strong>
+                  {(selectedRequest as any)?.title ||
+                    (selectedRequest as any)?.description?.substring(0, 50) ||
+                    "Không có tiêu đề"}
+                </strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Người yêu cầu: {(selectedRequest as any)?.requesterName || (selectedRequest as any)?.requester?.name || (selectedRequest as any)?.user?.name || "N/A"}
+                Người yêu cầu:{" "}
+                {(selectedRequest as any)?.requesterName ||
+                  (selectedRequest as any)?.requester?.name ||
+                  (selectedRequest as any)?.user?.name ||
+                  "N/A"}
               </p>
             </div>
 
@@ -851,7 +916,14 @@ export default function ReliefRequests() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Tiêu đề</Label>
-                      <p className="font-medium">{(selectedRequest as any).title || (selectedRequest as any).description?.substring(0, 50) || "Không có tiêu đề"}</p>
+                      <p className="font-medium">
+                        {(selectedRequest as any).title ||
+                          (selectedRequest as any).description?.substring(
+                            0,
+                            50,
+                          ) ||
+                          "Không có tiêu đề"}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">
@@ -889,13 +961,23 @@ export default function ReliefRequests() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Họ tên</Label>
-                      <p>{(selectedRequest as any).requesterName || (selectedRequest as any).requester?.name || (selectedRequest as any).user?.name || "N/A"}</p>
+                      <p>
+                        {(selectedRequest as any).requesterName ||
+                          (selectedRequest as any).requester?.name ||
+                          (selectedRequest as any).user?.name ||
+                          "N/A"}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">
                         Số điện thoại
                       </Label>
-                      <p>{(selectedRequest as any).requesterPhone || (selectedRequest as any).requester?.phone || (selectedRequest as any).user?.phone || "N/A"}</p>
+                      <p>
+                        {(selectedRequest as any).requesterPhone ||
+                          (selectedRequest as any).requester?.phone ||
+                          (selectedRequest as any).user?.phone ||
+                          "N/A"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -905,7 +987,11 @@ export default function ReliefRequests() {
                   <div className="space-y-2">
                     <div>
                       <Label className="text-muted-foreground">Địa chỉ</Label>
-                      <p>{(selectedRequest as any).location?.address || (selectedRequest as any).address || "N/A"}</p>
+                      <p>
+                        {(selectedRequest as any).location?.address ||
+                          (selectedRequest as any).address ||
+                          "N/A"}
+                      </p>
                     </div>
                     {(selectedRequest as any).location?.district && (
                       <div>
@@ -927,13 +1013,23 @@ export default function ReliefRequests() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label className="text-muted-foreground">Vĩ độ</Label>
-                          <p>{(selectedRequest as any).location?.coordinates?.lat}</p>
+                          <p>
+                            {
+                              (selectedRequest as any).location?.coordinates
+                                ?.lat
+                            }
+                          </p>
                         </div>
                         <div>
                           <Label className="text-muted-foreground">
                             Kinh độ
                           </Label>
-                          <p>{(selectedRequest as any).location?.coordinates?.lng}</p>
+                          <p>
+                            {
+                              (selectedRequest as any).location?.coordinates
+                                ?.lng
+                            }
+                          </p>
                         </div>
                       </div>
                     )}

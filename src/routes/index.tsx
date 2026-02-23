@@ -31,7 +31,6 @@ import ProductManagement from "../pages/staff/ProductManagement";
 import VolunteerList from "../pages/staff/VolunteerList";
 import CommonWarehouse from "../pages/staff/CommonWarehouse";
 import TeamWarehouse from "../pages/staff/TeamWarehouse";
-import UpdateProfile from "../pages/staff/UpdateProfile";
 
 // Auth Pages
 import Login from "../pages/auth/Login";
@@ -160,10 +159,6 @@ const router = createBrowserRouter([
             element: <TeamWarehouse />,
           },
         ],
-      },
-      {
-        path: "update-profile",
-        element: <UpdateProfile />,
       },
     ],
   },

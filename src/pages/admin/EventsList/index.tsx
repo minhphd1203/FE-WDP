@@ -33,8 +33,9 @@ import {
 export default function EventsList() {
   const navigate = useNavigate();
   
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  // Mặc định hiển thị sự kiện tình nguyện (Đội cứu trợ) đang mở
+  const [statusFilter, setStatusFilter] = useState<string>('OPEN');
+  const [typeFilter, setTypeFilter] = useState<string>('VOLUNTEER');
   
   const { data: eventsResponse, isLoading, error, refetch } = useEvents({
     status: statusFilter !== 'all' ? statusFilter : undefined,
@@ -173,7 +174,7 @@ export default function EventsList() {
         <div>
           <h1 className="text-3xl font-bold">Quản lý Sự kiện</h1>
           <p className="text-muted-foreground mt-1">
-            Quản lý các sự kiện cứu trợ và quyên góp
+            Quản lý các sự kiện Đội cứu trợ và sự kiện Quyên góp
           </p>
         </div>
         <div className="flex gap-2">
@@ -221,16 +222,16 @@ export default function EventsList() {
               </SelectContent>
             </Select>
             
-            {(statusFilter !== 'all' || typeFilter !== 'all') && (
+            {(statusFilter !== 'OPEN' || typeFilter !== 'VOLUNTEER') && (
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => {
-                  setStatusFilter('all');
-                  setTypeFilter('all');
+                  setStatusFilter('OPEN');
+                  setTypeFilter('VOLUNTEER');
                 }}
               >
-                Xóa bộ lọc
+                Đặt lại bộ lọc
               </Button>
             )}
           </div>
@@ -246,10 +247,14 @@ export default function EventsList() {
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-2">
-                Chưa có sự kiện nào được tạo
+                {typeFilter === 'VOLUNTEER' && statusFilter === 'OPEN' 
+                  ? 'Không có sự kiện Đội cứu trợ nào đang mở'
+                  : 'Không tìm thấy sự kiện nào'}
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                Kiểm tra Console (F12) để xem debug logs
+                {typeFilter === 'VOLUNTEER' && statusFilter === 'OPEN'
+                  ? 'Tạo sự kiện tuyển tình nguyện viên để bắt đầu'
+                  : 'Thử điều chỉnh bộ lọc hoặc tạo sự kiện mới'}
               </p>
               <div className="flex gap-2 justify-center">
                 <Button 

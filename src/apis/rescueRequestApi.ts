@@ -14,6 +14,7 @@ import {
 export interface RescueRequestFilters {
   status?: RescueRequestStatus;
   priority?: RescueRequestPriority;
+  eventId?: string; // Filter by event ID
   q?: string; // Search by address
   from?: string; // From date (YYYY-MM-DD)
   to?: string; // To date (YYYY-MM-DD)

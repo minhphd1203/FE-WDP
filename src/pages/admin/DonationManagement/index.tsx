@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Search, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Eye, Filter, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -39,17 +39,22 @@ import {
   useBulkApproveDonations,
   useBulkRejectDonations
 } from '../../../hooks/useDonation';
+import { useEvents } from '../../../hooks/useEvent';
 import { 
   rejectDonationSchema, 
   bulkRejectDonationsSchema,
   RejectDonationFormData,
   BulkRejectDonationsFormData
 } from '../../../schema/donationSchema';
-import { Donation } from '../../../apis/donationApi';
+import { Donation } from '../../../types/donation';
 
 export default function DonationManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [eventFilter, setEventFilter] = useState<string>('all');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
   const [approveDialog, setApproveDialog] = useState<{
     open: boolean;
@@ -81,13 +86,18 @@ export default function DonationManagement() {
   const { data: donationsResponse, isLoading } = useDonations({
     search: searchQuery,
     status: statusFilter === 'all' ? undefined : statusFilter,
+    eventId: eventFilter === 'all' ? undefined : eventFilter,
+    from: fromDate || undefined,
+    to: toDate || undefined,
   });
+  const { data: eventsResponse } = useEvents({ status: 'OPEN' });
   const approveMutation = useApproveDonation();
   const rejectMutation = useRejectDonation();
   const bulkApproveMutation = useBulkApproveDonations();
   const bulkRejectMutation = useBulkRejectDonations();
 
-  const donations = donationsResponse?.data?.items || donationsResponse?.data?.data || donationsResponse?.data || [];
+  const donations = donationsResponse?.data?.data || [];
+  const events = eventsResponse?.data?.data || [];
 
   // Form for reject
   const {
@@ -197,6 +207,18 @@ export default function DonationManagement() {
 
   const pendingDonations = donations.filter((d: Donation) => d.status === 'PENDING');
 
+  const handleClearFilters = () => {
+    setEventFilter('all');
+    setFromDate('');
+    setToDate('');
+  };
+
+  const activeFiltersCount = [
+    eventFilter !== 'all',
+    fromDate,
+    toDate,
+  ].filter(Boolean).length;
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -229,29 +251,94 @@ export default function DonationManagement() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm kiếm theo tên người donate, email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm kiếm theo tên người donate, email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                  <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                  <SelectItem value="REJECTED">Từ chối</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Bộ lọc nâng cao
+                {activeFiltersCount > 0 && (
+                  <Badge className="ml-2 bg-primary">{activeFiltersCount}</Badge>
+                )}
+              </Button>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Lọc theo trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                <SelectItem value="REJECTED">Từ chối</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Advanced Filters */}
+            {showAdvancedFilters && (
+              <div className="border-t pt-4 space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Sự kiện</Label>
+                    <Select value={eventFilter} onValueChange={setEventFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tất cả sự kiện" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả sự kiện</SelectItem>
+                        {events.map((event: any) => (
+                          <SelectItem key={event.id} value={event.id}>
+                            {event.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Từ ngày</Label>
+                    <Input
+                      type="date"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Đến ngày</Label>
+                    <Input
+                      type="date"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                      min={fromDate || undefined}
+                    />
+                  </div>
+                </div>
+                {activeFiltersCount > 0 && (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearFilters}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Xóa bộ lọc
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -86,6 +86,8 @@ export const ROUTES = {
   STAFF_DISTRIBUTE: "/staff/distribute",
   STAFF_VOLUNTEERS: "/staff/volunteers",
   STAFF_WAREHOUSE: "/staff/warehouse",
+  STAFF_WAREHOUSE_COMMON: "/staff/warehouse/common",
+  STAFF_WAREHOUSE_TEAM: "/staff/warehouse/team",
   STAFF_UPDATE_PROFILE: "/staff/update-profile",
 
   // Auth routes
