@@ -25,6 +25,8 @@ import { Badge } from '../../../components/ui/badge';
 import { useTeams, useCreateTeam, useUpdateTeam, useDeleteTeam } from '../../../hooks/useTeam';
 import { createTeamSchema, updateTeamSchema, CreateTeamInput, UpdateTeamInput } from '../../../schema/teamSchema';
 import { Team } from '../../../apis/teamApi';
+import { formatDateTime } from '../../../lib/utils';
+import OSMLocationPicker from '../../../components/ui/osm-location-picker';
 
 export default function TeamManagement() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -191,7 +193,7 @@ export default function TeamManagement() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(team.createdAt).toLocaleDateString('vi-VN')}
+                    {formatDateTime(team.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -245,10 +247,12 @@ export default function TeamManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="create-area">Khu vực phụ trách *</Label>
-                <Input
-                  id="create-area"
-                  {...createForm.register('area')}
-                  placeholder="Ví dụ: Quận 1, TP.HCM"
+                <OSMLocationPicker
+                  value={createForm.watch('area')}
+                  onChange={(address) => createForm.setValue('area', address)}
+                  placeholder="Nhập địa chỉ hoặc chọn trên bản đồ"
+                  error={createForm.formState.errors.area?.message}
+                  showMap={true}
                 />
                 {createForm.formState.errors.area && (
                   <p className="text-sm text-red-500">
@@ -319,10 +323,12 @@ export default function TeamManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-area">Khu vực phụ trách</Label>
-                <Input
-                  id="edit-area"
-                  {...editForm.register('area')}
-                  placeholder="Ví dụ: Quận 1, Quận 2, TP.HCM"
+                <OSMLocationPicker
+                  value={editForm.watch('area')}
+                  onChange={(address) => editForm.setValue('area', address)}
+                  placeholder="Nhập địa chỉ hoặc chọn trên bản đồ"
+                  error={editForm.formState.errors.area?.message}
+                  showMap={true}
                 />
                 {editForm.formState.errors.area && (
                   <p className="text-sm text-red-500">
