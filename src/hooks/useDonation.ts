@@ -40,14 +40,15 @@ export const useDonations = (params?: {
 };
 
 // Hook to get donation by ID
-export const useDonation = (id: string) => {
+export const useDonation = (eventId: string | undefined, donationId: string | undefined) => {
   return useQuery({
-    queryKey: donationKeys.detail(id),
+    queryKey: [...donationKeys.details(), eventId, donationId],
     queryFn: async () => {
-      const response = await donationApi.getDonationById(id);
+      if (!eventId || !donationId) return null;
+      const response = await donationApi.getDonationById(eventId, donationId);
       return response;
     },
-    enabled: !!id,
+    enabled: !!eventId && !!donationId,
   });
 };
 

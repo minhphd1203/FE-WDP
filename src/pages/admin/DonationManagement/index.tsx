@@ -27,9 +27,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { useDonations } from '../../../hooks/useDonation';
+import { useDonations, useDonation } from '../../../hooks/useDonation';
 import { useEvents } from '../../../hooks/useEvent';
 import { Donation } from '../../../types/donation';
+import { formatDateTime, formatDate } from '../../../lib/utils';
 
 export default function DonationManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,10 +41,12 @@ export default function DonationManagement() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [detailDialog, setDetailDialog] = useState<{
     open: boolean;
-    donation: Donation | null;
+    eventId: string | null;
+    donationId: string | null;
   }>({
     open: false,
-    donation: null,
+    eventId: null,
+    donationId: null,
   });
 
   const { data: donationsResponse, isLoading } = useDonations({
@@ -54,6 +57,14 @@ export default function DonationManagement() {
     to: toDate || undefined,
   });
   const { data: eventsResponse } = useEvents({ status: 'OPEN' });
+
+  // Fetch detail donation when dialog is open
+  const { data: donationDetailResponse, isLoading: isLoadingDetail } = useDonation(
+    detailDialog.eventId || undefined,
+    detailDialog.donationId || undefined
+  );
+
+  const donationDetail = donationDetailResponse?.data;
 
   const donations = donationsResponse?.data?.data || [];
   const events = eventsResponse?.data?.data || [];
@@ -234,17 +245,21 @@ export default function DonationManagement() {
                           {donation.creator?.phone && <div>{donation.creator.phone}</div>}
                         </div>
                       </TableCell>
-                      <TableCell>{donation.title || '-'}</TableCell>
+                      <TableCell>{donation.title}</TableCell>
                       <TableCell>{donation.items?.length || 0} items</TableCell>
                       <TableCell>{getStatusBadge(donation.status)}</TableCell>
                       <TableCell>
-                        {new Date(donation.createdAt).toLocaleDateString('vi-VN')}
+                        {formatDateTime(donation.createdAt)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setDetailDialog({ open: true, donation })}
+                          onClick={() => setDetailDialog({ 
+                            open: true, 
+                            eventId: donation.eventId,
+                            donationId: donation.id 
+                          })}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -264,51 +279,53 @@ export default function DonationManagement() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialog.open} onOpenChange={(open) => 
-        !open && setDetailDialog({ open: false, donation: null })
+        !open && setDetailDialog({ open: false, eventId: null, donationId: null })
       }>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết Donation</DialogTitle>
           </DialogHeader>
-          {detailDialog.donation && (
+          {isLoadingDetail ? (
+            <div className="text-center py-8">Đang tải...</div>
+          ) : donationDetail ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Người donate</Label>
                   <p className="font-medium">
-                    {detailDialog.donation.creator?.profile?.fullName || 
-                     detailDialog.donation.creator?.email || 'Ẩn danh'}
+                    {donationDetail.creator?.profile?.fullName || 
+                     donationDetail.creator?.email || 'Ẩn danh'}
                   </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Trạng thái</Label>
-                  <div className="mt-1">{getStatusBadge(detailDialog.donation.status)}</div>
+                  <div className="mt-1">{getStatusBadge(donationDetail.status)}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {detailDialog.donation.creator?.email && (
-                  <div>
-                    <Label className="text-muted-foreground">Email</Label>
-                    <p>{detailDialog.donation.creator.email}</p>
-                  </div>
-                )}
-                {detailDialog.donation.creator?.phone && (
-                  <div>
-                    <Label className="text-muted-foreground">Số điện thoại</Label>
-                    <p>{detailDialog.donation.creator.phone}</p>
-                  </div>
-                )}
-              </div>
-              {detailDialog.donation.creator?.profile?.address && (
+              {donationDetail.title && (
                 <div>
-                  <Label className="text-muted-foreground">Địa chỉ</Label>
-                  <p>{detailDialog.donation.creator.profile.address}</p>
+                  <Label className="text-muted-foreground">Sự kiện</Label>
+                  <p className="font-medium">{donationDetail.title}</p>
                 </div>
               )}
+              <div className="grid grid-cols-2 gap-4">
+                {donationDetail.creator?.email && (
+                  <div>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p>{donationDetail.creator.email}</p>
+                  </div>
+                )}
+                {donationDetail.creator?.phone && (
+                  <div>
+                    <Label className="text-muted-foreground">Số điện thoại</Label>
+                    <p>{donationDetail.creator.phone}</p>
+                  </div>
+                )}
+              </div>
               <div>
                 <Label className="text-muted-foreground">Danh sách vật phẩm</Label>
                 <div className="mt-2 space-y-2">
-                  {detailDialog.donation.items.map((item, index) => (
+                  {donationDetail.items.map((item, index) => (
                     <div key={index} className="border rounded-lg p-3">
                       <div className="font-medium">{item.name}</div>
                       {item.category && (
@@ -326,7 +343,25 @@ export default function DonationManagement() {
                       )}
                       {item.expirationDate && (
                         <div className="text-sm text-muted-foreground">
-                          Hạn sử dụng: {new Date(item.expirationDate).toLocaleDateString('vi-VN')}
+                          Hạn sử dụng: {formatDate(item.expirationDate)}
+                        </div>
+                      )}
+                      {item.imageUrls && item.imageUrls.length > 0 && (
+                        <div className="text-sm">
+                          <div className="text-muted-foreground mb-1">Hình ảnh:</div>
+                          <div className="flex gap-2 flex-wrap">
+                            {item.imageUrls.map((url, idx) => (
+                              <img
+                                key={idx}
+                                src={url}
+                                alt={`${item.name} ${idx + 1}`}
+                                className="w-20 h-20 object-cover rounded border"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://via.placeholder.com/80?text=No+Image';
+                                }}
+                              />
+                            ))}
+                          </div>
                         </div>
                       )}
                       {item.note && (
@@ -338,34 +373,32 @@ export default function DonationManagement() {
                   ))}
                 </div>
               </div>
-              {detailDialog.donation.note && (
+              {donationDetail.note && (
                 <div>
                   <Label className="text-muted-foreground">Ghi chú phê duyệt</Label>
-                  <p className="text-sm">{detailDialog.donation.note}</p>
-                </div>
-              )}
-              {detailDialog.donation.reason && (
-                <div>
-                  <Label className="text-muted-foreground">Lý do từ chối</Label>
-                  <p className="text-sm text-red-600">{detailDialog.donation.reason}</p>
+                  <p className="text-sm">{donationDetail.note}</p>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                 <div>
                   <Label className="text-muted-foreground">Ngày tạo</Label>
-                  <p>{new Date(detailDialog.donation.createdAt).toLocaleString('vi-VN')}</p>
+                  <p>{formatDateTime(donationDetail.createdAt)}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Cập nhật</Label>
-                  <p>{new Date(detailDialog.donation.updatedAt).toLocaleString('vi-VN')}</p>
+                  <p>{formatDateTime(donationDetail.updatedAt)}</p>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Không tìm thấy thông tin donation
             </div>
           )}
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setDetailDialog({ open: false, donation: null })}
+              onClick={() => setDetailDialog({ open: false, eventId: null, donationId: null })}
             >
               Đóng
             </Button>

@@ -40,8 +40,7 @@ export interface DonationItem {
   quantity: number;
   condition: ItemCondition;
   imageUrls: string[];
-  note: string;
-  description?: string;
+  note: string | null;
   createdAt: string;
   updatedAt: string;
   category: Category;
@@ -51,8 +50,7 @@ export interface DonationItem {
 export interface CreatorProfile {
   id: string;
   accountId: string;
-  fullName: string;
-  address: string;
+  fullName: string | null;
   avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -63,7 +61,7 @@ export interface Creator {
   id: string;
   email: string;
   phone: string | null;
-  passwordHash: string;
+  passwordHash?: string; // Not returned in list endpoints for security
   role: string;
   isActive: boolean;
   createdAt: string;
@@ -80,16 +78,11 @@ export interface Donation {
   title: string;
   status: DonationStatus;
   note: string | null;
-  reason: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
   items: DonationItem[];
   creator: Creator;
-  donorName?: string; // deprecated
-  donorEmail?: string; // deprecated
-  donorPhone?: string; // deprecated
-  eventTitle?: string; // deprecated
 }
 
 // Pagination meta interface

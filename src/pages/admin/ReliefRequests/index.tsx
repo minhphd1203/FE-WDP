@@ -48,13 +48,12 @@ import {
   useRescueRequestAssignments,
 } from "../../../hooks/useRescueRequest";
 import { useTeams } from "../../../hooks/useTeam";
-import { useEvents } from "../../../hooks/useEvent";
 import {
   ReliefRequest,
   RescueRequestStatus,
   RescueRequestPriority,
 } from "../../../types";
-import { formatDate } from "../../../lib/utils";
+import { formatDateTime } from "../../../lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -63,7 +62,7 @@ export default function ReliefRequests() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [assignedFilter, setAssignedFilter] = useState<string>("all"); // all, assigned, unassigned
   const [page, setPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(
     null,
@@ -71,6 +70,7 @@ export default function ReliefRequests() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
 
   const limit = 20;
@@ -83,19 +83,13 @@ export default function ReliefRequests() {
     requiredTeams: 1,
   });
 
-  // Fetch all events (not just OPEN, including all types)
-  const { data: eventsResponse } = useEvents({});
-
-  const events = eventsResponse?.data?.data || [];
-
-  // Fetch data - không bắt buộc phải có eventId
+  // Fetch data theo đúng API specification
   const {
     data: requestsData,
     isLoading,
     error,
   } = useRescueRequests({
     q: searchQuery || undefined,
-    eventId: selectedEventId || undefined, // Optional now
     status:
       statusFilter !== "all"
         ? (statusFilter as RescueRequestStatus)
@@ -104,10 +98,14 @@ export default function ReliefRequests() {
       priorityFilter !== "all"
         ? (priorityFilter as RescueRequestPriority)
         : undefined,
+    assigned:
+      assignedFilter === "assigned"
+        ? true
+        : assignedFilter === "unassigned"
+        ? false
+        : undefined,
     page,
     limit,
-    sortBy: "createdAt",
-    order: "DESC",
   });
 
   const { data: teamsData, isLoading: teamsLoading } = useTeams({ limit: 100 });
@@ -305,43 +303,7 @@ export default function ReliefRequests() {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
-            {/* Event Selector */}
-            <div className="flex items-center gap-4">
-              <Label className="text-sm font-medium whitespace-nowrap">
-                Sự kiện (tùy chọn):
-              </Label>
-              <Select
-                value={selectedEventId || "all"}
-                onValueChange={(value) =>
-                  setSelectedEventId(value === "all" ? null : value)
-                }
-              >
-                <SelectTrigger className="w-full max-w-md">
-                  <SelectValue placeholder="Tất cả sự kiện" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả sự kiện</SelectItem>
-                  {events.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      Không có sự kiện nào
-                    </SelectItem>
-                  ) : (
-                    events.map((event: any) => (
-                      <SelectItem key={event.id} value={event.id}>
-                        [
-                        {event.type === "VOLUNTEER"
-                          ? "Đội cứu trợ"
-                          : "Quyên góp"}
-                        ] {event.title} -{" "}
-                        {new Date(event.startDate).toLocaleDateString("vi-VN")}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Other Filters */}
+            {/* Filter Controls */}
             <div className="flex gap-4">
               <div className="flex-1">
                 <div className="relative">
@@ -372,6 +334,16 @@ export default function ReliefRequests() {
                   <SelectItem value={RescueRequestPriority.LOW}>
                     Thấp
                   </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Phân công" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="assigned">Đã phân công</SelectItem>
+                  <SelectItem value="unassigned">Chưa phân công</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -442,7 +414,7 @@ export default function ReliefRequests() {
                   <TableHead>Mức độ</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Teams (Cần/Gán/Nhận)</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
+                  <TableHead>Thời gian</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -493,7 +465,7 @@ export default function ReliefRequests() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{formatDate(request.createdAt)}</TableCell>
+                    <TableCell>{formatDateTime(request.createdAt)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {/* Nút Xem chi tiết - luôn hiển thị */}
@@ -545,38 +517,19 @@ export default function ReliefRequests() {
                           </Button>
                         )}
 
-                        {/* Đã phân công - Có thể phân công thêm hoặc cập nhật trạng thái */}
+                        {/* Đã phân công - Hiện popup với Hủy đơn hoặc Phân công thêm */}
                         {request.status === RescueRequestStatus.ASSIGNED && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRequest(request);
-                                setIsAssignDialogOpen(true);
-                              }}
-                              title="Phân công thêm đội cứu trợ"
-                            >
-                              Phân công thêm
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRequest(request);
-                                setReviewForm({
-                                  status: getDefaultReviewStatus(request.status),
-                                  priority: request.priority,
-                                  note: "",
-                                  requiredTeams: request.requiredTeams || 1,
-                                });
-                                setIsReviewDialogOpen(true);
-                              }}
-                              title="Cập nhật trạng thái đơn"
-                            >
-                              Cập nhật
-                            </Button>
-                          </>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setIsActionDialogOpen(true);
+                            }}
+                            title="Hủy đơn hoặc phân công thêm đội"
+                          >
+                            Cập nhật
+                          </Button>
                         )}
 
                         {/* Đang thực hiện - Chỉ cập nhật trạng thái */}
@@ -611,11 +564,7 @@ export default function ReliefRequests() {
             </Table>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              <p>
-                {selectedEventId
-                  ? "Sự kiện này chưa có đơn cứu hộ nào"
-                  : "Không có đơn yêu cầu nào"}
-              </p>
+              <p>Không có đơn yêu cầu nào</p>
             </div>
           )}
         </CardContent>
@@ -751,6 +700,111 @@ export default function ReliefRequests() {
         </DialogContent>
       </Dialog>
 
+      {/* Action Dialog for ASSIGNED status */}
+      <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cập nhật đơn cứu trợ</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Đơn yêu cầu từ:{" "}
+                <strong>
+                  {selectedRequest?.guestName || 'N/A'}
+                </strong>
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Địa chỉ: {selectedRequest?.address || 'N/A'}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-medium text-blue-900 mb-2">
+                Đơn đã được phân công đội cứu trợ
+              </p>
+              <p className="text-sm text-blue-700">
+                Bạn có thể hoàn thành đơn hoặc phân công thêm đội cứu trợ.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsActionDialogOpen(false);
+                setSelectedRequest(null);
+              }}
+            >
+              Đóng
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsActionDialogOpen(false);
+                  setIsAssignDialogOpen(true);
+                }}
+              >
+                Phân công thêm
+              </Button>
+              <Button
+                onClick={async () => {
+                  // Hoàn thành đơn - chuyển qua các trạng thái trung gian theo đúng workflow
+                  if (selectedRequest) {
+                    try {
+                      // Bước 1: ASSIGNED → ACCEPTED
+                      await reviewRequestMutation.mutateAsync({
+                        id: selectedRequest.id,
+                        data: {
+                          status: RescueRequestStatus.ACCEPTED,
+                          priority: selectedRequest.priority,
+                          note: "Đội cứu trợ đã chấp nhận",
+                          requiredTeams: selectedRequest.requiredTeams || 1,
+                        },
+                      });
+                      
+                      // Bước 2: ACCEPTED → IN_PROGRESS
+                      await reviewRequestMutation.mutateAsync({
+                        id: selectedRequest.id,
+                        data: {
+                          status: RescueRequestStatus.IN_PROGRESS,
+                          priority: selectedRequest.priority,
+                          note: "Đang thực hiện cứu trợ",
+                          requiredTeams: selectedRequest.requiredTeams || 1,
+                        },
+                      });
+                      
+                      // Bước 3: IN_PROGRESS → DONE
+                      await reviewRequestMutation.mutateAsync({
+                        id: selectedRequest.id,
+                        data: {
+                          status: RescueRequestStatus.DONE,
+                          priority: selectedRequest.priority,
+                          note: "Admin đánh dấu hoàn thành",
+                          requiredTeams: selectedRequest.requiredTeams || 1,
+                        },
+                      });
+                      
+                      setIsActionDialogOpen(false);
+                      setSelectedRequest(null);
+                      toast.success("Đã hoàn thành đơn cứu trợ");
+                    } catch (error) {
+                      // Error handled in hook
+                    }
+                  }
+                }}
+                disabled={reviewRequestLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {reviewRequestLoading ? "Đang xử lý..." : "Hoàn thành"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Review Dialog */}
       <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
         <DialogContent>
@@ -817,19 +871,6 @@ export default function ReliefRequests() {
                       <>
                         <SelectItem value={RescueRequestStatus.REVIEWED}>
                           Đã đánh giá - Chấp nhận
-                        </SelectItem>
-                        <SelectItem value={RescueRequestStatus.REJECTED}>
-                          Từ chối
-                        </SelectItem>
-                      </>
-                    )}
-                    {selectedRequest?.status === RescueRequestStatus.ASSIGNED && (
-                      <>
-                        <SelectItem value={RescueRequestStatus.ACCEPTED}>
-                          Chấp nhận
-                        </SelectItem>
-                        <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
-                          Đang thực hiện
                         </SelectItem>
                         <SelectItem value={RescueRequestStatus.REJECTED}>
                           Từ chối
@@ -1005,11 +1046,11 @@ export default function ReliefRequests() {
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Ngày tạo</Label>
-                      <p className="text-sm">{formatDate(selectedRequest.createdAt)}</p>
+                      <p className="text-sm">{formatDateTime(selectedRequest.createdAt)}</p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Cập nhật</Label>
-                      <p className="text-sm">{formatDate(selectedRequest.updatedAt)}</p>
+                      <p className="text-sm">{formatDateTime(selectedRequest.updatedAt)}</p>
                     </div>
                     {selectedRequest.estimatedPeople && (
                       <div>
@@ -1024,6 +1065,21 @@ export default function ReliefRequests() {
                         <Label className="text-muted-foreground">ID người tạo</Label>
                         <p className="text-sm font-mono">{selectedRequest.creatorId}</p>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Ghi chú</h3>
+                  <div className="border rounded-lg p-3 bg-muted/30">
+                    {selectedRequest.note ? (
+                      <p className="text-sm whitespace-pre-wrap">
+                        {selectedRequest.note}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        Không có ghi chú
+                      </p>
                     )}
                   </div>
                 </div>
@@ -1088,15 +1144,6 @@ export default function ReliefRequests() {
                   </div>
                 </div>
 
-                {selectedRequest.note && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Ghi chú</h3>
-                    <p className="text-sm whitespace-pre-wrap">
-                      {selectedRequest.note}
-                    </p>
-                  </div>
-                )}
-
                 {selectedRequest.teamSummary && (
                   <div>
                     <h3 className="font-semibold mb-2">Thống kê đội cứu trợ</h3>
@@ -1153,7 +1200,7 @@ export default function ReliefRequests() {
                               )}
                               {team.respondedAt && (
                                 <p className="text-xs text-muted-foreground">
-                                  Phản hồi lúc: {formatDate(team.respondedAt)}
+                                  Phản hồi lúc: {formatDateTime(team.respondedAt)}
                                 </p>
                               )}
                             </div>

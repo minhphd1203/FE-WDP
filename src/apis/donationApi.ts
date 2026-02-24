@@ -7,7 +7,7 @@ import {
 
 const DONATION_ENDPOINTS = {
   DONATIONS: "/admin/donations",
-  DONATION_BY_ID: (id: string) => `/donations/${id}`,
+  DONATION_BY_ID: (eventId: string, donationId: string) => `/events/${eventId}/donations/${donationId}`,
   DONATION_APPROVE: (id: string) => `/admin/donations/${id}/approve`,
   DONATION_REJECT: (id: string) => `/admin/donations/${id}/reject`,
   BULK_APPROVE: "/admin/donations/bulk-approve",
@@ -49,8 +49,8 @@ export const donationApi = {
   },
 
   // Get donation by ID
-  getDonationById: async (id: string): Promise<Donation> => {
-    return httpClient.get(DONATION_ENDPOINTS.DONATION_BY_ID(id));
+  getDonationById: async (eventId: string, donationId: string): Promise<Donation> => {
+    return httpClient.get(DONATION_ENDPOINTS.DONATION_BY_ID(eventId, donationId));
   },
 
   // Approve donation

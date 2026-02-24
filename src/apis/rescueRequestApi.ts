@@ -14,14 +14,12 @@ import {
 export interface RescueRequestFilters {
   status?: RescueRequestStatus;
   priority?: RescueRequestPriority;
-  eventId?: string; // Filter by event ID
+  assigned?: boolean; // Filter by assigned status: true = đã phân công, false = chưa phân công
   q?: string; // Search by address
   from?: string; // From date (YYYY-MM-DD)
   to?: string; // To date (YYYY-MM-DD)
   page?: number;
   limit?: number;
-  sortBy?: string;
-  order?: 'ASC' | 'DESC';
 }
 
 export const rescueRequestApi = {
