@@ -52,6 +52,7 @@ export interface CreatorProfile {
   accountId: string;
   fullName: string | null;
   avatarUrl: string | null;
+  address: string | null;
   createdAt: string;
   updatedAt: string;
 }
