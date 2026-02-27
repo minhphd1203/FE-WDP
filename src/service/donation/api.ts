@@ -42,7 +42,7 @@ export const donationService = {
     if (filters?.order) params.append("order", filters.order);
 
     const query = params.toString();
-    return httpClient.get<ApiResponse<DonationsResponse>>(
+    return httpClient.get<DonationsResponse>(
       query
         ? `${DONATION_ENDPOINTS.ADMIN_DONATIONS}?${query}`
         : DONATION_ENDPOINTS.ADMIN_DONATIONS,
@@ -83,7 +83,7 @@ export const donationService = {
     if (limit) params.append("limit", limit.toString());
 
     const query = params.toString();
-    return httpClient.get<ApiResponse<DonationsResponse>>(
+    return httpClient.get<DonationsResponse>(
       query
         ? `${DONATION_ENDPOINTS.MY_DONATIONS(eventId)}?${query}`
         : DONATION_ENDPOINTS.MY_DONATIONS(eventId),
