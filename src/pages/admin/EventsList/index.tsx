@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Calendar, MapPin, RefreshCw, Filter } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
@@ -32,17 +32,17 @@ import {
 
 export default function EventsList() {
   const navigate = useNavigate();
-  
+
   // Mặc định hiển thị sự kiện tình nguyện (Đội cứu trợ) đang mở
   const [statusFilter, setStatusFilter] = useState<string>('OPEN');
   const [typeFilter, setTypeFilter] = useState<string>('VOLUNTEER');
-  
+
   const { data: eventsResponse, isLoading, error, refetch } = useEvents({
     status: statusFilter !== 'all' ? statusFilter : undefined,
     type: typeFilter !== 'all' ? typeFilter : undefined,
   });
   const deleteEventMutation = useDeleteEvent();
-  
+
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     eventId: string | null;
@@ -53,22 +53,9 @@ export default function EventsList() {
     eventTitle: '',
   });
 
-  // Debug: log response structure
-  console.log('Events Response:', eventsResponse);
-  console.log('Events Data:', eventsResponse?.data);
-  console.log('Events Items:', eventsResponse?.data?.items);
-  console.log('Loading:', isLoading);
-  console.log('Error:', error);
-  
-  // Force refetch on mount
-  useEffect(() => {
-    console.log('EventsList mounted, refetching...');
-    refetch();
-  }, []);
-  
   // Handle different possible response structures
   let events: any[] = [];
-  
+
   if (eventsResponse?.data?.data) {
     // Correct API structure: response.data.data
     events = eventsResponse.data.data;
@@ -78,19 +65,6 @@ export default function EventsList() {
   } else if (Array.isArray(eventsResponse)) {
     // Direct array response
     events = eventsResponse;
-  }
-  
-  console.log('Parsed Events:', events);
-  console.log('Events Count:', events.length);
-  console.log('Meta info:', eventsResponse?.data?.meta);
-  if (events.length > 0) {
-    console.table(events.map(e => ({
-      id: e.id,
-      title: e.title,
-      type: e.type,
-      status: e.status,
-      startDate: e.startDate
-    })));
   }
 
   const handleDelete = async () => {

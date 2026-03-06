@@ -1,13 +1,12 @@
-import { 
-  User, 
-  Event, 
-  Product, 
-  ReliefRequest, 
-  WarehouseItem, 
+import {
+  User,
+  Event,
+  Product,
+  WarehouseItem,
   UserRole,
   EventType,
   ProductStatus,
-  RequestStatus,
+  RescueRequestStatus,
 } from '../types';
 
 // Mock Users
@@ -16,6 +15,7 @@ export const mockUsers: User[] = [
     id: '1',
     email: 'admin@example.com',
     name: 'Nguyễn Văn Admin',
+    fullName: 'Nguyễn Văn Admin',
     phone: '0912345678',
     role: UserRole.ADMIN,
     avatar: undefined,
@@ -27,6 +27,7 @@ export const mockUsers: User[] = [
     id: '2',
     email: 'staff@example.com',
     name: 'Trần Thị Staff',
+    fullName: 'Trần Thị Staff',
     phone: '0923456789',
     role: UserRole.STAFF,
     createdAt: '2026-01-02T00:00:00Z',
@@ -37,6 +38,7 @@ export const mockUsers: User[] = [
     id: '3',
     email: 'user1@example.com',
     name: 'Lê Văn User',
+    fullName: 'Lê Văn User',
     phone: '0934567890',
     role: UserRole.USER,
     createdAt: '2026-01-03T00:00:00Z',
@@ -57,7 +59,7 @@ export const mockEvents: Event[] = [
     location: 'Hà Nội',
     createdBy: '1',
     createdByName: 'Nguyễn Văn Admin',
-    status: 'active',
+    status: 'OPEN',
     totalRegistrations: 25,
     createdAt: '2026-01-10T00:00:00Z',
     updatedAt: '2026-01-10T00:00:00Z',
@@ -71,7 +73,7 @@ export const mockEvents: Event[] = [
     endDate: '2026-01-25T23:59:59Z',
     createdBy: '1',
     createdByName: 'Nguyễn Văn Admin',
-    status: 'active',
+    status: 'OPEN',
     totalRegistrations: 0,
     createdAt: '2026-01-11T00:00:00Z',
     updatedAt: '2026-01-11T00:00:00Z',
@@ -147,7 +149,7 @@ export const mockProducts: Product[] = [
 ];
 
 // Mock Relief Requests
-export const mockReliefRequests: ReliefRequest[] = [
+export const mockReliefRequests: any[] = [
   {
     id: '1',
     title: 'Cần hỗ trợ khẩn cấp - Gia đình bị ngập nước',
@@ -164,7 +166,7 @@ export const mockReliefRequests: ReliefRequest[] = [
       city: 'Hải Dương',
     },
     urgency: 'critical',
-    status: RequestStatus.PENDING,
+    status: RescueRequestStatus.NEW,
     createdAt: '2026-01-12T07:00:00Z',
     updatedAt: '2026-01-12T07:00:00Z',
   },
@@ -184,7 +186,7 @@ export const mockReliefRequests: ReliefRequest[] = [
       city: 'Hải Phòng',
     },
     urgency: 'high',
-    status: RequestStatus.APPROVED,
+    status: RescueRequestStatus.ASSIGNED,
     assignedTeamId: 'team2',
     assignedTeamName: 'Đội cứu trợ 2 - Hải Phòng',
     assignedBy: '1',
@@ -209,7 +211,7 @@ export const mockReliefRequests: ReliefRequest[] = [
       city: 'Quảng Ninh',
     },
     urgency: 'medium',
-    status: RequestStatus.IN_PROGRESS,
+    status: RescueRequestStatus.IN_PROGRESS,
     assignedTeamId: 'team3',
     assignedTeamName: 'Đội cứu trợ 3 - Quảng Ninh',
     assignedBy: '1',

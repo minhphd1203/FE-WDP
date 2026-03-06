@@ -42,26 +42,17 @@ export const eventApi = {
     status?: string;
     search?: string;
   }): Promise<ApiResponse<PaginatedResponse<Event>>> => {
-    console.log('eventApi.getEvents called with params:', params);
-    console.log('API endpoint:', API_ENDPOINTS.EVENTS);
-    const result = await httpClient.get(API_ENDPOINTS.EVENTS, { params });
-    console.log('eventApi.getEvents result:', result);
-    return result;
+    return httpClient.get<ApiResponse<PaginatedResponse<Event>>>(API_ENDPOINTS.EVENTS, { params });
   },
 
   // Get event by ID
   getEventById: async (id: string): Promise<ApiResponse<Event>> => {
-    console.log('eventApi.getEventById called with id:', id);
-    return httpClient.get(API_ENDPOINTS.EVENT_BY_ID(id));
+    return httpClient.get<ApiResponse<Event>>(API_ENDPOINTS.EVENT_BY_ID(id));
   },
 
   // Create new event
   createEvent: async (data: CreateEventDto): Promise<ApiResponse<Event>> => {
-    console.log('eventApi.createEvent called with data:', data);
-    console.log('API endpoint:', API_ENDPOINTS.EVENTS);
-    const result = await httpClient.post(API_ENDPOINTS.EVENTS, data);
-    console.log('eventApi.createEvent result:', result);
-    return result;
+    return httpClient.post<ApiResponse<Event>>(API_ENDPOINTS.EVENTS, data);
   },
 
   // Update event

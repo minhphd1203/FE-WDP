@@ -47,28 +47,20 @@ export default function CreateEvent() {
   const startDate = watch('startDate');
 
   const onSubmit = async (data: CreateEventFormData) => {
-    console.log('Form data before submit:', data);
-    
     // Convert datetime-local to ISO 8601
     const formattedData = {
       ...data,
       startDate: new Date(data.startDate).toISOString(),
       endDate: new Date(data.endDate).toISOString(),
     };
-    
-    console.log('Formatted data:', formattedData);
-    
+
     try {
       await createEventMutation.mutateAsync(formattedData);
-      console.log('Mutation completed, waiting before navigate...');
-      
       // Wait a bit for cache to update
       setTimeout(() => {
-        console.log('Navigating to events list...');
         navigate(ROUTES.ADMIN_EVENTS);
       }, 500);
     } catch (error) {
-      console.error('Submit error:', error);
       // Error is handled in the hook
     }
   };

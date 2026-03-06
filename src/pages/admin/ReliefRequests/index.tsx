@@ -39,7 +39,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { Checkbox } from "../../../components/ui/checkbox";
 import {
   useRescueRequests,
   useAssignTeams,
@@ -126,19 +125,6 @@ export default function ReliefRequests() {
   const cancelRequestLoading = cancelRequestMutation.isPending;
 
   const requests = (requestsData as any)?.items || [];
-
-  console.log("Requests data:", requestsData);
-  console.log("Requests array:", requests);
-  console.log("Is loading:", isLoading);
-  console.log("Error:", error);
-
-  // Debug: Log first request structure
-  if (requests.length > 0) {
-    console.log(
-      "First request structure:",
-      JSON.stringify(requests[0], null, 2),
-    );
-  }
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["rescue-requests"] });
@@ -286,9 +272,9 @@ export default function ReliefRequests() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Đơn Yêu Cầu Cứu Trợ</h1>
+          <h1 className="text-3xl font-bold">Yêu cầu cứu hộ</h1>
           <p className="text-muted-foreground mt-1">
-            Quản lý và xử lý các yêu cầu cứu trợ từ người dân
+            Xem và xử lý các yêu cầu cứu hộ khẩn cấp
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" disabled={isLoading}>
@@ -451,12 +437,33 @@ export default function ReliefRequests() {
                     </TableCell>
                     <TableCell>
                       {request.teamSummary ? (
-                        <div className="text-sm">
-                          <span className={request.teamSummary.isFulfilled ? "text-green-600 font-medium" : "text-muted-foreground"}>
-                            {request.teamSummary.required} / {request.teamSummary.assigned} / {request.teamSummary.accepted}
+                        <div className="text-sm flex items-center gap-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-orange-100 text-orange-700 font-medium">
+                            <span className="text-xs">Cần:</span>
+                            {request.teamSummary.required}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded font-medium ${
+                            request.teamSummary.assigned >= request.teamSummary.required
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            <span className="text-xs">Gán:</span>
+                            {request.teamSummary.assigned}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded font-medium ${
+                            request.teamSummary.accepted >= request.teamSummary.required
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            <span className="text-xs">Nhận:</span>
+                            {request.teamSummary.accepted}
                           </span>
                           {request.teamSummary.isFulfilled && (
-                            <span className="ml-2 text-xs text-green-600">✓ Đủ</span>
+                            <span className="ml-1 inline-flex items-center gap-1 text-green-600">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </span>
                           )}
                         </div>
                       ) : (
@@ -642,29 +649,43 @@ export default function ReliefRequests() {
                     Đang tải danh sách đội...
                   </div>
                 ) : teams.length > 0 ? (
-                  teams.map((team) => (
-                    <div
-                      key={team.id}
-                      className="flex items-center space-x-2 p-2 hover:bg-accent rounded"
-                    >
-                      <Checkbox
-                        id={`team-${team.id}`}
-                        checked={selectedTeamIds.includes(team.id)}
-                        onCheckedChange={() => handleToggleTeam(team.id)}
-                      />
-                      <Label
-                        htmlFor={`team-${team.id}`}
-                        className="flex-1 cursor-pointer"
+                  teams.map((team) => {
+                    const isSelected = selectedTeamIds.includes(team.id);
+                    return (
+                      <div
+                        key={team.id}
+                        className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleToggleTeam(team.id)}
                       >
-                        <div>
-                          <p className="font-medium">{team.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? 'bg-red-500 border-red-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className={`font-medium ${isSelected ? 'text-red-700' : 'text-gray-900'}`}>{team.name}</p>
+                          <p className={`text-xs ${isSelected ? 'text-red-600' : 'text-gray-500'}`}>
                             Khu vực: {team.area} - Quy mô: {team.teamSize} người
                           </p>
                         </div>
-                      </Label>
-                    </div>
-                  ))
+                        {isSelected && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            Đã chọn
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     Không có đội cứu trợ nào
@@ -672,9 +693,14 @@ export default function ReliefRequests() {
                 )}
               </div>
               {selectedTeamIds.length > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Đã chọn: {selectedTeamIds.length} đội
-                </p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-red-100 text-red-700 font-medium">
+                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Đã chọn: {selectedTeamIds.length} đội
+                  </span>
+                </div>
               )}
             </div>
           </div>

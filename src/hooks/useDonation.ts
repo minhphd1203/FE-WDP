@@ -1,13 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  donationApi, 
-  ApproveDonationDto, 
+import {
+  donationApi,
+  ApproveDonationDto,
   RejectDonationDto,
   BulkApproveDonationsDto,
   BulkRejectDonationsDto
 } from '../apis/donationApi';
-import { PaginationParams } from '../types';
 
 // Query keys
 export const donationKeys = {
@@ -61,7 +60,7 @@ export const useApproveDonation = () => {
       const response = await donationApi.approveDonation(id, data);
       return response;
     },
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
       queryClient.invalidateQueries({ queryKey: donationKeys.detail(variables.id) });
       toast.success('Phê duyệt donation thành công!');
@@ -82,7 +81,7 @@ export const useRejectDonation = () => {
       const response = await donationApi.rejectDonation(id, data);
       return response;
     },
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
       queryClient.invalidateQueries({ queryKey: donationKeys.detail(variables.id) });
       toast.success('Từ chối donation thành công!');

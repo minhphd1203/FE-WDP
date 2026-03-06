@@ -115,7 +115,7 @@ export default function TeamManagement() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Quản lý Đội Cứu Hộ</h1>
+        <h1 className="text-3xl font-bold">Đội cứu hộ</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Tạo Đội Cứu Hộ

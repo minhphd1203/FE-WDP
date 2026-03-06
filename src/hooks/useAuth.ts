@@ -64,7 +64,7 @@ export function useAuth() {
         throw new Error(response.message || "Đăng nhập thất bại");
       }
 
-      const { accessToken, refreshToken, account } = response.data;
+      const { accessToken, refreshToken, account } = response.data as any;
       const role = normalizeRole(account.role);
       const now = new Date().toISOString();
 
@@ -74,6 +74,8 @@ export function useAuth() {
             id: account.id,
             email: account.email ?? "",
             name: account.email?.split("@")[0] ?? "User",
+            fullName: account.fullName ?? account.email?.split("@")[0] ?? "User",
+            phone: account.phone ?? "",
             role,
             createdAt: response.timestamp || now,
             updatedAt: response.timestamp || now,

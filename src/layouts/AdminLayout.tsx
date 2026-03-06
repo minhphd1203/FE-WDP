@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
-  Users,
   AlertCircle,
   Package,
   LogOut,
   Menu,
   X,
+  Shield,
+  HeartHandshake,
+  UserCog,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ROUTES } from '../constants';
@@ -22,32 +24,32 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Quản lý sự kiện',
+    name: 'Sự kiện',
     href: ROUTES.ADMIN_EVENTS,
     icon: Calendar,
   },
   {
-    name: 'Quản lý người dùng',
+    name: 'Tài khoản',
     href: ROUTES.ADMIN_USERS,
-    icon: Users,
+    icon: UserCog,
   },
   {
-    name: 'Quản lý Donations',
+    name: 'Quyên góp',
     href: ROUTES.ADMIN_DONATIONS,
-    icon: Package,
+    icon: HeartHandshake,
   },
   {
-    name: 'Quản lý Đội Cứu Hộ',
+    name: 'Đội cứu hộ',
     href: ROUTES.ADMIN_TEAMS,
-    icon: Users,
+    icon: Shield,
   },
   {
-    name: 'Đơn yêu cầu cứu hộ',
+    name: 'Yêu cầu cứu hộ',
     href: ROUTES.ADMIN_RELIEF_REQUESTS,
     icon: AlertCircle,
   },
   {
-    name: 'Quản lý kho',
+    name: 'Kho',
     href: ROUTES.ADMIN_WAREHOUSE,
     icon: Package,
   },
@@ -55,7 +57,6 @@ const navigation = [
 
 export default function AdminLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -96,13 +97,13 @@ export default function AdminLayout() {
                     to={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
                     )}
                   >
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
                     {item.name}
                   </Link>
                 );
@@ -152,13 +153,13 @@ export default function AdminLayout() {
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
                   {item.name}
                 </Link>
               );

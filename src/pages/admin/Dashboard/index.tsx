@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, Users, Package, AlertCircle } from "lucide-react";
+import { Plus, Calendar, Users, Package, AlertCircle, UserCog } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -7,57 +7,40 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { ROUTES } from "../../../constants";
-import {
-  mockEvents,
-  mockReliefRequests,
-  mockProducts,
-  mockWarehouseStats,
-} from "../../../mocks/data";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  // Use mock data
-  const eventsData = { data: { items: mockEvents, total: mockEvents.length } };
-  const requestsData = {
-    data: {
-      items: mockReliefRequests.filter((r) => r.status === "pending"),
-      total: mockReliefRequests.filter((r) => r.status === "pending").length,
-    },
-  };
-  const pendingProductsData = {
-    data: mockProducts.filter((p) => p.status === "pending"),
-  };
-  const warehouseStats = { data: mockWarehouseStats };
-
+  // Static stats - using placeholder values
+  // In production, replace with actual API calls
   const stats = [
     {
-      title: "Sự kiện đang diễn ra",
-      value: eventsData?.data?.total || 0,
+      title: "Sự kiện đang mở",
+      value: "-",
       icon: Calendar,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
     },
     {
-      title: "Đơn yêu cầu chờ xử lý",
-      value: requestsData?.data?.total || 0,
+      title: "Yêu cầu chờ xử lý",
+      value: "-",
       icon: AlertCircle,
       color: "text-red-600",
       bgColor: "bg-red-100",
     },
     {
-      title: "Sản phẩm chờ xác minh",
-      value: pendingProductsData?.data?.length || 0,
-      icon: Package,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-    },
-    {
-      title: "Tổng mặt hàng trong kho",
-      value: warehouseStats?.data?.totalItems || 0,
+      title: "Tổng tồn kho",
+      value: "-",
       icon: Package,
       color: "text-green-600",
       bgColor: "bg-green-100",
+    },
+    {
+      title: "Tổng tài khoản",
+      value: "-",
+      icon: Users,
+      color: "text-purple-600",
+      bgColor: "bg-purple-100",
     },
   ];
 
@@ -70,7 +53,7 @@ export default function AdminDashboard() {
       color: "bg-blue-500 hover:bg-blue-600",
     },
     {
-      title: "Quản lý đơn cứu hộ",
+      title: "Yêu cầu cứu hộ",
       description: "Xem và xử lý các yêu cầu cứu hộ",
       action: () => navigate(ROUTES.ADMIN_RELIEF_REQUESTS),
       icon: AlertCircle,
@@ -84,10 +67,10 @@ export default function AdminDashboard() {
       color: "bg-green-500 hover:bg-green-600",
     },
     {
-      title: "Quản lý người dùng",
+      title: "Tài khoản",
       description: "Quản lý Admin, Staff và User",
       action: () => navigate(ROUTES.ADMIN_USERS),
-      icon: Users,
+      icon: UserCog,
       color: "bg-purple-500 hover:bg-purple-600",
     },
   ];
@@ -96,7 +79,7 @@ export default function AdminDashboard() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard Admin</h1>
+          <h1 className="text-3xl font-bold">Tổng quan</h1>
           <p className="text-muted-foreground mt-1">
             Quản lý hoạt động cứu trợ lũ lụt
           </p>
@@ -150,65 +133,27 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Recent Activities */}
+      {/* Recent Activities - Placeholder */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Sự kiện gần đây</CardTitle>
           </CardHeader>
           <CardContent>
-            {eventsData?.data?.items && eventsData.data.items.length > 0 ? (
-              <div className="space-y-4">
-                {eventsData.data.items.slice(0, 5).map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-start gap-3 pb-3 border-b last:border-0"
-                  >
-                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{event.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(event.startDate).toLocaleDateString("vi-VN")}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Chưa có sự kiện nào
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Chưa có sự kiện nào
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Đơn cứu hộ mới</CardTitle>
+            <CardTitle>Yêu cầu cứu hộ mới</CardTitle>
           </CardHeader>
           <CardContent>
-            {requestsData?.data?.items && requestsData.data.items.length > 0 ? (
-              <div className="space-y-4">
-                {requestsData.data.items.slice(0, 5).map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-start gap-3 pb-3 border-b last:border-0"
-                  >
-                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{request.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {request.location.address}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Chưa có đơn yêu cầu mới
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Chưa có yêu cầu nào
+            </p>
           </CardContent>
         </Card>
       </div>

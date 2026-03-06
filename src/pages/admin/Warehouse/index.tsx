@@ -35,8 +35,6 @@ export default function Warehouse() {
   const [receipts, setReceipts] = useState<any[]>([]);
   const [isLoadingStocks, setIsLoadingStocks] = useState(false);
   const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
-  const [stockPage, setStockPage] = useState(1);
-  const [receiptPage, setReceiptPage] = useState(1);
 
   // Dialog states
   const [selectedStock, setSelectedStock] = useState<any>(null);
@@ -53,14 +51,12 @@ export default function Warehouse() {
   const fetchStocks = async () => {
     setIsLoadingStocks(true);
     try {
-      const response = await warehouseApi.getStocks(stockPage, 20);
-      console.log("Stocks response:", response);
+      const response = await warehouseApi.getStocks(1, 20);
       if (response.success && response.data) {
         setStocks(response.data.data || []);
       }
     } catch (error: any) {
       toast.error("Không thể tải danh sách tồn kho");
-      console.error("Error fetching stocks:", error);
     } finally {
       setIsLoadingStocks(false);
     }
@@ -69,14 +65,12 @@ export default function Warehouse() {
   const fetchReceipts = async () => {
     setIsLoadingReceipts(true);
     try {
-      const response = await warehouseApi.getReceipts(receiptPage, 20);
-      console.log("Receipts response:", response);
+      const response = await warehouseApi.getReceipts(1, 20);
       if (response.success && response.data) {
         setReceipts(response.data.data || []);
       }
     } catch (error: any) {
       toast.error("Không thể tải danh sách biên lai");
-      console.error("Error fetching receipts:", error);
     } finally {
       setIsLoadingReceipts(false);
     }
@@ -92,14 +86,12 @@ export default function Warehouse() {
     setIsReceiptDialogOpen(true);
     try {
       const response = await warehouseApi.getReceiptById(receipt.id);
-      console.log("Receipt detail response:", response);
       if (response.success && response.data) {
         setSelectedReceipt(response.data);
       } else {
         setSelectedReceipt(receipt);
       }
     } catch (error: any) {
-      console.error("Error fetching receipt detail:", error);
       setSelectedReceipt(receipt);
       toast.error("Không thể tải chi tiết biên lai");
     } finally {
@@ -135,7 +127,7 @@ export default function Warehouse() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Quản lý Kho</h1>
+          <h1 className="text-3xl font-bold">Kho</h1>
           <p className="text-muted-foreground mt-1">
             Quản lý tồn kho và biên lai nhập kho
           </p>

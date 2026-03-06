@@ -39,7 +39,7 @@ export const useWarehouse = () => {
       setError(null);
       const response = await warehouseApi.getAllocations(params);
       if (response.success) {
-        setAllocations(response.data.items);
+        setAllocations((response.data as any).items || response.data);
       }
     } catch (err: any) {
       setError(err.message || 'Không thể tải danh sách phân bổ');
@@ -59,7 +59,7 @@ export const useWarehouse = () => {
       setError(null);
       const response = await warehouseApi.getReceipts(params);
       if (response.success) {
-        setReceipts(response.data.items);
+        setReceipts((response.data as any).items || response.data);
       }
     } catch (err: any) {
       setError(err.message || 'Không thể tải danh sách biên lai nhập kho');
@@ -71,12 +71,13 @@ export const useWarehouse = () => {
 
   // Create allocation
   const createAllocation = async (data: {
+    teamId: string;
     items: AllocationItem[];
   }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await warehouseApi.createAllocation(data);
+      const response = await warehouseApi.createAllocation(data as any);
       if (response.success) {
         toast.success('Tạo phân bổ thành công');
         await fetchAllocations();

@@ -64,7 +64,7 @@ export default function DonationManagement() {
     detailDialog.donationId || undefined
   );
 
-  const donationDetail = donationDetailResponse?.data;
+  const donationDetail = donationDetailResponse as any;
 
   const donations = donationsResponse?.data?.data || [];
   const events = eventsResponse?.data?.data || [];
@@ -107,7 +107,7 @@ export default function DonationManagement() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Quản lý Donation</h1>
+          <h1 className="text-3xl font-bold">Quản lý Quyên góp</h1>
           <p className="text-muted-foreground mt-1">
             Xem và theo dõi các donation từ người dùng
           </p>
@@ -325,7 +325,7 @@ export default function DonationManagement() {
               <div>
                 <Label className="text-muted-foreground">Danh sách vật phẩm</Label>
                 <div className="mt-2 space-y-2">
-                  {donationDetail.items.map((item, index) => (
+                  {donationDetail.items.map((item: any, index: any) => (
                     <div key={index} className="border rounded-lg p-3">
                       <div className="font-medium">{item.name}</div>
                       {item.category && (
@@ -350,7 +350,7 @@ export default function DonationManagement() {
                         <div className="text-sm">
                           <div className="text-muted-foreground mb-1">Hình ảnh:</div>
                           <div className="flex gap-2 flex-wrap">
-                            {item.imageUrls.map((url, idx) => (
+                            {item.imageUrls.map((url: any, idx: any) => (
                               <img
                                 key={idx}
                                 src={url}

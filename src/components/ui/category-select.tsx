@@ -21,7 +21,7 @@ export function CategorySelect({
   disabled = false,
 }: CategorySelectProps) {
   const { data: categoriesData, isLoading } = useCategories({ limit: 100 });
-  const categories = categoriesData?.items || [];
+  const categories = (categoriesData as any)?.items || [];
 
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled || isLoading}>
@@ -30,7 +30,7 @@ export function CategorySelect({
       </SelectTrigger>
       <SelectContent>
         {categories.length > 0 ? (
-          categories.map((category) => (
+          categories.map((category: any) => (
             <SelectItem key={category.id} value={category.name}>
               {category.name}
             </SelectItem>

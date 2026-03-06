@@ -41,7 +41,7 @@ export default function TeamWarehouse() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAllocationDetail, setSelectedAllocationDetail] =
-    useState<Allocation | null>(null);
+    useState<any>(null);
   const [isAllocationDetailLoading, setIsAllocationDetailLoading] =
     useState(false);
 
@@ -488,7 +488,7 @@ export default function TeamWarehouse() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {selectedAllocationDetail.items?.map((item) => (
+                      {selectedAllocationDetail.items?.map((item: any) => (
                         <tr key={item.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 font-medium text-gray-900">
                             {item.category}
