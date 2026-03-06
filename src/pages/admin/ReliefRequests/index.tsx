@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Search,
-  MapPin,
-  Eye,
-  Users,
-  RefreshCw,
-} from "lucide-react";
+import { Search, MapPin, Eye, Users, RefreshCw } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -101,8 +95,8 @@ export default function ReliefRequests() {
       assignedFilter === "assigned"
         ? true
         : assignedFilter === "unassigned"
-        ? false
-        : undefined,
+          ? false
+          : undefined,
     page,
     limit,
   });
@@ -111,10 +105,8 @@ export default function ReliefRequests() {
   const teams = teamsData?.items || [];
 
   // Fetch assignments for selected request
-  const { 
-    data: assignmentsData, 
-    isLoading: assignmentsLoading 
-  } = useRescueRequestAssignments(selectedRequest?.id || null);
+  const { data: assignmentsData, isLoading: assignmentsLoading } =
+    useRescueRequestAssignments(selectedRequest?.id || null);
 
   const assignTeamsMutation = useAssignTeams();
   const reviewRequestMutation = useReviewRequest();
@@ -410,10 +402,10 @@ export default function ReliefRequests() {
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {request.guestName || 'N/A'}
+                          {request.guestName || "N/A"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {request.guestPhone || 'N/A'}
+                          {request.guestPhone || "N/A"}
                         </p>
                       </div>
                     </TableCell>
@@ -421,7 +413,7 @@ export default function ReliefRequests() {
                       <div className="flex items-start gap-1">
                         <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                         <span className="text-sm line-clamp-2">
-                          {request.address || 'N/A'}
+                          {request.address || "N/A"}
                         </span>
                       </div>
                     </TableCell>
@@ -442,26 +434,42 @@ export default function ReliefRequests() {
                             <span className="text-xs">Cần:</span>
                             {request.teamSummary.required}
                           </span>
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded font-medium ${
-                            request.teamSummary.assigned >= request.teamSummary.required
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded font-medium ${
+                              request.teamSummary.assigned >=
+                              request.teamSummary.required
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
                             <span className="text-xs">Gán:</span>
                             {request.teamSummary.assigned}
                           </span>
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded font-medium ${
-                            request.teamSummary.accepted >= request.teamSummary.required
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded font-medium ${
+                              request.teamSummary.accepted >=
+                              request.teamSummary.required
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
                             <span className="text-xs">Nhận:</span>
                             {request.teamSummary.accepted}
                           </span>
                           {request.teamSummary.isFulfilled && (
                             <span className="ml-1 inline-flex items-center gap-1 text-green-600">
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
                               </svg>
                             </span>
                           )}
@@ -542,7 +550,8 @@ export default function ReliefRequests() {
                         {/* Đang thực hiện - Chỉ cập nhật trạng thái */}
                         {/* Chỉ hiện nút Cập nhật cho ACCEPTED và IN_PROGRESS, không hiện cho DONE/CANCELED/REJECTED */}
                         {(request.status === RescueRequestStatus.ACCEPTED ||
-                          request.status === RescueRequestStatus.IN_PROGRESS) && (
+                          request.status ===
+                            RescueRequestStatus.IN_PROGRESS) && (
                           <Button
                             variant="default"
                             size="sm"
@@ -556,9 +565,11 @@ export default function ReliefRequests() {
                               });
                               setIsReviewDialogOpen(true);
                             }}
-                            title={request.status === RescueRequestStatus.IN_PROGRESS 
-                              ? "Xác nhận hoàn thành cứu trợ" 
-                              : "Cập nhật trạng thái đơn"}
+                            title={
+                              request.status === RescueRequestStatus.IN_PROGRESS
+                                ? "Xác nhận hoàn thành cứu trợ"
+                                : "Cập nhật trạng thái đơn"
+                            }
                           >
                             Cập nhật
                           </Button>
@@ -599,7 +610,10 @@ export default function ReliefRequests() {
               size="sm"
               onClick={() =>
                 setPage((p) =>
-                  Math.min(Math.ceil((requestsData as any).total / limit), p + 1),
+                  Math.min(
+                    Math.ceil((requestsData as any).total / limit),
+                    p + 1,
+                  ),
                 )
               }
               disabled={page >= Math.ceil((requestsData as any).total / limit)}
@@ -620,22 +634,30 @@ export default function ReliefRequests() {
             <div>
               <p className="text-sm text-muted-foreground">
                 Yêu cầu từ:{" "}
-                <strong>
-                  {selectedRequest?.guestName || 'N/A'}
-                </strong>
+                <strong>{selectedRequest?.guestName || "N/A"}</strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Địa điểm:{" "}
-                {selectedRequest?.address || 'N/A'}
+                Địa điểm: {selectedRequest?.address || "N/A"}
               </p>
               {selectedRequest?.teamSummary && (
                 <div className="mt-2 p-3 bg-muted/50 rounded-lg">
                   <p className="text-sm font-medium mb-1">Thống kê đội:</p>
                   <p className="text-xs text-muted-foreground">
-                    Cần: <span className="font-semibold">{selectedRequest.teamSummary.required}</span> | 
-                    Đã gán: <span className="font-semibold">{selectedRequest.teamSummary.assigned}</span> | 
-                    Đã nhận: <span className="font-semibold text-green-600">{selectedRequest.teamSummary.accepted}</span>
-                    {selectedRequest.teamSummary.isFulfilled && <span className="ml-2 text-green-600">✓ Đủ</span>}
+                    Cần:{" "}
+                    <span className="font-semibold">
+                      {selectedRequest.teamSummary.required}
+                    </span>{" "}
+                    | Đã gán:{" "}
+                    <span className="font-semibold">
+                      {selectedRequest.teamSummary.assigned}
+                    </span>{" "}
+                    | Đã nhận:{" "}
+                    <span className="font-semibold text-green-600">
+                      {selectedRequest.teamSummary.accepted}
+                    </span>
+                    {selectedRequest.teamSummary.isFulfilled && (
+                      <span className="ml-2 text-green-600">✓ Đủ</span>
+                    )}
                   </p>
                 </div>
               )}
@@ -656,25 +678,43 @@ export default function ReliefRequests() {
                         key={team.id}
                         className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-red-500 bg-red-50'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                         }`}
                         onClick={() => handleToggleTeam(team.id)}
                       >
-                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                          isSelected
-                            ? 'bg-red-500 border-red-500'
-                            : 'border-gray-300'
-                        }`}>
+                        <div
+                          className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            isSelected
+                              ? "bg-red-500 border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
                           {isSelected && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className={`font-medium ${isSelected ? 'text-red-700' : 'text-gray-900'}`}>{team.name}</p>
-                          <p className={`text-xs ${isSelected ? 'text-red-600' : 'text-gray-500'}`}>
+                          <p
+                            className={`font-medium ${isSelected ? "text-red-700" : "text-gray-900"}`}
+                          >
+                            {team.name}
+                          </p>
+                          <p
+                            className={`text-xs ${isSelected ? "text-red-600" : "text-gray-500"}`}
+                          >
                             Khu vực: {team.area} - Quy mô: {team.teamSize} người
                           </p>
                         </div>
@@ -695,8 +735,18 @@ export default function ReliefRequests() {
               {selectedTeamIds.length > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-red-100 text-red-700 font-medium">
-                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                     Đã chọn: {selectedTeamIds.length} đội
                   </span>
@@ -736,12 +786,10 @@ export default function ReliefRequests() {
             <div>
               <p className="text-sm text-muted-foreground">
                 Đơn yêu cầu từ:{" "}
-                <strong>
-                  {selectedRequest?.guestName || 'N/A'}
-                </strong>
+                <strong>{selectedRequest?.guestName || "N/A"}</strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Địa chỉ: {selectedRequest?.address || 'N/A'}
+                Địa chỉ: {selectedRequest?.address || "N/A"}
               </p>
             </div>
 
@@ -790,7 +838,7 @@ export default function ReliefRequests() {
                           requiredTeams: selectedRequest.requiredTeams || 1,
                         },
                       });
-                      
+
                       // Bước 2: ACCEPTED → IN_PROGRESS
                       await reviewRequestMutation.mutateAsync({
                         id: selectedRequest.id,
@@ -801,7 +849,7 @@ export default function ReliefRequests() {
                           requiredTeams: selectedRequest.requiredTeams || 1,
                         },
                       });
-                      
+
                       // Bước 3: IN_PROGRESS → DONE
                       await reviewRequestMutation.mutateAsync({
                         id: selectedRequest.id,
@@ -812,7 +860,7 @@ export default function ReliefRequests() {
                           requiredTeams: selectedRequest.requiredTeams || 1,
                         },
                       });
-                      
+
                       setIsActionDialogOpen(false);
                       setSelectedRequest(null);
                       toast.success("Đã hoàn thành đơn cứu trợ");
@@ -839,21 +887,18 @@ export default function ReliefRequests() {
               {selectedRequest?.status === RescueRequestStatus.NEW
                 ? "Đánh giá đơn yêu cầu"
                 : selectedRequest?.status === RescueRequestStatus.IN_PROGRESS
-                ? "Xác nhận hoàn thành cứu trợ"
-                : "Cập nhật trạng thái"}
+                  ? "Xác nhận hoàn thành cứu trợ"
+                  : "Cập nhật trạng thái"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
                 Yêu cầu từ:{" "}
-                <strong>
-                  {selectedRequest?.guestName || 'N/A'}
-                </strong>
+                <strong>{selectedRequest?.guestName || "N/A"}</strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Người yêu cầu:{" "}
-                {selectedRequest?.guestName || 'N/A'}
+                Người yêu cầu: {selectedRequest?.guestName || "N/A"}
               </p>
             </div>
 
@@ -864,7 +909,8 @@ export default function ReliefRequests() {
                   Cứu trợ đã thành công?
                 </p>
                 <p className="text-sm text-green-700">
-                  Nhấn "Hoàn thành" để xác nhận đơn yêu cầu này đã được cứu trợ thành công.
+                  Nhấn "Hoàn thành" để xác nhận đơn yêu cầu này đã được cứu trợ
+                  thành công.
                 </p>
               </div>
             ) : (
@@ -893,7 +939,8 @@ export default function ReliefRequests() {
                         </SelectItem>
                       </>
                     )}
-                    {selectedRequest?.status === RescueRequestStatus.REVIEWED && (
+                    {selectedRequest?.status ===
+                      RescueRequestStatus.REVIEWED && (
                       <>
                         <SelectItem value={RescueRequestStatus.REVIEWED}>
                           Đã đánh giá - Chấp nhận
@@ -903,7 +950,8 @@ export default function ReliefRequests() {
                         </SelectItem>
                       </>
                     )}
-                    {selectedRequest?.status === RescueRequestStatus.ACCEPTED && (
+                    {selectedRequest?.status ===
+                      RescueRequestStatus.ACCEPTED && (
                       <>
                         <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
                           Đang thực hiện
@@ -923,61 +971,62 @@ export default function ReliefRequests() {
 
             {/* Chỉ hiện priority khi không phải IN_PROGRESS và không phải CANCELED */}
             {selectedRequest?.status !== RescueRequestStatus.IN_PROGRESS &&
-             reviewForm.status !== RescueRequestStatus.CANCELED && (
-              <div className="space-y-2">
-                <Label>Mức độ ưu tiên *</Label>
-                <Select
-                  value={reviewForm.priority}
-                  onValueChange={(value) =>
-                    setReviewForm((prev) => ({
-                      ...prev,
-                      priority: value as RescueRequestPriority,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn mức độ" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={RescueRequestPriority.CRITICAL}>
-                      Khẩn cấp
-                    </SelectItem>
-                    <SelectItem value={RescueRequestPriority.HIGH}>
-                      Cao
-                    </SelectItem>
-                    <SelectItem value={RescueRequestPriority.MEDIUM}>
-                      Trung bình
-                    </SelectItem>
-                    <SelectItem value={RescueRequestPriority.LOW}>
-                      Thấp
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+              reviewForm.status !== RescueRequestStatus.CANCELED && (
+                <div className="space-y-2">
+                  <Label>Mức độ ưu tiên *</Label>
+                  <Select
+                    value={reviewForm.priority}
+                    onValueChange={(value) =>
+                      setReviewForm((prev) => ({
+                        ...prev,
+                        priority: value as RescueRequestPriority,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn mức độ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={RescueRequestPriority.CRITICAL}>
+                        Khẩn cấp
+                      </SelectItem>
+                      <SelectItem value={RescueRequestPriority.HIGH}>
+                        Cao
+                      </SelectItem>
+                      <SelectItem value={RescueRequestPriority.MEDIUM}>
+                        Trung bình
+                      </SelectItem>
+                      <SelectItem value={RescueRequestPriority.LOW}>
+                        Thấp
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
             {/* Chỉ hiện required teams khi đang đánh giá lần đầu */}
-            {selectedRequest?.status === RescueRequestStatus.NEW && 
-             reviewForm.status === RescueRequestStatus.REVIEWED && (
-              <div className="space-y-2">
-                <Label>Số đội cần thiết *</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={reviewForm.requiredTeams}
-                  onChange={(e) =>
-                    setReviewForm((prev) => ({
-                      ...prev,
-                      requiredTeams: parseInt(e.target.value) || 1,
-                    }))
-                  }
-                  placeholder="Nhập số đội cần thiết"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Ước lượng số người cần cứu: {selectedRequest.estimatedPeople || 'Chưa rõ'}
-                </p>
-              </div>
-            )}
+            {selectedRequest?.status === RescueRequestStatus.NEW &&
+              reviewForm.status === RescueRequestStatus.REVIEWED && (
+                <div className="space-y-2">
+                  <Label>Số đội cần thiết *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={reviewForm.requiredTeams}
+                    onChange={(e) =>
+                      setReviewForm((prev) => ({
+                        ...prev,
+                        requiredTeams: parseInt(e.target.value) || 1,
+                      }))
+                    }
+                    placeholder="Nhập số đội cần thiết"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Ước lượng số người cần cứu:{" "}
+                    {selectedRequest.estimatedPeople || "Chưa rõ"}
+                  </p>
+                </div>
+              )}
 
             {/* Ghi chú: Không hiện khi IN_PROGRESS */}
             {selectedRequest?.status !== RescueRequestStatus.IN_PROGRESS && (
@@ -1022,13 +1071,17 @@ export default function ReliefRequests() {
             <Button
               onClick={handleReviewRequest}
               disabled={reviewRequestLoading || cancelRequestLoading}
-              className={selectedRequest?.status === RescueRequestStatus.IN_PROGRESS ? "bg-green-600 hover:bg-green-700" : ""}
+              className={
+                selectedRequest?.status === RescueRequestStatus.IN_PROGRESS
+                  ? "bg-green-600 hover:bg-green-700"
+                  : ""
+              }
             >
               {reviewRequestLoading || cancelRequestLoading
                 ? "Đang xử lý..."
                 : selectedRequest?.status === RescueRequestStatus.IN_PROGRESS
-                ? "Hoàn thành"
-                : "Xác nhận"}
+                  ? "Hoàn thành"
+                  : "Xác nhận"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1072,26 +1125,32 @@ export default function ReliefRequests() {
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Ngày tạo</Label>
-                      <p className="text-sm">{formatDateTime(selectedRequest.createdAt)}</p>
+                      <p className="text-sm">
+                        {formatDateTime(selectedRequest.createdAt)}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Cập nhật</Label>
-                      <p className="text-sm">{formatDateTime(selectedRequest.updatedAt)}</p>
+                      <p className="text-sm">
+                        {formatDateTime(selectedRequest.updatedAt)}
+                      </p>
                     </div>
                     {selectedRequest.estimatedPeople && (
                       <div>
-                        <Label className="text-muted-foreground">Ước lượng số người</Label>
+                        <Label className="text-muted-foreground">
+                          Ước lượng số người
+                        </Label>
                         <p className="text-sm font-semibold text-orange-600">
                           {selectedRequest.estimatedPeople} người cần cứu trợ
                         </p>
                       </div>
                     )}
-                    {selectedRequest.creatorId && (
+                    {/* {selectedRequest.creatorId && (
                       <div>
                         <Label className="text-muted-foreground">ID người tạo</Label>
                         <p className="text-sm font-mono">{selectedRequest.creatorId}</p>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
 
@@ -1115,17 +1174,13 @@ export default function ReliefRequests() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Họ tên</Label>
-                      <p>
-                        {selectedRequest.guestName || 'N/A'}
-                      </p>
+                      <p>{selectedRequest.guestName || "N/A"}</p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">
                         Số điện thoại
                       </Label>
-                      <p>
-                        {selectedRequest.guestPhone || 'N/A'}
-                      </p>
+                      <p>{selectedRequest.guestPhone || "N/A"}</p>
                     </div>
                   </div>
                 </div>
@@ -1136,30 +1191,38 @@ export default function ReliefRequests() {
                     <div>
                       <Label className="text-muted-foreground">Địa chỉ</Label>
                       <p className="text-sm">
-                        {selectedRequest.address || 'N/A'}
+                        {selectedRequest.address || "N/A"}
                       </p>
                     </div>
                     {selectedRequest.latitude && selectedRequest.longitude && (
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label className="text-muted-foreground">Vĩ độ</Label>
-                            <p className="text-sm">{selectedRequest.latitude}</p>
+                            <Label className="text-muted-foreground">
+                              Vĩ độ
+                            </Label>
+                            <p className="text-sm">
+                              {selectedRequest.latitude}
+                            </p>
                           </div>
                           <div>
                             <Label className="text-muted-foreground">
                               Kinh độ
                             </Label>
-                            <p className="text-sm">{selectedRequest.longitude}</p>
+                            <p className="text-sm">
+                              {selectedRequest.longitude}
+                            </p>
                           </div>
                         </div>
                         <div>
-                          <Label className="text-muted-foreground mb-2 block">Bản đồ</Label>
+                          <Label className="text-muted-foreground mb-2 block">
+                            Bản đồ
+                          </Label>
                           <iframe
                             src={`https://maps.google.com/maps?q=${selectedRequest.latitude},${selectedRequest.longitude}&output=embed`}
                             width="100%"
                             height="300"
-                            style={{ border: 0, borderRadius: '8px' }}
+                            style={{ border: 0, borderRadius: "8px" }}
                             loading="lazy"
                             referrerPolicy="no-referrer-when-downgrade"
                             title="Vị trí cứu trợ"
@@ -1176,19 +1239,33 @@ export default function ReliefRequests() {
                     <div className="border rounded p-4 bg-muted/50">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-muted-foreground">Số đội cần thiết</Label>
-                          <p className="text-lg font-semibold">{selectedRequest.teamSummary.required}</p>
+                          <Label className="text-muted-foreground">
+                            Số đội cần thiết
+                          </Label>
+                          <p className="text-lg font-semibold">
+                            {selectedRequest.teamSummary.required}
+                          </p>
                         </div>
                         <div>
-                          <Label className="text-muted-foreground">Số đội đã gán</Label>
-                          <p className="text-lg font-semibold">{selectedRequest.teamSummary.assigned}</p>
+                          <Label className="text-muted-foreground">
+                            Số đội đã gán
+                          </Label>
+                          <p className="text-lg font-semibold">
+                            {selectedRequest.teamSummary.assigned}
+                          </p>
                         </div>
                         <div>
-                          <Label className="text-muted-foreground">Số đội đã nhận</Label>
-                          <p className="text-lg font-semibold text-green-600">{selectedRequest.teamSummary.accepted}</p>
+                          <Label className="text-muted-foreground">
+                            Số đội đã nhận
+                          </Label>
+                          <p className="text-lg font-semibold text-green-600">
+                            {selectedRequest.teamSummary.accepted}
+                          </p>
                         </div>
                         <div>
-                          <Label className="text-muted-foreground">Trạng thái</Label>
+                          <Label className="text-muted-foreground">
+                            Trạng thái
+                          </Label>
                           <p className="text-lg font-semibold">
                             {selectedRequest.teamSummary.isFulfilled ? (
                               <span className="text-green-600">✓ Đủ đội</span>
@@ -1226,7 +1303,8 @@ export default function ReliefRequests() {
                               )}
                               {team.respondedAt && (
                                 <p className="text-xs text-muted-foreground">
-                                  Phản hồi lúc: {formatDateTime(team.respondedAt)}
+                                  Phản hồi lúc:{" "}
+                                  {formatDateTime(team.respondedAt)}
                                 </p>
                               )}
                             </div>
@@ -1240,19 +1318,23 @@ export default function ReliefRequests() {
                 {assignmentsLoading ? (
                   <div className="text-center py-4">
                     <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-                    <p className="text-sm text-muted-foreground mt-2">Đang tải chi tiết phân công...</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Đang tải chi tiết phân công...
+                    </p>
                   </div>
-                ) : assignmentsData && (
-                  <div>
-                    <h3 className="font-semibold mb-2">
-                      Chi tiết phân công từ hệ thống
-                    </h3>
-                    <div className="border rounded p-4 bg-muted/50">
-                      <pre className="text-xs overflow-auto max-h-[300px]">
-                        {JSON.stringify(assignmentsData, null, 2)}
-                      </pre>
+                ) : (
+                  assignmentsData && (
+                    <div>
+                      <h3 className="font-semibold mb-2">
+                        Chi tiết phân công từ hệ thống
+                      </h3>
+                      <div className="border rounded p-4 bg-muted/50">
+                        <pre className="text-xs overflow-auto max-h-[300px]">
+                          {JSON.stringify(assignmentsData, null, 2)}
+                        </pre>
+                      </div>
                     </div>
-                  </div>
+                  )
                 )}
               </div>
             </div>
