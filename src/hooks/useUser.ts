@@ -1,35 +1,31 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { 
-  userApi, 
-  CreateAccountDto, 
-  UpdateAccountDto, 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  userApi,
+  CreateAccountDto,
+  UpdateAccountDto,
   UpdateAccountStatusDto,
-  VerifyContactDto 
-} from '../apis/userApi';
-import { PaginationParams } from '../types';
+  VerifyContactDto,
+  UserListParams,
+} from "../apis/userApi";
 
 // Query keys
 export const userKeys = {
-  all: ['users'] as const,
-  lists: () => [...userKeys.all, 'list'] as const,
+  all: ["users"] as const,
+  lists: () => [...userKeys.all, "list"] as const,
   list: (filters?: any) => [...userKeys.lists(), filters] as const,
-  details: () => [...userKeys.all, 'detail'] as const,
+  details: () => [...userKeys.all, "detail"] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
 };
 
 // Hook to get users list
-export const useUsers = (params?: Partial<PaginationParams> & {
-  role?: string;
-  search?: string;
-  isActive?: boolean;
-}) => {
+export const useUsers = (params?: UserListParams) => {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: async () => {
-      console.log('[useUsers] Query function called with params:', params);
+      console.log("[useUsers] Query function called with params:", params);
       const response = await userApi.getUsers(params);
-      console.log('[useUsers] Query response:', response);
+      console.log("[useUsers] Query response:", response);
       return response;
     },
     staleTime: 0,
@@ -55,21 +51,24 @@ export const useCreateUser = () => {
 
   return useMutation({
     mutationFn: async (data: CreateAccountDto) => {
-      console.log('[useCreateUser] Mutation function called with:', data);
+      console.log("[useCreateUser] Mutation function called with:", data);
       const response = await userApi.createUser(data);
-      console.log('[useCreateUser] API response:', response);
+      console.log("[useCreateUser] API response:", response);
       return response;
     },
     onSuccess: async () => {
-      console.log('[useCreateUser] Mutation success, invalidating queries');
+      console.log("[useCreateUser] Mutation success, invalidating queries");
       await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       await queryClient.refetchQueries({ queryKey: userKeys.lists() });
-      console.log('[useCreateUser] Queries invalidated and refetched');
-      toast.success('Tạo tài khoản thành công!');
+      console.log("[useCreateUser] Queries invalidated and refetched");
+      toast.success("Tạo tài khoản thành công!");
     },
     onError: (error: any) => {
-      console.error('[useCreateUser] Mutation error:', error);
-      const message = error?.response?.data?.message || error.message || 'Tạo tài khoản thất bại';
+      console.error("[useCreateUser] Mutation error:", error);
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Tạo tài khoản thất bại";
       toast.error(message);
     },
   });
@@ -80,23 +79,39 @@ export const useUpdateUser = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateAccountDto }) => {
-      console.log('[useUpdateUser] Mutation function called with id:', id, 'data:', data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateAccountDto;
+    }) => {
+      console.log(
+        "[useUpdateUser] Mutation function called with id:",
+        id,
+        "data:",
+        data,
+      );
       const response = await userApi.updateUser(id, data);
-      console.log('[useUpdateUser] API response:', response);
+      console.log("[useUpdateUser] API response:", response);
       return response;
     },
     onSuccess: async (_response, variables) => {
-      console.log('[useUpdateUser] Mutation success, invalidating queries');
+      console.log("[useUpdateUser] Mutation success, invalidating queries");
       await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      await queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      await queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.id),
+      });
       await queryClient.refetchQueries({ queryKey: userKeys.lists() });
-      console.log('[useUpdateUser] Queries invalidated and refetched');
-      toast.success('Cập nhật tài khoản thành công!');
+      console.log("[useUpdateUser] Queries invalidated and refetched");
+      toast.success("Cập nhật tài khoản thành công!");
     },
     onError: (error: any) => {
-      console.error('[useUpdateUser] Mutation error:', error);
-      const message = error?.response?.data?.message || error.message || 'Cập nhật tài khoản thất bại';
+      console.error("[useUpdateUser] Mutation error:", error);
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Cập nhật tài khoản thất bại";
       toast.error(message);
     },
   });
@@ -108,21 +123,24 @@ export const useDeleteUser = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      console.log('[useDeleteUser] Mutation function called with id:', id);
+      console.log("[useDeleteUser] Mutation function called with id:", id);
       const response = await userApi.deleteUser(id);
-      console.log('[useDeleteUser] API response:', response);
+      console.log("[useDeleteUser] API response:", response);
       return response;
     },
     onSuccess: async () => {
-      console.log('[useDeleteUser] Mutation success, invalidating queries');
+      console.log("[useDeleteUser] Mutation success, invalidating queries");
       await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       await queryClient.refetchQueries({ queryKey: userKeys.lists() });
-      console.log('[useDeleteUser] Queries invalidated and refetched');
-      toast.success('Xóa tài khoản thành công!');
+      console.log("[useDeleteUser] Queries invalidated and refetched");
+      toast.success("Xóa tài khoản thành công!");
     },
     onError: (error: any) => {
-      console.error('[useDeleteUser] Mutation error:', error);
-      const message = error?.response?.data?.message || error.message || 'Xóa tài khoản thất bại';
+      console.error("[useDeleteUser] Mutation error:", error);
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Xóa tài khoản thất bại";
       toast.error(message);
     },
   });
@@ -133,23 +151,41 @@ export const useUpdateUserStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateAccountStatusDto }) => {
-      console.log('[useUpdateUserStatus] Mutation function called with id:', id, 'data:', data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateAccountStatusDto;
+    }) => {
+      console.log(
+        "[useUpdateUserStatus] Mutation function called with id:",
+        id,
+        "data:",
+        data,
+      );
       const response = await userApi.updateUserStatus(id, data);
-      console.log('[useUpdateUserStatus] API response:', response);
+      console.log("[useUpdateUserStatus] API response:", response);
       return response;
     },
     onSuccess: async (_response, variables) => {
-      console.log('[useUpdateUserStatus] Mutation success, invalidating queries');
+      console.log(
+        "[useUpdateUserStatus] Mutation success, invalidating queries",
+      );
       await queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      await queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      await queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.id),
+      });
       await queryClient.refetchQueries({ queryKey: userKeys.lists() });
-      console.log('[useUpdateUserStatus] Queries invalidated and refetched');
-      toast.success('Cập nhật trạng thái thành công!');
+      console.log("[useUpdateUserStatus] Queries invalidated and refetched");
+      toast.success("Cập nhật trạng thái thành công!");
     },
     onError: (error: any) => {
-      console.error('[useUpdateUserStatus] Mutation error:', error);
-      const message = error?.response?.data?.message || error.message || 'Cập nhật trạng thái thất bại';
+      console.error("[useUpdateUserStatus] Mutation error:", error);
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Cập nhật trạng thái thất bại";
       toast.error(message);
     },
   });
@@ -166,10 +202,13 @@ export const useConfirmContact = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      toast.success('Xác nhận liên lạc thành công!');
+      toast.success("Xác nhận liên lạc thành công!");
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || error.message || 'Xác nhận liên lạc thất bại';
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Xác nhận liên lạc thất bại";
       toast.error(message);
     },
   });
@@ -180,16 +219,25 @@ export const useVerifyContact = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: VerifyContactDto }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: VerifyContactDto;
+    }) => {
       const response = await userApi.verifyContact(id, data);
       return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      toast.success('Xác minh liên lạc thành công!');
+      toast.success("Xác minh liên lạc thành công!");
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || error.message || 'Xác minh liên lạc thất bại';
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Xác minh liên lạc thất bại";
       toast.error(message);
     },
   });

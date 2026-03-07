@@ -15,13 +15,9 @@ import StaffLayout from "../layouts/StaffLayout";
 import AuthLayout from "../layouts/AuthLayout";
 
 // Admin Pages
-import AdminDashboard from "../pages/admin/Dashboard";
-import CreateEvent from "../pages/admin/CreateEvent";
-import EditEvent from "../pages/admin/EditEvent";
-import EventsList from "../pages/admin/EventsList";
+
 import UserManagement from "../pages/admin/UserManagement";
-import DonationManagement from "../pages/admin/DonationManagement";
-import TeamManagement from "../pages/admin/TeamManagement";
+import UpdateProfile from "../pages/admin/UpdateProfile";
 import ReliefRequests from "../pages/admin/ReliefRequests";
 import Warehouse from "../pages/admin/Warehouse";
 
@@ -35,6 +31,10 @@ import TeamWarehouse from "../pages/staff/TeamWarehouse";
 // Auth Pages
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import AdminDashboard from "@/pages/admin/Dashboard";
+import EventLayout from "@/pages/admin/EventManagement/eventLayout";
+
+import EventsList from "../pages/admin/EventManagement/eventComponent/EventList";
 
 const router = createBrowserRouter([
   // Auth routes
@@ -78,6 +78,7 @@ const router = createBrowserRouter([
       },
       {
         path: "events",
+        element: <EventLayout />,
         children: [
           {
             index: true,
@@ -85,11 +86,11 @@ const router = createBrowserRouter([
           },
           {
             path: "create",
-            element: <CreateEvent />,
+            element: <Navigate to={ROUTES.ADMIN_EVENTS} replace />,
           },
           {
             path: ":id/edit",
-            element: <EditEvent />,
+            element: <Navigate to={ROUTES.ADMIN_EVENTS} replace />,
           },
         ],
       },
@@ -98,12 +99,8 @@ const router = createBrowserRouter([
         element: <UserManagement />,
       },
       {
-        path: "donations",
-        element: <DonationManagement />,
-      },
-      {
-        path: "teams",
-        element: <TeamManagement />,
+        path: "update-profile",
+        element: <UpdateProfile />,
       },
       {
         path: "relief-requests",
