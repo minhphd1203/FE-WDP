@@ -1,5 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, Users, Package, AlertCircle, UserCog } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  Users,
+  Package,
+  AlertCircle,
+  UserCog,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,29 +25,29 @@ export default function AdminDashboard() {
       title: "Sự kiện đang mở",
       value: "-",
       icon: Calendar,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-red-700",
+      bgColor: "bg-red-100",
     },
     {
       title: "Yêu cầu chờ xử lý",
       value: "-",
       icon: AlertCircle,
-      color: "text-red-600",
-      bgColor: "bg-red-100",
+      color: "text-rose-700",
+      bgColor: "bg-rose-100",
     },
     {
       title: "Tổng tồn kho",
       value: "-",
       icon: Package,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      color: "text-emerald-700",
+      bgColor: "bg-emerald-100",
     },
     {
       title: "Tổng tài khoản",
       value: "-",
       icon: Users,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
+      color: "text-slate-700",
+      bgColor: "bg-slate-100",
     },
   ];
 
@@ -50,28 +57,32 @@ export default function AdminDashboard() {
       description: "Tạo đội cứu trợ hoặc chiến dịch quyên góp",
       action: () => navigate(ROUTES.ADMIN_CREATE_EVENT),
       icon: Plus,
-      color: "bg-blue-500 hover:bg-blue-600",
+      color:
+        "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700",
     },
     {
       title: "Yêu cầu cứu hộ",
       description: "Xem và xử lý các yêu cầu cứu hộ",
       action: () => navigate(ROUTES.ADMIN_RELIEF_REQUESTS),
       icon: AlertCircle,
-      color: "bg-red-500 hover:bg-red-600",
+      color:
+        "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700",
     },
     {
       title: "Quản lý kho",
       description: "Xem và quản lý vật phẩm cứu trợ",
       action: () => navigate(ROUTES.ADMIN_WAREHOUSE),
       icon: Package,
-      color: "bg-green-500 hover:bg-green-600",
+      color:
+        "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700",
     },
     {
       title: "Tài khoản",
       description: "Quản lý Admin, Staff và User",
       action: () => navigate(ROUTES.ADMIN_USERS),
       icon: UserCog,
-      color: "bg-purple-500 hover:bg-purple-600",
+      color:
+        "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700",
     },
   ];
 
@@ -89,17 +100,22 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+          <Card
+            key={index}
+            className="border-red-100 bg-gradient-to-br from-white to-red-50/30"
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-red-100">
+              <CardTitle className="text-sm font-semibold text-slate-900">
                 {stat.title}
               </CardTitle>
-              <div className={`p-2 rounded-full ${stat.bgColor}`}>
+              <div className={`p-2 rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+            <CardContent className="pt-4">
+              <div className="text-2xl font-bold text-slate-900">
+                {stat.value}
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -107,26 +123,28 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Thao tác nhanh</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">
+          Thao tác nhanh
+        </h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action, index) => (
             <Card
               key={index}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className="border-red-100 bg-gradient-to-br from-white to-red-50/30 cursor-pointer hover:shadow-lg hover:border-red-200 transition-all"
               onClick={action.action}
             >
               <CardHeader>
                 <div
-                  className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center mb-4`}
+                  className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center mb-4 shadow-md`}
                 >
                   <action.icon className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">{action.title}</CardTitle>
+                <CardTitle className="text-lg font-bold text-slate-900">
+                  {action.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {action.description}
-                </p>
+                <p className="text-sm text-slate-600">{action.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -135,25 +153,25 @@ export default function AdminDashboard() {
 
       {/* Recent Activities - Placeholder */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sự kiện gần đây</CardTitle>
+        <Card className="border-red-100 bg-gradient-to-br from-white to-red-50/30">
+          <CardHeader className="border-b border-red-100 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-900">
+              Sự kiện gần đây
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Chưa có sự kiện nào
-            </p>
+          <CardContent className="pt-4">
+            <p className="text-sm text-slate-600">Chưa có sự kiện nào</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Yêu cầu cứu hộ mới</CardTitle>
+        <Card className="border-red-100 bg-gradient-to-br from-white to-red-50/30">
+          <CardHeader className="border-b border-red-100 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-900">
+              Yêu cầu cứu hộ mới
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Chưa có yêu cầu nào
-            </p>
+          <CardContent className="pt-4">
+            <p className="text-sm text-slate-600">Chưa có yêu cầu nào</p>
           </CardContent>
         </Card>
       </div>

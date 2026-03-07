@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, FileText, Eye } from "lucide-react";
+import { Package, FileText, Eye, RefreshCw } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,6 +28,9 @@ import { formatDate } from "../../../lib/utils";
 import { toast } from "sonner";
 
 type Tab = "stocks" | "receipts";
+
+const viewButtonClass =
+  "h-9 rounded-lg border border-red-300 bg-white text-red-700 text-sm font-medium transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-700 disabled:border-red-200 disabled:bg-red-50 disabled:text-red-300";
 
 export default function Warehouse() {
   const [activeTab, setActiveTab] = useState<Tab>("stocks");
@@ -101,10 +104,10 @@ export default function Warehouse() {
 
   const getConditionBadge = (condition: string) => {
     const conditionColors: Record<string, string> = {
-      EXCELLENT: "bg-green-100 text-green-800",
-      GOOD: "bg-blue-100 text-blue-800",
-      FAIR: "bg-yellow-100 text-yellow-800",
-      POOR: "bg-red-100 text-red-800",
+      EXCELLENT: "bg-emerald-100 text-emerald-800",
+      GOOD: "bg-cyan-100 text-cyan-800",
+      FAIR: "bg-amber-100 text-amber-800",
+      POOR: "bg-rose-100 text-rose-800",
     };
 
     const conditionLabels: Record<string, string> = {
@@ -116,7 +119,7 @@ export default function Warehouse() {
 
     return (
       <Badge
-        className={conditionColors[condition] || "bg-gray-100 text-gray-800"}
+        className={conditionColors[condition] || "bg-slate-100 text-slate-800"}
       >
         {conditionLabels[condition] || condition}
       </Badge>
@@ -135,81 +138,87 @@ export default function Warehouse() {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-2 border-b">
+      <div className="flex space-x-2 border-b border-red-100">
         <button
           onClick={() => setActiveTab("stocks")}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
             activeTab === "stocks"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-b-2 border-red-600 text-red-700"
+              : "text-muted-foreground hover:text-slate-900"
           }`}
         >
-          <Package className="inline h-4 w-4 mr-2" />
+          <Package className="h-4 w-4" />
           Tồn kho
         </button>
         <button
           onClick={() => setActiveTab("receipts")}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
             activeTab === "receipts"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-b-2 border-red-600 text-red-700"
+              : "text-muted-foreground hover:text-slate-900"
           }`}
         >
-          <FileText className="inline h-4 w-4 mr-2" />
+          <FileText className="h-4 w-4" />
           Biên lai nhập kho
         </button>
       </div>
 
       {/* Stocks Tab */}
       {activeTab === "stocks" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Tồn kho ({stocks?.length || 0})</CardTitle>
-            <Button onClick={fetchStocks} variant="outline" size="sm">
+        <Card className="border-red-100">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-red-100 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-900">
+              Tồn kho ({stocks?.length || 0})
+            </CardTitle>
+            <Button
+              onClick={fetchStocks}
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-lg border-red-300 text-red-700 hover:bg-red-50"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {isLoadingStocks ? (
               <div className="text-center py-8">Đang tải...</div>
             ) : (stocks?.length || 0) > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
                     <TableHead>Danh mục</TableHead>
-                    <TableHead>Tình trạng</TableHead>
-                    <TableHead>Số lượng</TableHead>
-                    <TableHead>Cập nhật lần cuối</TableHead>
-                    <TableHead>Thao tác</TableHead>
+                    <TableHead className="text-center">Tình trạng</TableHead>
+                    <TableHead className="text-center">Số lượng</TableHead>
+                    <TableHead className="text-center">
+                      Cập nhật lần cuối
+                    </TableHead>
+                    <TableHead className="text-center">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stocks.map((stock: any) => (
                     <TableRow key={stock.id}>
-                      <TableCell className="font-mono text-xs">
-                        {stock.id?.substring(0, 8) || "N/A"}...
-                      </TableCell>
                       <TableCell className="font-medium">
                         {stock.category?.name || stock.categoryName || "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {getConditionBadge(stock.condition || "GOOD")}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <span className="font-semibold">
                           {stock.quantity || 0}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {stock.lastUpdated || stock.updatedAt
                           ? formatDate(stock.lastUpdated || stock.updatedAt)
                           : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Button
                           size="sm"
-                          variant="outline"
+                          className={viewButtonClass}
                           onClick={() => handleViewStockDetail(stock)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -231,52 +240,56 @@ export default function Warehouse() {
 
       {/* Receipts Tab */}
       {activeTab === "receipts" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Biên lai nhập kho ({receipts?.length || 0})</CardTitle>
-            <Button onClick={fetchReceipts} variant="outline" size="sm">
+        <Card className="border-red-100">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-red-100 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-900">
+              Biên lai nhập kho ({receipts?.length || 0})
+            </CardTitle>
+            <Button
+              onClick={fetchReceipts}
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-lg border-red-300 text-red-700 hover:bg-red-50"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {isLoadingReceipts ? (
               <div className="text-center py-8">Đang tải...</div>
             ) : (receipts?.length || 0) > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>ID quyên góp</TableHead>
-                    <TableHead>Người quyên góp</TableHead>
-                    <TableHead>Ngày nhận</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Thao tác</TableHead>
+                    <TableHead className="text-center">
+                      Người quyên góp
+                    </TableHead>
+                    <TableHead className="text-center">Ngày nhận</TableHead>
+                    <TableHead className="text-center">Ngày tạo</TableHead>
+                    <TableHead className="text-center">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {receipts.map((receipt: any) => (
                     <TableRow key={receipt.id}>
-                      <TableCell className="font-mono text-xs">
-                        {receipt.id?.substring(0, 8) || "N/A"}...
+                      <TableCell className="text-center">
+                        {receipt.donorName || "-"}
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {receipt.donationId?.substring(0, 8) || "N/A"}...
-                      </TableCell>
-                      <TableCell>{receipt.donorName || "-"}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {receipt.receivedAt
                           ? formatDate(receipt.receivedAt)
                           : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {receipt.createdAt
                           ? formatDate(receipt.createdAt)
                           : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Button
                           size="sm"
-                          variant="outline"
+                          className={viewButtonClass}
                           onClick={() => handleViewReceiptDetail(receipt)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -298,9 +311,11 @@ export default function Warehouse() {
 
       {/* Stock Detail Dialog */}
       <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Chi tiết tồn kho</DialogTitle>
+        <DialogContent className="max-w-2xl rounded-3xl border-2 border-red-100 bg-gradient-to-br from-white to-red-50/30">
+          <DialogHeader className="border-b border-red-100 pb-4">
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Chi tiết tồn kho
+            </DialogTitle>
             <DialogDescription>
               Thông tin chi tiết về sản phẩm trong kho
             </DialogDescription>
@@ -309,31 +324,27 @@ export default function Warehouse() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    ID
+                  <p className="text-sm font-medium text-slate-600">ID</p>
+                  <p className="text-sm font-mono font-semibold mt-1">
+                    {selectedStock.id}
                   </p>
-                  <p className="text-sm font-mono">{selectedStock.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Danh mục
-                  </p>
-                  <p className="text-sm">
+                  <p className="text-sm font-medium text-slate-600">Danh mục</p>
+                  <p className="text-sm font-semibold mt-1">
                     {selectedStock.category?.name ||
                       selectedStock.categoryName ||
                       "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Số lượng
-                  </p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-sm font-medium text-slate-600">Số lượng</p>
+                  <p className="text-lg font-bold text-red-700 mt-1">
                     {selectedStock.quantity || 0}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-600">
                     Tình trạng
                   </p>
                   <div className="mt-1">
@@ -341,20 +352,18 @@ export default function Warehouse() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Ngày tạo
-                  </p>
-                  <p className="text-sm">
+                  <p className="text-sm font-medium text-slate-600">Ngày tạo</p>
+                  <p className="text-sm mt-1">
                     {selectedStock.createdAt
                       ? formatDate(selectedStock.createdAt)
                       : "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-600">
                     Cập nhật lần cuối
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm mt-1">
                     {selectedStock.lastUpdated || selectedStock.updatedAt
                       ? formatDate(
                           selectedStock.lastUpdated || selectedStock.updatedAt,
@@ -365,20 +374,16 @@ export default function Warehouse() {
               </div>
 
               {selectedStock.location && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Vị trí
-                  </p>
-                  <p className="text-sm">{selectedStock.location}</p>
+                <div className="rounded-xl border border-red-100 bg-red-50/50 p-3">
+                  <p className="text-sm font-medium text-slate-600">Vị trí</p>
+                  <p className="text-sm mt-1">{selectedStock.location}</p>
                 </div>
               )}
 
               {selectedStock.note && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Ghi chú
-                  </p>
-                  <p className="text-sm">{selectedStock.note}</p>
+                <div className="rounded-xl border border-red-100 bg-red-50/50 p-3">
+                  <p className="text-sm font-medium text-slate-600">Ghi chú</p>
+                  <p className="text-sm mt-1">{selectedStock.note}</p>
                 </div>
               )}
             </div>
@@ -388,9 +393,11 @@ export default function Warehouse() {
 
       {/* Receipt Detail Dialog */}
       <Dialog open={isReceiptDialogOpen} onOpenChange={setIsReceiptDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Chi tiết biên lai nhập kho</DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto rounded-3xl border-2 border-red-100 bg-gradient-to-br from-white to-red-50/30">
+          <DialogHeader className="border-b border-red-100 pb-4">
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Chi tiết biên lai nhập kho
+            </DialogTitle>
             <DialogDescription>
               Thông tin chi tiết về biên lai nhập kho
             </DialogDescription>
@@ -401,40 +408,42 @@ export default function Warehouse() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-600">
                     ID Biên lai
                   </p>
-                  <p className="text-sm font-mono">{selectedReceipt.id}</p>
+                  <p className="text-sm font-mono font-semibold mt-1">
+                    {selectedReceipt.id}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-600">
                     ID Quyên góp
                   </p>
-                  <p className="text-sm font-mono">
+                  <p className="text-sm font-mono font-semibold mt-1">
                     {selectedReceipt.donationId || "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-600">
                     Người quyên góp
                   </p>
-                  <p className="text-sm">{selectedReceipt.donorName || "-"}</p>
+                  <p className="text-sm font-semibold mt-1">
+                    {selectedReceipt.donorName || "-"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-600">
                     Ngày nhận
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm mt-1">
                     {selectedReceipt.receivedAt
                       ? formatDate(selectedReceipt.receivedAt)
                       : "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Ngày tạo
-                  </p>
-                  <p className="text-sm">
+                  <p className="text-sm font-medium text-slate-600">Ngày tạo</p>
+                  <p className="text-sm mt-1">
                     {selectedReceipt.createdAt
                       ? formatDate(selectedReceipt.createdAt)
                       : "-"}
@@ -443,14 +452,14 @@ export default function Warehouse() {
               </div>
 
               {selectedReceipt.items && selectedReceipt.items.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                <div className="rounded-xl border border-red-100 bg-red-50/50 p-3">
+                  <p className="text-sm font-bold text-slate-900 mb-3">
                     Danh sách sản phẩm ({selectedReceipt.items.length})
                   </p>
-                  <div className="border rounded-lg">
+                  <div className="border border-red-200 rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow>
+                        <TableRow className="bg-red-50/50">
                           <TableHead>Tên sản phẩm</TableHead>
                           <TableHead>Danh mục</TableHead>
                           <TableHead>Số lượng</TableHead>
@@ -487,11 +496,9 @@ export default function Warehouse() {
               )}
 
               {selectedReceipt.note && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Ghi chú
-                  </p>
-                  <p className="text-sm">{selectedReceipt.note}</p>
+                <div className="rounded-xl border border-red-100 bg-red-50/50 p-3">
+                  <p className="text-sm font-medium text-slate-600">Ghi chú</p>
+                  <p className="text-sm mt-1">{selectedReceipt.note}</p>
                 </div>
               )}
             </div>

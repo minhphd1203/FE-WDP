@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { Input } from './input';
-import { MapPin } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Input } from "./input";
+import { MapPin } from "lucide-react";
 
 interface LocationAutocompleteProps {
   value?: string;
@@ -12,9 +12,9 @@ interface LocationAutocompleteProps {
 }
 
 export default function LocationAutocomplete({
-  value = '',
+  value = "",
   onChange,
-  placeholder = 'Nhập địa điểm',
+  placeholder = "Nhập địa điểm",
   error,
   showMap = true,
   onCoordinatesChange,
@@ -34,9 +34,9 @@ export default function LocationAutocomplete({
   // Load Google Maps script
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    
-    if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY') {
-      console.warn('Google Maps API key not configured');
+
+    if (!apiKey || apiKey === "YOUR_GOOGLE_MAPS_API_KEY") {
+      console.warn("Google Maps API key not configured");
       return;
     }
 
@@ -48,22 +48,22 @@ export default function LocationAutocomplete({
 
     // Check if script is already in the document
     const existingScript = document.querySelector(
-      `script[src*="maps.googleapis.com/maps/api/js"]`
+      `script[src*="maps.googleapis.com/maps/api/js"]`,
     );
-    
+
     if (existingScript) {
-      existingScript.addEventListener('load', () => setIsScriptLoaded(true));
+      existingScript.addEventListener("load", () => setIsScriptLoaded(true));
       return;
     }
 
     // Load the script
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=vi&region=VN`;
     script.async = true;
     script.defer = true;
     script.onload = () => setIsScriptLoaded(true);
     script.onerror = () => {
-      console.error('Failed to load Google Maps script');
+      console.error("Failed to load Google Maps script");
     };
     document.head.appendChild(script);
 
@@ -74,7 +74,12 @@ export default function LocationAutocomplete({
 
   // Initialize map
   useEffect(() => {
-    if (!isScriptLoaded || !showMap || !mapRef.current || mapInstanceRef.current) {
+    if (
+      !isScriptLoaded ||
+      !showMap ||
+      !mapRef.current ||
+      mapInstanceRef.current
+    ) {
       return;
     }
 
@@ -99,43 +104,49 @@ export default function LocationAutocomplete({
       });
 
       // Add click listener to map
-      mapInstanceRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
-        if (e.latLng) {
-          updateLocationFromLatLng(e.latLng);
-        }
-      });
+      mapInstanceRef.current.addListener(
+        "click",
+        (e: google.maps.MapMouseEvent) => {
+          if (e.latLng) {
+            updateLocationFromLatLng(e.latLng);
+          }
+        },
+      );
 
       // Add drag listener to marker
-      markerRef.current.addListener('dragend', (e: google.maps.MapMouseEvent) => {
-        if (e.latLng) {
-          updateLocationFromLatLng(e.latLng);
-        }
-      });
+      markerRef.current.addListener(
+        "dragend",
+        (e: google.maps.MapMouseEvent) => {
+          if (e.latLng) {
+            updateLocationFromLatLng(e.latLng);
+          }
+        },
+      );
     } catch (error) {
-      console.error('Error initializing Google Maps:', error);
+      console.error("Error initializing Google Maps:", error);
     }
   }, [isScriptLoaded, showMap]);
 
   // Update location from coordinates using Geocoding
   const updateLocationFromLatLng = (latLng: google.maps.LatLng) => {
     const geocoder = new google.maps.Geocoder();
-    
+
     geocoder.geocode({ location: latLng }, (results, status) => {
-      if (status === 'OK' && results && results[0]) {
+      if (status === "OK" && results && results[0]) {
         const address = results[0].formatted_address;
         setInputValue(address);
         onChange(address);
-        
+
         const coords = {
           lat: latLng.lat(),
           lng: latLng.lng(),
         };
         setSelectedCoordinates(coords);
-        
+
         if (onCoordinatesChange) {
           onCoordinatesChange(coords.lat, coords.lng);
         }
-        
+
         // Update marker position
         if (markerRef.current) {
           markerRef.current.setPosition(latLng);
@@ -155,18 +166,18 @@ export default function LocationAutocomplete({
       autocompleteRef.current = new google.maps.places.Autocomplete(
         inputRef.current,
         {
-          componentRestrictions: { country: 'vn' }, // Restrict to Vietnam
-          fields: ['formatted_address', 'name', 'geometry'],
-          types: ['geocode', 'establishment'], // Allow addresses and places
-        }
+          componentRestrictions: { country: "vn" }, // Restrict to Vietnam
+          fields: ["formatted_address", "name", "geometry"],
+          types: ["geocode", "establishment"], // Allow addresses and places
+        },
       );
 
       // Add listener for place selection
-      autocompleteRef.current.addListener('place_changed', () => {
+      autocompleteRef.current.addListener("place_changed", () => {
         const place = autocompleteRef.current?.getPlace();
-        
+
         if (place) {
-          const address = place.formatted_address || place.name || '';
+          const address = place.formatted_address || place.name || "";
           setInputValue(address);
           onChange(address);
 
@@ -174,9 +185,9 @@ export default function LocationAutocomplete({
           if (place.geometry?.location) {
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
-            
+
             setSelectedCoordinates({ lat, lng });
-            
+
             if (onCoordinatesChange) {
               onCoordinatesChange(lat, lng);
             }
@@ -196,7 +207,7 @@ export default function LocationAutocomplete({
         }
       });
     } catch (error) {
-      console.error('Error initializing Google Maps Autocomplete:', error);
+      console.error("Error initializing Google Maps Autocomplete:", error);
     }
   }, [isScriptLoaded, onChange, onCoordinatesChange]);
 
@@ -220,31 +231,34 @@ export default function LocationAutocomplete({
           value={inputValue}
           onChange={handleInputChange}
           placeholder={placeholder}
-          className="pl-10"
+          className="h-11 w-full rounded-xl border-[1px] border-red-400 pl-10 pr-3 text-base focus:ring-0 focus:outline-red-500 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       </div>
-      
+
       {error && <p className="text-sm text-red-500">{error}</p>}
-      
+
       {!isScriptLoaded && (
         <p className="text-xs text-muted-foreground">
-          {import.meta.env.VITE_GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY'
-            ? 'Chưa cấu hình Google Maps API key'
-            : 'Đang tải bản đồ...'}
+          {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ===
+          "YOUR_GOOGLE_MAPS_API_KEY"
+            ? "Chưa cấu hình Google Maps API key"
+            : "Đang tải bản đồ..."}
         </p>
       )}
 
       {/* Map Preview */}
       {showMap && isScriptLoaded && (
         <div className="space-y-2">
-          <div 
-            ref={mapRef} 
-            className="w-full h-[300px] rounded-lg border border-border"
+          <p className="text-sm font-semibold text-slate-700">Bản đồ</p>
+          <div
+            ref={mapRef}
+            className="h-[320px] w-full rounded-2xl border-2 border-red-200"
           />
           {selectedCoordinates && (
             <p className="text-xs text-muted-foreground">
-              Tọa độ: {selectedCoordinates.lat.toFixed(6)}, {selectedCoordinates.lng.toFixed(6)}
-              {' '} • Click trên bản đồ hoặc kéo marker để chọn vị trí chính xác
+              Tọa độ: {selectedCoordinates.lat.toFixed(6)},{" "}
+              {selectedCoordinates.lng.toFixed(6)} • Click trên bản đồ hoặc kéo
+              marker để chọn vị trí chính xác
             </p>
           )}
         </div>

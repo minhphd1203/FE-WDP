@@ -74,8 +74,7 @@ export const ROUTES = {
   ADMIN_CREATE_EVENT: "/admin/events/create",
   ADMIN_EDIT_EVENT: (id: string) => `/admin/events/${id}/edit`,
   ADMIN_USERS: "/admin/users",
-  ADMIN_DONATIONS: "/admin/donations",
-  ADMIN_TEAMS: "/admin/teams",
+  ADMIN_UPDATE_PROFILE: "/admin/update-profile",
   ADMIN_RELIEF_REQUESTS: "/admin/relief-requests",
   ADMIN_WAREHOUSE: "/admin/warehouse",
 
@@ -128,7 +127,8 @@ export const API_ENDPOINTS = {
   RELIEF_REQUEST_ASSIGN: (id: string) => `/relief-requests/${id}/assign`,
   RESCUE_REQUESTS: "/rescue-requests",
   RESCUE_REQUEST_BY_ID: (id: string) => `/rescue-requests/${id}`,
-  RESCUE_REQUEST_ASSIGN: (id: string) => `/rescue-requests/admin/${id}/assignments`,
+  RESCUE_REQUEST_ASSIGN: (id: string) =>
+    `/rescue-requests/admin/${id}/assignments`,
   RESCUE_REQUEST_REVIEW: (id: string) => `/rescue-requests/admin/${id}/review`,
   RESCUE_REQUEST_CANCEL: (id: string) => `/rescue-requests/${id}/cancel`,
 
@@ -139,7 +139,8 @@ export const API_ENDPOINTS = {
   WAREHOUSE_STOCKS: "/warehouse/stocks",
   WAREHOUSE_ALLOCATIONS: "/warehouse/allocations",
   WAREHOUSE_ALLOCATION_BY_ID: (id: string) => `/warehouse/allocations/${id}`,
-  WAREHOUSE_ALLOCATION_STATUS: (id: string) => `/warehouse/allocations/${id}/status`,
+  WAREHOUSE_ALLOCATION_STATUS: (id: string) =>
+    `/warehouse/allocations/${id}/status`,
   WAREHOUSE_RECEIPTS: "/warehouse/receipts",
   WAREHOUSE_RECEIPT_BY_ID: (id: string) => `/warehouse/receipts/${id}`,
 
