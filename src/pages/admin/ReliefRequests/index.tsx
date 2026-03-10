@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, MapPin, Eye, Users, RefreshCw } from "lucide-react";
+import { Search, MapPin, Eye, Users, RefreshCw, ImageOff, X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -39,6 +39,7 @@ import {
   useReviewRequest,
   useCancelRequest,
   useRescueRequestAssignments,
+  useRescueRequestEvidenceImages,
 } from "../../../hooks/useRescueRequest";
 import { useTeams } from "../../../hooks/useTeam";
 import {
@@ -65,6 +66,7 @@ export default function ReliefRequests() {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const limit = 20;
 
@@ -107,6 +109,12 @@ export default function ReliefRequests() {
   // Fetch assignments for selected request
   const { data: assignmentsData, isLoading: assignmentsLoading } =
     useRescueRequestAssignments(selectedRequest?.id || null);
+
+  // Fetch evidence images for selected request (only when detail dialog is open)
+  const { data: evidenceImages = [], isLoading: evidenceImagesLoading } =
+    useRescueRequestEvidenceImages(
+      isDetailDialogOpen ? (selectedRequest?.id || null) : null
+    );
 
   const assignTeamsMutation = useAssignTeams();
   const reviewRequestMutation = useReviewRequest();
@@ -1089,7 +1097,7 @@ export default function ReliefRequests() {
 
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết đơn yêu cầu cứu trợ</DialogTitle>
           </DialogHeader>
@@ -1314,6 +1322,51 @@ export default function ReliefRequests() {
                     </div>
                   )}
 
+                {/* Evidence Images */}
+                <div>
+                  <h3 className="font-semibold mb-2">Ảnh hiện trường</h3>
+                  {evidenceImagesLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                      <p className="text-sm text-muted-foreground ml-2">Đang tải ảnh hiện trường...</p>
+                    </div>
+                  ) : evidenceImages.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {evidenceImages.map((url: string, index: number) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-lg overflow-hidden border border-border cursor-pointer group"
+                          onClick={() => setLightboxIndex(index)}
+                        >
+                          <img
+                            src={url}
+                            alt={`Ảnh hiện trường ${index + 1}`}
+                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+                            }}
+                          />
+                          <div className="hidden absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground text-xs gap-1">
+                            <ImageOff className="h-5 w-5" />
+                            <span>Không tải được</span>
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium drop-shadow">
+                              Xem ảnh
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 border rounded-lg bg-muted/30 text-muted-foreground gap-2">
+                      <ImageOff className="h-8 w-8" />
+                      <p className="text-sm">Không có ảnh hiện trường</p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Detailed Assignments from API */}
                 {assignmentsLoading ? (
                   <div className="text-center py-4">
@@ -1353,6 +1406,50 @@ export default function ReliefRequests() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && evidenceImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+
+          {lightboxIndex > 0 && (
+            <button
+              className="absolute left-4 text-white hover:text-gray-300 transition-colors p-2"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+            >
+              <ChevronLeft className="h-10 w-10" />
+            </button>
+          )}
+
+          <img
+            src={evidenceImages[lightboxIndex]}
+            alt={`Ảnh hiện trường ${lightboxIndex + 1}`}
+            className="max-h-[85vh] max-w-[85vw] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {lightboxIndex < evidenceImages.length - 1 && (
+            <button
+              className="absolute right-4 text-white hover:text-gray-300 transition-colors p-2"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+            >
+              <ChevronRight className="h-10 w-10" />
+            </button>
+          )}
+
+          <div className="absolute bottom-4 text-white text-sm opacity-70">
+            {lightboxIndex + 1} / {evidenceImages.length}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

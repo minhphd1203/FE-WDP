@@ -70,6 +70,21 @@ export const useRescueRequest = (id: string) => {
   });
 };
 
+// Get evidence images for a rescue request
+export const useRescueRequestEvidenceImages = (id: string | null) => {
+  return useQuery({
+    queryKey: [...RESCUE_REQUEST_KEYS.detail(id || ''), 'evidence-images'],
+    queryFn: async () => {
+      if (!id) return [];
+      const response = await rescueRequestApi.getEvidenceImages(id);
+      if (Array.isArray(response.data)) return response.data;
+      if (Array.isArray((response as any)?.data?.data)) return (response as any).data.data;
+      return [];
+    },
+    enabled: !!id,
+  });
+};
+
 // Get assignments for a rescue request
 export const useRescueRequestAssignments = (id: string | null) => {
   return useQuery({
