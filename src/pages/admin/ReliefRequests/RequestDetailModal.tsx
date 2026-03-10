@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Clock3, MapPin, Phone, User, X } from "lucide-react";
+import { Check, Clock3, MapPin, Phone, User, X, Users, ZoomIn, ZoomOut, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -78,6 +78,8 @@ export const RequestDetailModal = ({
   onUpdated,
 }: RequestDetailModalProps) => {
   const [activeMode, setActiveMode] = useState<ActionMode | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [zoom, setZoom] = useState(1);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [evaluateForm, setEvaluateForm] = useState({
     priority: RescueRequestPriority.MEDIUM,
@@ -119,12 +121,36 @@ export const RequestDetailModal = ({
     if (!open) return;
 
     const onEscape = (event: KeyboardEvent) => {
+      if (lightboxIndex !== null) {
+        setLightboxIndex(null);
+        return;
+      }
       if (event.key === "Escape") onOpenChange(false);
     };
 
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (lightboxIndex === null) return;
+
+      if (event.key === "ArrowLeft" && lightboxIndex > 0) {
+        setLightboxIndex(lightboxIndex - 1);
+      } else if (event.key === "ArrowRight" && lightboxIndex < ((request?.evidenceImages?.length || 0) - 1)) {
+        setLightboxIndex(lightboxIndex + 1);
+      } else if (event.key === "+" || event.key === "=") {
+        setZoom((z) => Math.min(3, z + 0.25));
+      } else if (event.key === "-") {
+        setZoom((z) => Math.max(0.5, z - 0.25));
+      } else if (event.key === "0") {
+        setZoom(1);
+      }
+    };
+
     window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [open, onOpenChange]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onEscape);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, onOpenChange, lightboxIndex, request?.evidenceImages]);
 
   const teamSummary = useMemo(
     () => ({
@@ -284,6 +310,174 @@ export const RequestDetailModal = ({
                         <p className="mt-1 text-sm">{formatDateTime(request.updatedAt)}</p>
                       </div>
                     </div>
+
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground">Số người ước tính</p>
+                        <p className="mt-1 flex items-center gap-2 font-medium">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {request.estimatedPeople || "Không có thông tin"}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground">Trạng thái gán đội</p>
+                        <p className="mt-1 font-medium">
+                          {request.isAssigned ? (
+                            <span className="text-green-600">Đã gán đội</span>
+                          ) : (
+                            <span className="text-orange-600">Chưa gán đội</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {request.evidenceImages && request.evidenceImages.length > 0 && (
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground">Hình ảnh bằng chứng ({request.evidenceImages.length})</p>
+                        <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
+                          {request.evidenceImages.map((img, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setLightboxIndex(idx)}
+                              className="group relative aspect-square overflow-hidden rounded-lg border border-border transition-transform hover:scale-105"
+                            >
+                              <img
+                                src={img}
+                                alt={`Evidence ${idx + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
+                              <Maximize2 className="absolute bottom-1 right-1 h-4 w-4 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lightbox */}
+                    {lightboxIndex !== null && (
+                      <div
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
+                        onClick={(e) => {
+                          if (e.target === e.currentTarget) setLightboxIndex(null);
+                        }}
+                      >
+                        {/* Close button */}
+                        <button
+                          type="button"
+                          className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/70 hover:scale-110"
+                          onClick={() => setLightboxIndex(null)}
+                        >
+                          <X className="h-6 w-6" />
+                        </button>
+
+                        {/* Navigation arrows */}
+                        <button
+                          type="button"
+                          className="absolute left-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm transition-all hover:bg-black/70 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
+                          disabled={lightboxIndex === 0}
+                          onClick={() => setLightboxIndex(lightboxIndex - 1)}
+                        >
+                          <ChevronLeft className="h-8 w-8" />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="absolute right-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm transition-all hover:bg-black/70 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
+                          disabled={lightboxIndex === request.evidenceImages.length - 1}
+                          onClick={() => setLightboxIndex(lightboxIndex + 1)}
+                        >
+                          <ChevronRight className="h-8 w-8" />
+                        </button>
+
+                        {/* Image container */}
+                        <div
+                          className="flex max-h-[85vh] max-w-[95vw] items-center justify-center overflow-auto"
+                          onWheel={(e) => {
+                            if (e.deltaY < 0) setZoom((z) => Math.min(3, z + 0.1));
+                            else setZoom((z) => Math.max(0.5, z - 0.1));
+                          }}
+                        >
+                          <img
+                            key={lightboxIndex}
+                            src={request.evidenceImages[lightboxIndex]}
+                            alt={`Evidence ${lightboxIndex + 1}`}
+                            className="max-h-[85vh] max-w-[95vw] object-contain transition-transform duration-200 ease-out"
+                            style={{ transform: `scale(${zoom})` }}
+                          />
+                        </div>
+
+                        {/* Controls */}
+                        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/60 px-6 py-3 backdrop-blur-md">
+                          <button
+                            type="button"
+                            className="rounded-lg bg-white/10 p-2 text-white transition-all hover:bg-white/20 hover:scale-110"
+                            onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
+                          >
+                            <ZoomOut className="h-5 w-5" />
+                          </button>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="50"
+                              max="300"
+                              value={zoom * 100}
+                              onChange={(e) => setZoom(Number(e.target.value) / 100)}
+                              className="h-1.5 w-24 cursor-pointer appearance-none rounded-full bg-white/30 accent-white"
+                            />
+                            <span className="min-w-[50px] text-center text-sm font-medium text-white">
+                              {Math.round(zoom * 100)}%
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="rounded-lg bg-white/10 p-2 text-white transition-all hover:bg-white/20 hover:scale-110"
+                            onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
+                          >
+                            <ZoomIn className="h-5 w-5" />
+                          </button>
+
+                          <div className="h-6 w-px bg-white/20" />
+
+                          <button
+                            type="button"
+                            className="rounded-lg px-3 py-1 text-sm text-white transition-all hover:bg-white/20"
+                            onClick={() => setZoom(1)}
+                          >
+                            100%
+                          </button>
+                        </div>
+
+                        {/* Counter */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1.5 text-sm text-white backdrop-blur-md">
+                          {lightboxIndex + 1} / {request.evidenceImages.length}
+                        </div>
+
+                        {/* Thumbnails */}
+                        <div className="absolute bottom-20 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/60 p-2 backdrop-blur-md">
+                          {request.evidenceImages.map((img, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setLightboxIndex(idx);
+                                setZoom(1);
+                              }}
+                              className={`relative h-12 w-12 overflow-hidden rounded-md transition-all ${
+                                idx === lightboxIndex
+                                  ? "ring-2 ring-white ring-offset-2 ring-offset-black"
+                                  : "opacity-50 hover:opacity-100"
+                              }`}
+                            >
+                              <img src={img} alt="" className="h-full w-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {request.note && (
                       <div className="rounded-lg border border-border p-3">
