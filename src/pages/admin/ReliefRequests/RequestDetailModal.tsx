@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check, Clock3, MapPin, Phone, User, X, Users, ZoomIn, ZoomOut, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
@@ -16,6 +17,7 @@ import {
   useAssignTeams,
   useCancelRequest,
   useReviewRequest,
+  useRescueRequest,
 } from "../../../hooks/useRescueRequest";
 import { useTeams } from "../../../hooks/useTeam";
 import { cn, formatDateTime } from "../../../lib/utils";
@@ -77,6 +79,7 @@ export const RequestDetailModal = ({
   onOpenChange,
   onUpdated,
 }: RequestDetailModalProps) => {
+  const queryClient = useQueryClient();
   const [activeMode, setActiveMode] = useState<ActionMode | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -183,6 +186,9 @@ export const RequestDetailModal = ({
         },
       });
       toast.success("Đánh giá yêu cầu thành công");
+      // Invalidate cache to refresh data
+      queryClient.invalidateQueries({ queryKey: ["rescue-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rescue-request", request.id] });
       onUpdated?.();
       setActiveMode(null);
     } catch {
@@ -201,6 +207,10 @@ export const RequestDetailModal = ({
         id: request.id,
         data: { teamIds: selectedTeamIds },
       });
+      toast.success("Phân công đội thành công");
+      // Invalidate cache to refresh data
+      queryClient.invalidateQueries({ queryKey: ["rescue-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rescue-request", request.id] });
       onUpdated?.();
       setActiveMode(null);
     } catch {
@@ -215,6 +225,7 @@ export const RequestDetailModal = ({
           id: request.id,
           data: { reason: updateForm.note },
         });
+        toast.success("Hủy yêu cầu thành công");
       } else {
         await reviewRequestMutation.mutateAsync({
           id: request.id,
@@ -225,7 +236,11 @@ export const RequestDetailModal = ({
             note: updateForm.note,
           },
         });
+        toast.success("Cập nhật yêu cầu thành công");
       }
+      // Invalidate cache to refresh data
+      queryClient.invalidateQueries({ queryKey: ["rescue-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rescue-request", request.id] });
       onUpdated?.();
       setActiveMode(null);
     } catch {
@@ -544,29 +559,73 @@ export const RequestDetailModal = ({
                     <CardTitle className="text-sm">Hành động xử lý</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* Dynamic buttons based on status */}
+                    {request.status === RescueRequestStatus.NEW && (
                       <Button
                         type="button"
-                        variant={activeMode === "evaluate" ? "default" : "outline"}
-                        onClick={() => setActiveMode(activeMode === "evaluate" ? null : "evaluate")}
+                        className="w-full"
+                        onClick={() => setActiveMode("evaluate")}
                       >
-                        Đánh giá
+                        Đánh giá yêu cầu
                       </Button>
+                    )}
+
+                    {request.status === RescueRequestStatus.REVIEWED && !request.isAssigned && (
                       <Button
                         type="button"
-                        variant={activeMode === "assign" ? "default" : "outline"}
-                        onClick={() => setActiveMode(activeMode === "assign" ? null : "assign")}
+                        className="w-full"
+                        onClick={() => setActiveMode("assign")}
                       >
-                        Phân công
+                        Phân công đội
                       </Button>
+                    )}
+
+                    {(request.status === RescueRequestStatus.ASSIGNED ||
+                      request.status === RescueRequestStatus.ACCEPTED ||
+                      request.status === RescueRequestStatus.IN_PROGRESS ||
+                      request.status === RescueRequestStatus.DONE) && (
                       <Button
                         type="button"
-                        variant={activeMode === "update" ? "default" : "outline"}
-                        onClick={() => setActiveMode(activeMode === "update" ? null : "update")}
+                        className="w-full"
+                        onClick={() => setActiveMode("assign")}
                       >
-                        Cập nhật
+                        Phân công thêm
                       </Button>
-                    </div>
+                    )}
+
+                    {/* Show active mode form */}
+                    {activeMode && ![
+                      RescueRequestStatus.NEW,
+                      RescueRequestStatus.REVIEWED,
+                      RescueRequestStatus.ASSIGNED,
+                      RescueRequestStatus.ACCEPTED,
+                      RescueRequestStatus.IN_PROGRESS,
+                      RescueRequestStatus.DONE
+                    ].includes(request.status) && (
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant={activeMode === "evaluate" ? "default" : "outline"}
+                          onClick={() => setActiveMode(activeMode === "evaluate" ? null : "evaluate")}
+                        >
+                          Đánh giá
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={activeMode === "assign" ? "default" : "outline"}
+                          onClick={() => setActiveMode(activeMode === "assign" ? null : "assign")}
+                        >
+                          Phân công
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={activeMode === "update" ? "default" : "outline"}
+                          onClick={() => setActiveMode(activeMode === "update" ? null : "update")}
+                        >
+                          Cập nhật
+                        </Button>
+                      </div>
+                    )}
 
                     {activeMode === "evaluate" && (
                       <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">

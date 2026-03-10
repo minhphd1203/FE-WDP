@@ -195,9 +195,8 @@ const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) =>
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-[260px] shrink-0 rounded-2xl border bg-white text-left transition-all duration-200",
-        "shadow-sm",
-        "hover:shadow-lg hover:-translate-y-[2px]",
+        "group relative w-[260px] shrink-0 rounded-3xl border-2 border-slate-100 bg-white text-left shadow-md transition-all duration-300",
+        "hover:shadow-2xl hover:-translate-y-1 hover:border-red-200",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300",
         statusStyle.bg,
         priorityStyle.ring,
@@ -205,12 +204,12 @@ const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) =>
       )}
     >
       {/* Top accent stripe */}
-      <div className={cn("h-1.5 rounded-t-2xl", isCritical ? "bg-gradient-to-r from-red-500 via-orange-400 to-red-500" : statusStyle.dot)} />
+      <div className={cn("h-2 rounded-t-[22px]", isCritical ? "bg-gradient-to-r from-red-500 via-orange-400 to-red-500" : statusStyle.dot)} />
 
       <div className={cn("flex flex-col gap-3 px-4 pb-4 pt-3", compact && "gap-2 px-3 pb-3 pt-2")}>
         {/* Avatar + Name */}
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-100 to-rose-100 text-red-500 shadow-sm">
             <User className="h-4 w-4" />
           </span>
           <div className="min-w-0">
@@ -240,30 +239,28 @@ const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) =>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-red-100" />
+        <div className="border-t border-dashed border-slate-200" />
 
         {/* Badges */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium leading-none",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm",
               priorityStyle.badge,
             )}
           >
-            <span className={cn("h-2 w-2 rounded-full", priorityStyle.dot)} />
             {priorityStyle.label}
           </span>
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium leading-none",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm",
               statusStyle.badge,
             )}
           >
-            <span className={cn("h-2 w-2 rounded-full", statusStyle.dot)} />
             {statusStyle.label}
           </span>
           {teamRequired > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
               <Users className="h-3.5 w-3.5" />
               <span className="tabular-nums">{teamAssigned}/{teamRequired}</span>
             </span>
@@ -326,10 +323,10 @@ const HourCardRow = ({ list, onRequestClick }: HourCardRowProps) => {
             type="button"
             onClick={() => setShowOverflow(!showOverflow)}
             className={cn(
-              "flex h-full min-h-[140px] w-[48px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed transition-colors",
+              "flex h-full min-h-[140px] w-[48px] shrink-0 flex-col items-center justify-center gap-1 rounded-3xl border-2 border-dashed transition-all",
               showOverflow
-                ? "border-red-400 bg-red-50 text-red-600"
-                : "border-red-200 bg-white text-red-500 hover:border-red-400 hover:bg-red-50",
+                ? "border-red-400 bg-red-50 text-red-600 shadow-md"
+                : "border-red-200 bg-white text-red-500 hover:border-red-400 hover:bg-red-50 hover:shadow-md",
             )}
           >
             <Plus className="h-4 w-4" />
@@ -340,7 +337,7 @@ const HourCardRow = ({ list, onRequestClick }: HourCardRowProps) => {
 
       {/* Overflow list popover */}
       {showOverflow && overflowCards.length > 0 && (
-        <div className="absolute right-0 top-0 z-20 w-[300px] rounded-2xl border border-red-200 bg-white p-3 shadow-xl">
+        <div className="absolute right-0 top-0 z-20 w-[300px] rounded-3xl border-2 border-red-100 bg-white p-3 shadow-xl">
           <div className="mb-2 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <List className="h-3.5 w-3.5" />
