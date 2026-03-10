@@ -46,6 +46,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "../../../components/ui/label"; // Giả định import
 import { Badge } from "../../../components/ui/badge"; // Giả định import
 
+// Helper to format date as YYYY-MM-DD
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export default function ReliefRequests() {
   const queryClient = useQueryClient();
 
@@ -56,6 +64,15 @@ export default function ReliefRequests() {
   const [assignedFilter, setAssignedFilter] = useState<string>("all"); // all, assigned, unassigned
   const [page, setPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(null);
+
+  // Calculate date range for calendar view (14 days: 4 days before + 9 days after selected date)
+  const dateRange = useMemo(() => {
+    const from = new Date(selectedDate);
+    from.setDate(from.getDate() - 4);
+    const to = new Date(selectedDate);
+    to.setDate(to.getDate() + 9);
+    return { from: formatDate(from), to: formatDate(to) };
+  }, [selectedDate]);
   
   // States từ nhánh Thong
   const [detailOpen, setDetailOpen] = useState(false);
@@ -90,6 +107,8 @@ export default function ReliefRequests() {
         : assignedFilter === "unassigned"
           ? false
           : undefined,
+    from: dateRange.from,
+    to: dateRange.to,
     page: 1,
     limit: 100,
   });
