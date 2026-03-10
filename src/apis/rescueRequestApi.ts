@@ -63,4 +63,9 @@ export const rescueRequestApi = {
   ): Promise<ApiResponse<ReliefRequest>> => {
     return httpClient.patch(API_ENDPOINTS.RESCUE_REQUEST_CANCEL(id), data);
   },
+
+  // Get evidence images for a rescue request
+  getEvidenceImages: async (id: string): Promise<ApiResponse<string[]>> => {
+    return httpClient.get(API_ENDPOINTS.RESCUE_REQUEST_EVIDENCE_IMAGES(id));
+  },
 };
