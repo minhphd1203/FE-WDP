@@ -20,6 +20,8 @@ import UserManagement from "../pages/admin/UserManagement";
 import UpdateProfile from "../pages/admin/UpdateProfile";
 import ReliefRequests from "../pages/admin/ReliefRequests";
 import Warehouse from "../pages/admin/Warehouse";
+import ReplenishmentRequests from "../pages/admin/ReplenishmentRequests";
+import WarehouseTransactions from "../pages/admin/WarehouseTransactions";
 
 // Staff Pages
 import StaffDashboard from "../pages/staff/Dashboard";
@@ -108,8 +110,16 @@ const router = createBrowserRouter([
         element: <ReliefRequests />,
       },
       {
+        path: "replenishment-requests",
+        element: <ReplenishmentRequests />,
+      },
+      {
         path: "warehouse",
         element: <Warehouse />,
+      },
+      {
+        path: "warehouse-transactions",
+        element: <WarehouseTransactions />,
       },
     ],
   },

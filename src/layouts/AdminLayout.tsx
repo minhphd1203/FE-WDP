@@ -5,10 +5,12 @@ import {
   Calendar,
   AlertCircle,
   Package,
+  ClipboardList,
   LogOut,
   Menu,
   X,
   UserCog,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
@@ -39,9 +41,19 @@ const navigation = [
     icon: AlertCircle,
   },
   {
+    name: "Tiếp tế vật phẩm",
+    href: ROUTES.ADMIN_REPLENISHMENT_REQUESTS,
+    icon: ClipboardList,
+  },
+  {
     name: "Kho",
     href: ROUTES.ADMIN_WAREHOUSE,
     icon: Package,
+  },
+  {
+    name: "Sổ giao dịch",
+    href: ROUTES.ADMIN_WAREHOUSE_TRANSACTIONS,
+    icon: BarChart3,
   },
 ];
 
@@ -98,8 +110,8 @@ export default function AdminLayout() {
         <div className="fixed inset-y-0 left-0 w-64 border-r border-red-100 bg-gradient-to-b from-red-50 to-white shadow-lg">
           <div className="flex h-full flex-col">
             {/* Sidebar header */}
-            <div className="flex items-center justify-between border-b border-red-100 bg-white p-4">
-              <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
+            <div className="flex items-center justify-between border-b border-red-100 bg-white px-5">
+              <img src="/logo.png" alt="ResQHub Logo" className="w-[200px]" />
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="rounded-lg p-1 text-red-600 transition-colors hover:bg-red-50"
@@ -181,8 +193,12 @@ export default function AdminLayout() {
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-1 flex-col border-r border-red-100 bg-gradient-to-b from-red-50 to-white">
           {/* Sidebar header */}
-          <div className="flex h-16 items-center justify-center border-b border-red-100 bg-white px-4">
-            <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
+          <div className="flex items-center justify-center border-b border-red-100 bg-white px-4">
+            <img
+              src="/logo.png"
+              alt="ResQHub Logo"
+              className="h-[100px] object-cover w-auto"
+            />
           </div>
 
           {/* Navigation */}
@@ -259,7 +275,7 @@ export default function AdminLayout() {
           >
             <Menu className="h-6 w-6" />
           </button>
-          <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
+          <img src="/logo.png" alt="ResQHub Logo" className="h-10 w-auto" />
         </div>
 
         {/* Page content */}

@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { rescueRequestApi } from "../../../apis/rescueRequestApi";
 import {
+  CreateReplenishmentRequestDto,
   CompleteRescueOrderItemDto,
   rescueOrderApi,
   RescueOrderDetail,
@@ -51,6 +52,7 @@ import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 
 const LIMIT = 20;
+const MAX_VISIBLE_TEAMS = 3;
 
 const priorityLabelMap: Record<RescueRequestPriority, string> = {
   [RescueRequestPriority.LOW]: "Thấp",
@@ -113,15 +115,20 @@ export default function RescueRequests() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const [isReplenishmentDialogOpen, setIsReplenishmentDialogOpen] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isCheckingStock, setIsCheckingStock] = useState(false);
+  const [isDispatching, setIsDispatching] = useState(false);
+  const [isCreatingReplenishment, setIsCreatingReplenishment] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [formData, setFormData] = useState({
     estimatedPeople: 1,
     note: "",
   });
   const [completeNote, setCompleteNote] = useState("");
+  const [replenishmentNote, setReplenishmentNote] = useState("");
   const [completeItems, setCompleteItems] = useState<
     CompleteRescueOrderItemDto[]
   >([]);
@@ -286,6 +293,14 @@ export default function RescueRequests() {
       const response = await rescueOrderApi.checkStock(selectedOrderDetail.id);
       if (response.success) {
         syncOrderInState(response.data);
+
+        const refreshedDetail = await rescueOrderApi.getRescueOrder(
+          selectedOrderDetail.id,
+        );
+        if (refreshedDetail.success) {
+          syncOrderInState(refreshedDetail.data);
+        }
+
         toast.success("Kiểm tra kho thành công");
       }
     } catch (error: any) {
@@ -311,6 +326,26 @@ export default function RescueRequests() {
     setCompleteNote("Hoàn tất cứu trợ");
     setCompleteItems(initialItems);
     setIsCompleteDialogOpen(true);
+  };
+
+  const handleOpenReplenishmentDialog = () => {
+    if (!selectedOrderDetail) {
+      return;
+    }
+
+    const shortageItems = (selectedOrderDetail.stockCheck?.items || [])
+      .filter((item) => item.shortageQuantity > 0)
+      .map(
+        (item) =>
+          `${itemTypeLabelMap[item.itemType] || item.itemType}: thiếu ${item.shortageQuantity}`,
+      );
+
+    setReplenishmentNote(
+      shortageItems.length > 0
+        ? `Kho đang thiếu ${shortageItems.join(", ")}, đề nghị bổ sung gấp.`
+        : "Đề nghị bổ sung hàng cho phiếu cứu trợ này.",
+    );
+    setIsReplenishmentDialogOpen(true);
   };
 
   const handleChangeCompleteItemQuantity = (
@@ -385,6 +420,77 @@ export default function RescueRequests() {
     }
   };
 
+  const handleDispatchOrder = async () => {
+    if (!selectedOrderDetail) {
+      return;
+    }
+
+    setIsDispatching(true);
+    try {
+      const response = await rescueOrderApi.dispatchRescueOrder(
+        selectedOrderDetail.id,
+      );
+
+      if (response.success) {
+        syncOrderInState(response.data);
+
+        const refreshedDetail = await rescueOrderApi.getRescueOrder(
+          selectedOrderDetail.id,
+        );
+        if (refreshedDetail.success) {
+          syncOrderInState(refreshedDetail.data);
+        }
+
+        toast.success("Xuất kho thành công");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Không thể xuất kho");
+    } finally {
+      setIsDispatching(false);
+    }
+  };
+
+  const handleCreateReplenishmentRequest = async () => {
+    if (!selectedOrderDetail) {
+      return;
+    }
+
+    const payload: CreateReplenishmentRequestDto = {
+      note: replenishmentNote.trim(),
+    };
+
+    if (!payload.note) {
+      toast.error("Vui lòng nhập ghi chú yêu cầu bổ sung");
+      return;
+    }
+
+    setIsCreatingReplenishment(true);
+    try {
+      const response = await rescueOrderApi.createReplenishmentRequest(
+        selectedOrderDetail.id,
+        payload,
+      );
+
+      if (response.success) {
+        const detailResponse = await rescueOrderApi.getRescueOrder(
+          selectedOrderDetail.id,
+        );
+        if (detailResponse.success) {
+          syncOrderInState(detailResponse.data);
+        }
+
+        setIsReplenishmentDialogOpen(false);
+        toast.success("Đã gửi yêu cầu bổ sung hàng");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Không thể tạo yêu cầu bổ sung",
+      );
+    } finally {
+      setIsCreatingReplenishment(false);
+    }
+  };
+
   const getPriorityLabel = (priority: RescueRequestPriority | string) => {
     return priorityLabelMap[priority as RescueRequestPriority] || priority;
   };
@@ -410,6 +516,47 @@ export default function RescueRequests() {
   const getReplenishmentStatusClassName = (status: string) => {
     return replenishmentStatusClassMap[status] || "bg-slate-100 text-slate-700";
   };
+
+  const hasStockShortage =
+    selectedOrderDetail?.stockCheck?.items?.some(
+      (item) => item.shortageQuantity > 0,
+    ) || false;
+
+  const canCheckStock =
+    selectedOrderDetail?.status === "PLANNED" ||
+    selectedOrderDetail?.status === "READY" ||
+    selectedOrderDetail?.status === "INSUFFICIENT";
+
+  const canDispatch =
+    selectedOrderDetail?.status === "READY" && !hasStockShortage;
+
+  const canRequestReplenishment =
+    selectedOrderDetail?.status === "INSUFFICIENT" || hasStockShortage;
+
+  const rescueLatitude = Number(selectedOrderDetail?.rescueRequest?.latitude);
+  const rescueLongitude = Number(selectedOrderDetail?.rescueRequest?.longitude);
+  const hasValidRescueCoordinates =
+    Number.isFinite(rescueLatitude) &&
+    Number.isFinite(rescueLongitude) &&
+    Math.abs(rescueLatitude) <= 90 &&
+    Math.abs(rescueLongitude) <= 180;
+
+  const mapBounds = hasValidRescueCoordinates
+    ? {
+        minLng: rescueLongitude - 0.01,
+        minLat: rescueLatitude - 0.01,
+        maxLng: rescueLongitude + 0.01,
+        maxLat: rescueLatitude + 0.01,
+      }
+    : null;
+
+  const rescueMapEmbedUrl = mapBounds
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${mapBounds.minLng}%2C${mapBounds.minLat}%2C${mapBounds.maxLng}%2C${mapBounds.maxLat}&layer=mapnik&marker=${rescueLatitude}%2C${rescueLongitude}`
+    : "";
+
+  const rescueMapExternalUrl = hasValidRescueCoordinates
+    ? `https://www.openstreetmap.org/?mlat=${rescueLatitude}&mlon=${rescueLongitude}#map=16/${rescueLatitude}/${rescueLongitude}`
+    : "";
 
   return (
     <div className="space-y-6 bg-gradient-to-b from-slate-50 to-red-50/30 p-4 sm:p-6">
@@ -490,17 +637,20 @@ export default function RescueRequests() {
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow className="hover:bg-slate-50/80">
-                  <TableHead className="text-slate-600">Mã đơn</TableHead>
-                  <TableHead className="text-slate-600">Địa chỉ</TableHead>
-                  <TableHead className="text-slate-600">Ưu tiên</TableHead>
-                  <TableHead className="text-slate-600">
+                  <TableHead className="w-[280px] text-slate-600">
+                    Địa chỉ
+                  </TableHead>
+                  <TableHead className="min-w-[110px] whitespace-nowrap text-slate-600">
+                    Ưu tiên
+                  </TableHead>
+                  <TableHead className="min-w-[130px] whitespace-nowrap text-slate-600">
                     Người cần hỗ trợ
                   </TableHead>
                   <TableHead className="text-slate-600">
                     Đội được phân
                   </TableHead>
                   <TableHead className="text-slate-600">Cập nhật</TableHead>
-                  <TableHead className="text-right text-slate-600">
+                  <TableHead className="min-w-[170px] text-right text-slate-600">
                     Hành động
                   </TableHead>
                 </TableRow>
@@ -509,7 +659,7 @@ export default function RescueRequests() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="py-10 text-center text-slate-600"
                     >
                       Đang tải danh sách đơn cứu hộ...
@@ -518,7 +668,7 @@ export default function RescueRequests() {
                 ) : requests.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="py-10 text-center text-slate-600"
                     >
                       Không có đơn cứu hộ nào ở trạng thái đã phân công.
@@ -527,20 +677,27 @@ export default function RescueRequests() {
                 ) : (
                   requests.map((request) => {
                     const existingOrder = ordersByRequestId[request.id];
+                    const visibleTeams = request.assignedTeams.slice(
+                      0,
+                      MAX_VISIBLE_TEAMS,
+                    );
+                    const remainingTeamsCount = Math.max(
+                      request.assignedTeams.length - MAX_VISIBLE_TEAMS,
+                      0,
+                    );
 
                     return (
                       <TableRow
                         key={request.id}
                         className="transition-all duration-200 hover:bg-slate-50/80"
                       >
-                        <TableCell className="font-semibold text-slate-900">
-                          {request.id.substring(0, 8)}...
-                        </TableCell>
-                        <TableCell className="min-w-[280px] text-slate-700">
-                          <div className="space-y-2">
+                        <TableCell className="w-[280px] max-w-[280px] py-3 text-slate-700">
+                          <div className="space-y-1.5">
                             <div className="flex items-start gap-2">
                               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                              <span>{request.address}</span>
+                              <span className="block break-words">
+                                {request.address}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-500">
                               <Phone className="h-4 w-4 text-slate-400" />
@@ -550,34 +707,47 @@ export default function RescueRequests() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={getPriorityClassName(request.priority)}
+                        <TableCell className="py-3 whitespace-nowrap">
+                          <div
+                            className={
+                              getPriorityClassName(request.priority) +
+                              " inline-flex rounded-full px-2 py-1 text-xs font-medium"
+                            }
                           >
                             {getPriorityLabel(request.priority)}
-                          </Badge>
+                          </div>
                         </TableCell>
-                        <TableCell className="text-slate-700">
+                        <TableCell className="py-3 whitespace-nowrap text-slate-700">
                           {request.estimatedPeople || 0} người
                         </TableCell>
-                        <TableCell className="min-w-[220px] text-slate-700">
-                          <div className="space-y-2">
+                        <TableCell className="min-w-[220px] py-3 text-slate-700">
+                          <div className="space-y-1.5">
                             <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
                               <Users className="h-4 w-4 text-red-500" />
                               {request.teamSummary.assigned}/
                               {request.teamSummary.required} đội
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-1.5">
                               {request.assignedTeams.length > 0 ? (
-                                request.assignedTeams.map((team) => (
-                                  <Badge
-                                    key={team.assignmentId}
-                                    variant="outline"
-                                    className="border-red-200 bg-red-50 text-red-700"
-                                  >
-                                    {team.teamName}
-                                  </Badge>
-                                ))
+                                <>
+                                  {visibleTeams.map((team) => (
+                                    <Badge
+                                      key={team.assignmentId}
+                                      variant="outline"
+                                      className="border-red-200 bg-red-50 px-2 py-0.5 text-xs text-red-700"
+                                    >
+                                      {team.teamName}
+                                    </Badge>
+                                  ))}
+                                  {remainingTeamsCount > 0 && (
+                                    <Badge
+                                      variant="outline"
+                                      className="border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600"
+                                    >
+                                      +{remainingTeamsCount} đội
+                                    </Badge>
+                                  )}
+                                </>
                               ) : (
                                 <span className="text-sm text-slate-500">
                                   Chưa có đội
@@ -586,12 +756,12 @@ export default function RescueRequests() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-600">
+                        <TableCell className="py-3 text-slate-600">
                           {formatDateTime(request.updatedAt)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="py-3 text-right">
                           {existingOrder ? (
-                            <div className="flex justify-end gap-2">
+                            <div className="flex flex-col items-end gap-2">
                               <Badge
                                 className={getOrderStatusClassName(
                                   existingOrder.status,
@@ -612,15 +782,17 @@ export default function RescueRequests() {
                               </Button>
                             </div>
                           ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => handleOpenCreateDialog(request)}
-                              disabled={isOrdersLoading}
-                              className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
-                            >
-                              <FilePlus2 className="h-4 w-4" />
-                              Tạo phiếu cứu trợ
-                            </Button>
+                            <div className="flex justify-end">
+                              <Button
+                                size="sm"
+                                onClick={() => handleOpenCreateDialog(request)}
+                                disabled={isOrdersLoading}
+                                className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
+                              >
+                                <FilePlus2 className="h-4 w-4" />
+                                Tạo phiếu cứu trợ
+                              </Button>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -757,14 +929,14 @@ export default function RescueRequests() {
       </Dialog>
 
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-hidden rounded-2xl border-red-100 p-0">
+        <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden rounded-2xl border-red-100 p-0">
           <DialogHeader className="border-b border-slate-100 bg-gray-50 px-6 py-4">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Chi tiết phiếu cứu trợ
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 overflow-y-auto px-6 py-5">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
             {isDetailLoading || !selectedOrderDetail ? (
               <div className="py-12 text-center text-slate-600">
                 Đang tải chi tiết phiếu cứu trợ...
@@ -794,36 +966,7 @@ export default function RescueRequests() {
                           selectedOrderDetail.estimatedPeople}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Tổng responder</p>
-                      <p className="mt-1 font-semibold text-slate-900">
-                        {selectedOrderDetail.totalResponders ||
-                          selectedOrderDetail.totalRescuers ||
-                          0}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Mức độ thiệt hại</p>
-                      <p className="mt-1 font-semibold text-slate-900">
-                        {getPriorityLabel(
-                          selectedOrderDetail.damageLevel ||
-                            selectedOrderDetail.priority,
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Mã đơn cứu hộ</p>
-                      <p className="mt-1 font-mono text-sm font-semibold text-slate-900">
-                        {selectedOrderDetail.rescueRequestId.substring(0, 12)}
-                        ...
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Người tạo phiếu</p>
-                      <p className="mt-1 font-mono text-sm font-semibold text-slate-900">
-                        {selectedOrderDetail.createdById.substring(0, 12)}...
-                      </p>
-                    </div>
+
                     <div>
                       <p className="text-sm text-slate-500">Tạo lúc</p>
                       <p className="mt-1 font-semibold text-slate-900">
@@ -996,6 +1139,32 @@ export default function RescueRequests() {
                           </p>
                         </div>
                       </div>
+
+                      {hasValidRescueCoordinates && (
+                        <div className="mt-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <p className="text-sm font-medium text-slate-700">
+                              Bản đồ vị trí cứu hộ
+                            </p>
+                            <a
+                              href={rescueMapExternalUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm font-medium text-red-700 hover:text-red-800"
+                            >
+                              Mở bản đồ lớn
+                            </a>
+                          </div>
+                          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                            <iframe
+                              title="Rescue location map"
+                              src={rescueMapEmbedUrl}
+                              className="h-72 w-full"
+                              loading="lazy"
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {selectedOrderDetail.rescueRequest.note && (
                         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
@@ -1254,6 +1423,21 @@ export default function RescueRequests() {
                               <p className="mt-3 text-sm text-slate-700">
                                 {request.note}
                               </p>
+                              {request.items && request.items.length > 0 && (
+                                <div className="mt-3 grid gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 md:grid-cols-3">
+                                  {request.items.map((item) => (
+                                    <div key={item.id}>
+                                      <p className="font-medium text-slate-900">
+                                        {item.category?.name ||
+                                          itemTypeLabelMap[item.itemType] ||
+                                          item.itemType}
+                                      </p>
+                                      <p>Yêu cầu: {item.requestedQuantity}</p>
+                                      <p>Duyệt: {item.approvedQuantity}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                               {request.reviewedAt && (
                                 <p className="mt-2 text-sm text-slate-500">
                                   Thời điểm duyệt:{" "}
@@ -1277,21 +1461,18 @@ export default function RescueRequests() {
           </div>
 
           <DialogFooter className="border-t border-slate-100 bg-gray-50 px-6 py-4">
-            {selectedOrderDetail &&
-              (selectedOrderDetail.status === "PLANNED" ||
-                selectedOrderDetail.status === "READY" ||
-                selectedOrderDetail.status === "INSUFFICIENT") && (
-                <Button
-                  onClick={() => void handleCheckStock()}
-                  disabled={isCheckingStock}
-                  className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isCheckingStock ? "animate-spin" : ""}`}
-                  />
-                  {isCheckingStock ? "Đang kiểm tra kho..." : "Check kho"}
-                </Button>
-              )}
+            {selectedOrderDetail && canCheckStock && (
+              <Button
+                onClick={() => void handleCheckStock()}
+                disabled={isCheckingStock}
+                className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isCheckingStock ? "animate-spin" : ""}`}
+                />
+                {isCheckingStock ? "Đang kiểm tra kho..." : "Check kho"}
+              </Button>
+            )}
 
             {selectedOrderDetail &&
               selectedOrderDetail.status === "DISPATCHED" && (
@@ -1303,6 +1484,26 @@ export default function RescueRequests() {
                   Hoàn tất phiếu
                 </Button>
               )}
+
+            {selectedOrderDetail && canDispatch && (
+              <Button
+                onClick={() => void handleDispatchOrder()}
+                disabled={isDispatching}
+                className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
+              >
+                {isDispatching ? "Đang xuất kho..." : "Xuất kho"}
+              </Button>
+            )}
+
+            {selectedOrderDetail && canRequestReplenishment && (
+              <Button
+                onClick={handleOpenReplenishmentDialog}
+                variant="outline"
+                className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              >
+                Yêu cầu bổ sung
+              </Button>
+            )}
 
             <Button
               variant="outline"
@@ -1319,14 +1520,14 @@ export default function RescueRequests() {
         open={isCompleteDialogOpen}
         onOpenChange={setIsCompleteDialogOpen}
       >
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border-red-100 p-0">
+        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden rounded-2xl border-red-100 p-0">
           <DialogHeader className="border-b border-slate-100 bg-gray-50 px-6 py-4">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Hoàn tất phiếu cứu trợ
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 overflow-y-auto px-6 py-5">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
             <div className="rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 p-4">
               <p className="text-sm text-slate-500">Lưu ý</p>
               <p className="mt-1 text-sm text-slate-800">
@@ -1444,6 +1645,76 @@ export default function RescueRequests() {
               className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
             >
               {isCompleting ? "Đang hoàn tất..." : "Xác nhận hoàn tất"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isReplenishmentDialogOpen}
+        onOpenChange={setIsReplenishmentDialogOpen}
+      >
+        <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden rounded-2xl border-red-100 p-0">
+          <DialogHeader className="border-b border-slate-100 bg-gray-50 px-6 py-4">
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Yêu cầu bổ sung hàng
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              Tạo yêu cầu bổ sung để admin duyệt cấp thêm hàng cho phiếu cứu trợ
+              đang thiếu.
+            </div>
+
+            {selectedOrderDetail?.stockCheck && (
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+                <p className="mb-2 text-sm font-semibold text-slate-800">
+                  Danh sách thiếu hiện tại
+                </p>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {selectedOrderDetail.stockCheck.items
+                    .filter((item) => item.shortageQuantity > 0)
+                    .map((item) => (
+                      <p
+                        key={item.orderItemId}
+                        className="text-sm text-slate-700"
+                      >
+                        {item.categoryName}: thiếu {item.shortageQuantity}
+                      </p>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="replenishment-note">Ghi chú yêu cầu</Label>
+              <Textarea
+                id="replenishment-note"
+                rows={4}
+                value={replenishmentNote}
+                onChange={(event) => setReplenishmentNote(event.target.value)}
+                className="rounded-xl border-red-300 focus-visible:border-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-0"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="border-t border-slate-100 bg-gray-50 px-6 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsReplenishmentDialogOpen(false)}
+              className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={() => void handleCreateReplenishmentRequest()}
+              disabled={isCreatingReplenishment}
+              className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
+            >
+              {isCreatingReplenishment
+                ? "Đang gửi yêu cầu..."
+                : "Gửi yêu cầu bổ sung"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -40,6 +40,54 @@ export interface CompleteRescueOrderDto {
   items?: CompleteRescueOrderItemDto[];
 }
 
+export interface CreateReplenishmentRequestDto {
+  note: string;
+}
+
+export interface ReviewReplenishmentRequestDto {
+  approved: boolean;
+  decisionNote?: string;
+  items?: Array<{
+    itemId: string;
+    approvedQuantity: number;
+    condition: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+  }>;
+}
+
+export interface WarehouseTransactionFilters {
+  page?: number;
+  limit?: number;
+  source?:
+    | "RESCUE_DISPATCH"
+    | "RESCUE_RETURN"
+    | "MANUAL_REPLENISHMENT"
+    | "DONATION_RECEIPT"
+    | "ALLOCATION_DISPATCH";
+  type?: "IN" | "OUT";
+  categoryId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface WarehouseTransaction {
+  id: string;
+  categoryId: string;
+  type: "IN" | "OUT";
+  source: string;
+  referenceId: string;
+  quantity: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  category?: {
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+}
+
 export interface RescueOrderListItem {
   id: string;
   rescueRequestId: string;
@@ -52,6 +100,11 @@ export interface RescueOrderListItem {
   affectedPeople?: number;
   damageLevel?: string;
   totalResponders?: number;
+  items?: RescueOrderItem[];
+  replenishmentRequests?: RescueOrderReplenishmentRequest[];
+  rescueRequest?: RescueOrderDetail["rescueRequest"];
+  teams?: RescueOrderTeam[];
+  stockCheck?: RescueOrderDetail["stockCheck"];
 }
 
 export interface RescueOrderItem {
@@ -92,6 +145,20 @@ export interface RescueOrderReplenishmentRequest {
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  items?: Array<{
+    id: string;
+    requestId: string;
+    categoryId: string;
+    itemType: RescueOrderItemType | string;
+    requestedQuantity: number;
+    approvedQuantity: number;
+    condition: "EXCELLENT" | "GOOD" | "FAIR" | "POOR" | string;
+    category?: {
+      id: string;
+      name: string;
+      description?: string | null;
+    };
+  }>;
 }
 
 export interface RescueOrderStockCheckItem {
@@ -166,6 +233,24 @@ export const rescueOrderApi = {
     );
   },
 
+  dispatchRescueOrder: async (
+    id: string,
+  ): Promise<ApiResponse<RescueOrderDetail>> => {
+    return httpClient.post(API_ENDPOINTS.WAREHOUSE_RESCUE_ORDER_DISPATCH(id));
+  },
+
+  createReplenishmentRequest: async (
+    id: string,
+    data: CreateReplenishmentRequestDto,
+  ): Promise<
+    ApiResponse<{ order?: RescueOrderDetail } & Record<string, any>>
+  > => {
+    return httpClient.post(
+      API_ENDPOINTS.WAREHOUSE_RESCUE_ORDER_REPLENISHMENT_REQUESTS(id),
+      data,
+    );
+  },
+
   completeRescueOrder: async (
     id: string,
     data: CompleteRescueOrderDto,
@@ -174,5 +259,21 @@ export const rescueOrderApi = {
       API_ENDPOINTS.WAREHOUSE_RESCUE_ORDER_COMPLETE(id),
       data,
     );
+  },
+
+  reviewReplenishmentRequest: async (
+    id: string,
+    data: ReviewReplenishmentRequestDto,
+  ): Promise<ApiResponse<RescueOrderDetail>> => {
+    return httpClient.patch(
+      API_ENDPOINTS.WAREHOUSE_REPLENISHMENT_REQUEST_REVIEW(id),
+      data,
+    );
+  },
+
+  listWarehouseTransactions: async (
+    params?: WarehouseTransactionFilters,
+  ): Promise<ApiResponse<PaginatedResponse<WarehouseTransaction>>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_TRANSACTIONS, { params });
   },
 };

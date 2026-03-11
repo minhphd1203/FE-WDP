@@ -372,7 +372,7 @@ export default function ProductManagement() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="px-6 pt-3 pb-6 space-y-6">
                 {/* Donation Summary */}
                 <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-lg p-4 border border-red-200">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -670,7 +670,7 @@ export default function ProductManagement() {
             </button>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="px-6 pt-3 pb-6 space-y-6">
             {/* Image */}
             {selectedItem.imageUrls && selectedItem.imageUrls.length > 0 && (
               <div>
