@@ -84,6 +84,7 @@ export const ROUTES = {
   STAFF_PRODUCTS: "/staff/products",
   STAFF_DISTRIBUTE: "/staff/distribute",
   STAFF_VOLUNTEERS: "/staff/volunteers",
+  STAFF_RESCUE_REQUESTS: "/staff/rescue-requests",
   STAFF_WAREHOUSE: "/staff/warehouse",
   STAFF_WAREHOUSE_COMMON: "/staff/warehouse/common",
   STAFF_WAREHOUSE_TEAM: "/staff/warehouse/team",
@@ -141,6 +142,13 @@ export const API_ENDPOINTS = {
   WAREHOUSE_ALLOCATION_BY_ID: (id: string) => `/warehouse/allocations/${id}`,
   WAREHOUSE_ALLOCATION_STATUS: (id: string) =>
     `/warehouse/allocations/${id}/status`,
+  WAREHOUSE_RESCUE_ORDERS: "/warehouse/rescue-orders",
+  WAREHOUSE_RESCUE_ORDER_BY_ID: (id: string) =>
+    `/warehouse/rescue-orders/${id}`,
+  WAREHOUSE_RESCUE_ORDER_CHECK_STOCK: (id: string) =>
+    `/warehouse/rescue-orders/${id}/check-stock`,
+  WAREHOUSE_RESCUE_ORDER_COMPLETE: (id: string) =>
+    `/warehouse/rescue-orders/${id}/complete`,
   WAREHOUSE_RECEIPTS: "/warehouse/receipts",
   WAREHOUSE_RECEIPT_BY_ID: (id: string) => `/warehouse/receipts/${id}`,
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   ChevronDown,
@@ -20,6 +21,12 @@ import {
 import { EventData } from "../../../types/event";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
 import { toast } from "sonner";
 import { CustomSelect } from "../../../components/ui/CustomSelect";
 
@@ -335,10 +342,10 @@ export default function ProductManagement() {
       PENDING: "bg-orange-100 text-orange-800",
       APPROVED: "bg-green-100 text-green-800",
       REJECTED: "bg-red-100 text-red-800",
-      RECEIVED: "bg-blue-100 text-blue-800",
-      ALLOCATED: "bg-blue-100 text-blue-800",
-      DISPATCHED: "bg-blue-100 text-blue-800",
-      DELIVERED: "bg-blue-100 text-blue-800",
+      RECEIVED: "bg-red-100 text-red-800",
+      ALLOCATED: "bg-red-100 text-red-800",
+      DISPATCHED: "bg-red-100 text-red-800",
+      DELIVERED: "bg-red-100 text-red-800",
     };
 
     const conditionLabelMap: Record<string, string> = {
@@ -348,279 +355,292 @@ export default function ProductManagement() {
       POOR: "Kém",
     };
 
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Chi tiết đơn quyên góp
-            </h2>
-            <button
-              onClick={() => setSelectedDonation(null)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Donation Summary */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Trạng thái</p>
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
-                      statusClassMap[selectedDonation.status]
-                    }`}
-                  >
-                    {statusLabelMap[selectedDonation.status]}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Ngày gửi</p>
-                  <p className="font-semibold text-gray-900 mt-1">
-                    {new Date(selectedDonation.createdAt).toLocaleDateString(
-                      "vi-VN",
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Ngày cập nhật</p>
-                  <p className="font-semibold text-gray-900 mt-1">
-                    {new Date(selectedDonation.updatedAt).toLocaleDateString(
-                      "vi-VN",
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Tổng số vật phẩm</p>
-                  <p className="font-semibold text-gray-900 mt-1">
-                    {selectedDonation.items.length}
-                  </p>
-                </div>
+    return typeof document !== "undefined"
+      ? createPortal(
+          <div className="fixed top-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Chi tiết đơn quyên góp
+                </h2>
+                <button
+                  onClick={() => setSelectedDonation(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-            </div>
 
-            {/* Donor Info */}
-            <div className="border rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2 text-indigo-600" />
-                Thông tin người quyên góp
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Họ tên</p>
-                  <p className="font-semibold text-gray-900">
-                    {selectedDonation.creator?.profile?.fullName ||
-                      selectedDonation.creator?.email ||
-                      "Ẩn danh"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-semibold text-gray-900 flex items-center">
-                    <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                    {selectedDonation.creator?.email || "Không có"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Địa chỉ</p>
-                  <p className="font-semibold text-gray-900 flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                    {selectedDonation.creator?.profile?.address || "Không có"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Số điện thoại</p>
-                  <p className="font-semibold text-gray-900 flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                    {selectedDonation.creator?.phone || "Không có"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Donation Note */}
-            {selectedDonation.note && (
-              <div className="border rounded-lg p-4 bg-amber-50 border-amber-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                  Ghi chú của người gửi
-                </h3>
-                <p className="text-gray-700">{selectedDonation.note}</p>
-              </div>
-            )}
-
-            {/* Items List */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Package className="h-5 w-5 mr-2 text-indigo-600" />
-                Các vật phẩm ({selectedDonation.items.length})
-              </h3>
-              <div className="space-y-4">
-                {selectedDonation.items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => setSelectedItem(item)}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50">
-                      {/* Image */}
-                      <div className="md:col-span-1">
-                        {item.imageUrls && item.imageUrls.length > 0 ? (
-                          <img
-                            src={item.imageUrls[0]}
-                            alt={item.name}
-                            className="w-full h-40 object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="w-full h-40 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
-                            Không có ảnh
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Main Info */}
-                      <div className="md:col-span-3 space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="text-xs text-gray-500">
-                              #{index + 1} - {item.id.substring(0, 8)}
-                            </p>
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {item.name}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Danh mục:{" "}
-                              <span className="font-medium text-indigo-600">
-                                {item.category?.name || "Không xác định"}
-                              </span>
-                            </p>
-                          </div>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              item.status === "APPROVED"
-                                ? "bg-green-100 text-green-800"
-                                : item.status === "SUBMITTED"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : item.status === "RECEIVED"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {item.status === "APPROVED"
-                              ? "Đã duyệt"
-                              : item.status === "SUBMITTED"
-                                ? "Chờ duyệt"
-                                : item.status === "RECEIVED"
-                                  ? "Đã nhận"
-                                  : item.status}
-                          </span>
-                        </div>
-
-                        {/* Details Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white p-3 rounded-lg">
-                          <div>
-                            <p className="text-xs text-gray-600">Số lượng</p>
-                            <p className="font-semibold text-gray-900">
-                              {item.quantity} {item.unit}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-600">Tình trạng</p>
-                            <p className="font-semibold text-gray-900">
-                              {conditionLabelMap[item.condition] ||
-                                item.condition}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-600">HSD</p>
-                            <p className="font-semibold text-gray-900">
-                              {new Date(item.expirationDate).toLocaleDateString(
-                                "vi-VN",
-                              )}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-600">
-                              Ngày cập nhật
-                            </p>
-                            <p className="font-semibold text-gray-900">
-                              {new Date(item.updatedAt).toLocaleDateString(
-                                "vi-VN",
-                              )}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Note */}
-                        {item.note && (
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ghi chú:
-                            </p>
-                            <p className="text-sm text-gray-800">{item.note}</p>
-                          </div>
-                        )}
-
-                        {/* Images Gallery */}
-                        {item.imageUrls && item.imageUrls.length > 1 && (
-                          <div>
-                            <p className="text-xs text-gray-600 mb-2">
-                              Ảnh khác ({item.imageUrls.length})
-                            </p>
-                            <div className="flex gap-2 flex-wrap">
-                              {item.imageUrls.map((url, imgIndex) => (
-                                <img
-                                  key={imgIndex}
-                                  src={url}
-                                  alt={`${item.name} ${imgIndex + 1}`}
-                                  className="w-16 h-16 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-80"
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+              <div className="p-6 space-y-6">
+                {/* Donation Summary */}
+                <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-lg p-4 border border-red-200">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Trạng thái</p>
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-1 ${
+                          statusClassMap[selectedDonation.status]
+                        }`}
+                      >
+                        {statusLabelMap[selectedDonation.status]}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Ngày gửi</p>
+                      <p className="font-semibold text-gray-900 mt-1">
+                        {new Date(
+                          selectedDonation.createdAt,
+                        ).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Ngày cập nhật</p>
+                      <p className="font-semibold text-gray-900 mt-1">
+                        {new Date(
+                          selectedDonation.updatedAt,
+                        ).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Tổng số vật phẩm</p>
+                      <p className="font-semibold text-gray-900 mt-1">
+                        {selectedDonation.items.length}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                </div>
 
-          {/* Footer Actions */}
-          <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
-            {selectedDonation.status === "SUBMITTED" && (
-              <>
+                {/* Donor Info */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <User className="h-5 w-5 mr-2 text-red-600" />
+                    Thông tin người quyên góp
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Họ tên</p>
+                      <p className="font-semibold text-gray-900">
+                        {selectedDonation.creator?.profile?.fullName ||
+                          selectedDonation.creator?.email ||
+                          "Ẩn danh"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Email</p>
+                      <p className="font-semibold text-gray-900 flex items-center">
+                        <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                        {selectedDonation.creator?.email || "Không có"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Địa chỉ</p>
+                      <p className="font-semibold text-gray-900 flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                        {selectedDonation.creator?.profile?.address ||
+                          "Không có"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Số điện thoại</p>
+                      <p className="font-semibold text-gray-900 flex items-center">
+                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                        {selectedDonation.creator?.phone || "Không có"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Donation Note */}
+                {selectedDonation.note && (
+                  <div className="border rounded-lg p-4 bg-amber-50 border-amber-200">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                      Ghi chú của người gửi
+                    </h3>
+                    <p className="text-gray-700">{selectedDonation.note}</p>
+                  </div>
+                )}
+
+                {/* Items List */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Package className="h-5 w-5 mr-2 text-red-600" />
+                    Các vật phẩm ({selectedDonation.items.length})
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedDonation.items.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50">
+                          {/* Image */}
+                          <div className="md:col-span-1">
+                            {item.imageUrls && item.imageUrls.length > 0 ? (
+                              <img
+                                src={item.imageUrls[0]}
+                                alt={item.name}
+                                className="w-full h-40 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-full h-40 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                                Không có ảnh
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Main Info */}
+                          <div className="md:col-span-3 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-xs text-gray-500">
+                                  #{index + 1} - {item.id.substring(0, 8)}
+                                </p>
+                                <h4 className="text-lg font-semibold text-gray-900">
+                                  {item.name}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  Danh mục:{" "}
+                                  <span className="font-medium text-red-600">
+                                    {item.category?.name || "Không xác định"}
+                                  </span>
+                                </p>
+                              </div>
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  item.status === "APPROVED"
+                                    ? "bg-green-100 text-green-800"
+                                    : item.status === "SUBMITTED"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : item.status === "RECEIVED"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {item.status === "APPROVED"
+                                  ? "Đã duyệt"
+                                  : item.status === "SUBMITTED"
+                                    ? "Chờ duyệt"
+                                    : item.status === "RECEIVED"
+                                      ? "Đã nhận"
+                                      : item.status}
+                              </span>
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white p-3 rounded-lg">
+                              <div>
+                                <p className="text-xs text-gray-600">
+                                  Số lượng
+                                </p>
+                                <p className="font-semibold text-gray-900">
+                                  {item.quantity} {item.unit}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600">
+                                  Tình trạng
+                                </p>
+                                <p className="font-semibold text-gray-900">
+                                  {conditionLabelMap[item.condition] ||
+                                    item.condition}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600">HSD</p>
+                                <p className="font-semibold text-gray-900">
+                                  {new Date(
+                                    item.expirationDate,
+                                  ).toLocaleDateString("vi-VN")}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-600">
+                                  Ngày cập nhật
+                                </p>
+                                <p className="font-semibold text-gray-900">
+                                  {new Date(item.updatedAt).toLocaleDateString(
+                                    "vi-VN",
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Note */}
+                            {item.note && (
+                              <div className="bg-red-50 border border-red-200 rounded p-3">
+                                <p className="text-xs text-gray-600 mb-1">
+                                  Ghi chú:
+                                </p>
+                                <p className="text-sm text-gray-800">
+                                  {item.note}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Images Gallery */}
+                            {item.imageUrls && item.imageUrls.length > 1 && (
+                              <div>
+                                <p className="text-xs text-gray-600 mb-2">
+                                  Ảnh khác ({item.imageUrls.length})
+                                </p>
+                                <div className="flex gap-2 flex-wrap">
+                                  {item.imageUrls.map((url, imgIndex) => (
+                                    <img
+                                      key={imgIndex}
+                                      src={url}
+                                      alt={`${item.name} ${imgIndex + 1}`}
+                                      className="w-16 h-16 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-80"
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
+                {selectedDonation.status === "SUBMITTED" && (
+                  <>
+                    <Button
+                      onClick={() => {
+                        handleApproveDonation(selectedDonation.id);
+                        setSelectedDonation(null);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Duyệt đơn
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        handleRejectDonation(selectedDonation.id);
+                        setSelectedDonation(null);
+                      }}
+                      variant="outline"
+                    >
+                      Từ chối
+                    </Button>
+                  </>
+                )}
                 <Button
-                  onClick={() => {
-                    handleApproveDonation(selectedDonation.id);
-                    setSelectedDonation(null);
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Duyệt đơn
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleRejectDonation(selectedDonation.id);
-                    setSelectedDonation(null);
-                  }}
+                  onClick={() => setSelectedDonation(null)}
                   variant="outline"
                 >
-                  Từ chối
+                  Đóng
                 </Button>
-              </>
-            )}
-            <Button onClick={() => setSelectedDonation(null)} variant="outline">
-              Đóng
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
   };
 
   // Item Detail Modal Component
@@ -664,7 +684,7 @@ export default function ProductManagement() {
             )}
 
             {/* Basic Info */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+            <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-lg p-4 border border-red-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Tên sản phẩm</p>
@@ -693,7 +713,7 @@ export default function ProductManagement() {
                         : selectedItem.status === "SUBMITTED"
                           ? "bg-yellow-100 text-yellow-800"
                           : selectedItem.status === "RECEIVED"
-                            ? "bg-blue-100 text-blue-800"
+                            ? "bg-red-100 text-red-800"
                             : "bg-gray-100 text-gray-800"
                     }`}
                   >
@@ -818,7 +838,7 @@ export default function ProductManagement() {
                 Nhập ghi chú (tùy chọn):
               </label>
               <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full rounded-md border border-red-200 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500"
                 rows={3}
                 value={dialogNote}
                 onChange={(e) => setDialogNote(e.target.value)}
@@ -871,7 +891,7 @@ export default function ProductManagement() {
                 Nhập lý do từ chối <span className="text-red-500">*</span>:
               </label>
               <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full rounded-md border border-red-200 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500"
                 rows={3}
                 value={dialogReason}
                 onChange={(e) => setDialogReason(e.target.value)}
@@ -908,476 +928,515 @@ export default function ProductManagement() {
   };
 
   return (
-    <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 min-h-screen">
+    <div className="space-y-6 bg-gradient-to-b from-slate-50 to-red-50/30 p-4 sm:p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-          Quản lý sản phẩm
-        </h1>
-        <p className="text-gray-500 mt-2 text-lg">
-          Duyệt, phân phối và quản lý sản phẩm quyên góp
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Quản lý sản phẩm
+          </h1>
+          <p className="mt-1 text-lg text-slate-600">
+            Duyệt, phân phối và quản lý sản phẩm quyên góp
+          </p>
+        </div>
       </div>
 
       {/* Event Selector */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Chọn sự kiện
-        </label>
-        <CustomSelect
-          options={events.map((event) => ({
-            value: event.id,
-            label: `${event.title} - ${new Date(event.startDate).toLocaleDateString("vi-VN")} ${event.type === "DONATION" ? "(Quyên góp)" : "(Tình nguyện)"}`,
-          }))}
-          value={selectedEvent?.id || ""}
-          onChange={(value) => {
-            const event = events.find((ev) => ev.id === value);
-            if (event) {
-              setSelectedEvent(event);
-              setFilters((prev) => ({ ...prev, eventId: event.id }));
-              setPage(1);
-            }
-          }}
-          placeholder="Chọn sự kiện..."
-          className="max-w-2xl"
-        />
-      </div>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-slate-900">Chọn sự kiện</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CustomSelect
+            options={events.map((event) => ({
+              value: event.id,
+              label: `${event.title} - ${new Date(event.startDate).toLocaleDateString("vi-VN")} ${event.type === "DONATION" ? "(Quyên góp)" : "(Tình nguyện)"}`,
+            }))}
+            value={selectedEvent?.id || ""}
+            onChange={(value) => {
+              const event = events.find((ev) => ev.id === value);
+              if (event) {
+                setSelectedEvent(event);
+                setFilters((prev) => ({ ...prev, eventId: event.id }));
+                setPage(1);
+              }
+            }}
+            placeholder="Chọn sự kiện..."
+          />
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl shadow-sm mb-6 border-2 border-gray-100 overflow-hidden flex">
-        <button
-          onClick={() => {
-            setActiveTab("pending");
-            setPage(1);
-            setSelectedIds(new Set());
-          }}
-          className={`flex-1 px-6 py-4 text-sm font-semibold border-b-4 transition-all duration-300 ${
-            activeTab === "pending"
-              ? "border-amber-500 text-amber-600 bg-amber-50"
-              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          Chờ duyệt (
-          {(donations || []).filter((d) => d.status === "SUBMITTED").length})
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("approved");
-            setPage(1);
-            setSelectedIds(new Set());
-          }}
-          className={`flex-1 px-6 py-4 text-sm font-semibold border-b-4 transition-all duration-300 ${
-            activeTab === "approved"
-              ? "border-emerald-500 text-emerald-600 bg-emerald-50"
-              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          Đã duyệt (
-          {(donations || []).filter((d) => d.status !== "SUBMITTED").length})
-        </button>
-      </div>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <Button
+              onClick={() => {
+                setActiveTab("pending");
+                setPage(1);
+                setSelectedIds(new Set());
+              }}
+              className={`min-w-[150px] rounded-xl border px-5 py-2 text-sm font-bold tracking-wide transition-all duration-200 ${
+                activeTab === "pending"
+                  ? "border-red-600 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white shadow-[0_12px_26px_-14px_rgba(220,38,38,0.9)]"
+                  : "border-red-300 bg-gradient-to-r from-red-50 to-rose-100 text-red-700 hover:border-red-400 hover:from-red-100 hover:to-rose-200"
+              }`}
+            >
+              Chờ duyệt (
+              {(donations || []).filter((d) => d.status === "SUBMITTED").length}
+              )
+            </Button>
+            <Button
+              onClick={() => {
+                setActiveTab("approved");
+                setPage(1);
+                setSelectedIds(new Set());
+              }}
+              className={`min-w-[150px] rounded-xl border px-5 py-2 text-sm font-bold tracking-wide transition-all duration-200 ${
+                activeTab === "approved"
+                  ? "border-red-600 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white shadow-[0_12px_26px_-14px_rgba(220,38,38,0.9)]"
+                  : "border-red-300 bg-gradient-to-r from-red-50 to-rose-100 text-red-700 hover:border-red-400 hover:from-red-100 hover:to-rose-200"
+              }`}
+            >
+              Đã duyệt (
+              {(donations || []).filter((d) => d.status !== "SUBMITTED").length}
+              )
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Actions */}
-      <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 flex flex-wrap gap-3 border-2 border-gray-100">
-        <Button
-          onClick={() => setShowFilters(!showFilters)}
-          variant="outline"
-          className="rounded-xl"
-        >
-          <ChevronDown className="h-4 w-4 mr-2" />
-          Bộ lọc
-        </Button>
-        {selectedIds.size > 0 && activeTab === "pending" && (
-          <>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-3">
             <Button
-              onClick={handleBulkApprove}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-xl shadow-sm"
-            >
-              Duyệt ({selectedIds.size})
-            </Button>
-            <Button
-              onClick={handleBulkReject}
+              onClick={() => setShowFilters(!showFilters)}
               variant="outline"
-              className="border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-xl"
             >
-              Từ chối ({selectedIds.size})
+              <ChevronDown className="h-4 w-4 mr-2" />
+              Bộ lọc
             </Button>
-            <Button
-              onClick={() => setSelectedIds(new Set())}
-              variant="outline"
-              className="rounded-xl"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Xoá chọn
-            </Button>
-          </>
-        )}
-        {selectedIds.size > 0 && activeTab === "approved" && (
-          <Button
-            onClick={() => setSelectedIds(new Set())}
-            variant="outline"
-            className="rounded-xl"
-          >
-            <X className="h-4 w-4 mr-2" />
-            Xoá chọn
-          </Button>
-        )}
-      </div>
+            {selectedIds.size > 0 && activeTab === "pending" && (
+              <>
+                <Button
+                  onClick={handleBulkApprove}
+                  className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-xl shadow-sm"
+                >
+                  Duyệt ({selectedIds.size})
+                </Button>
+                <Button
+                  onClick={handleBulkReject}
+                  variant="outline"
+                  className="border-red-500 text-red-600 hover:bg-red-50"
+                >
+                  Từ chối ({selectedIds.size})
+                </Button>
+                <Button
+                  onClick={() => setSelectedIds(new Set())}
+                  variant="outline"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Xoá chọn
+                </Button>
+              </>
+            )}
+            {selectedIds.size > 0 && activeTab === "approved" && (
+              <Button
+                onClick={() => setSelectedIds(new Set())}
+                variant="outline"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Xoá chọn
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100 space-y-5">
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Tìm kiếm
-            </label>
-            <Input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm, người gửi..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(1);
-              }}
-              className="rounded-xl"
-            />
-          </div>
-
-          {/* Sort Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+          <CardContent className="pt-6 space-y-5">
+            {/* Search */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Sắp xếp theo
-              </label>
-              <CustomSelect
-                options={[
-                  { value: "createdAt", label: "Ngày gửi" },
-                  { value: "expirationDate", label: "HSD" },
-                ]}
-                value={sortBy}
-                onChange={(value) =>
-                  setSortBy(value as "status" | "createdAt" | "expirationDate")
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Thứ tự
-              </label>
-              <CustomSelect
-                options={[
-                  { value: "DESC", label: "Giảm dần" },
-                  { value: "ASC", label: "Tăng dần" },
-                ]}
-                value={sortOrder}
-                onChange={(value) => setSortOrder(value as "ASC" | "DESC")}
-              />
-            </div>
-          </div>
-
-          {/* Existing Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Trạng thái
-              </label>
-              <CustomSelect
-                options={[
-                  { value: "", label: "Tất cả" },
-                  { value: "SUBMITTED", label: "Chờ duyệt" },
-                  { value: "APPROVED", label: "Đã duyệt" },
-                  { value: "REJECTED", label: "Từ chối" },
-                  { value: "RECEIVED", label: "Đã nhận" },
-                  { value: "ALLOCATED", label: "Đã phân bổ" },
-                  { value: "DISPATCHED", label: "Đã gửi" },
-                  { value: "DELIVERED", label: "Đã giao" },
-                ]}
-                value={filters.status || ""}
-                onChange={(value) =>
-                  setFilters({
-                    ...filters,
-                    status: (value || undefined) as DonationStatus | undefined,
-                  })
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Từ ngày
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Tìm kiếm
               </label>
               <Input
-                type="date"
-                value={filters.from || ""}
-                onChange={(e) =>
-                  setFilters({ ...filters, from: e.target.value })
-                }
-                className="rounded-xl"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Đến ngày
-              </label>
-              <Input
-                type="date"
-                value={filters.to || ""}
-                onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-                className="rounded-xl"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                onClick={() => {
-                  setFilters((prev) => ({
-                    eventId: prev.eventId || selectedEvent?.id,
-                  }));
-                  setSearchQuery("");
-                  setSortBy("createdAt");
-                  setSortOrder("DESC");
+                type="text"
+                placeholder="Tìm kiếm sản phẩm, người gửi..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
                 }}
-                variant="outline"
-                className="w-full rounded-xl border-2 hover:bg-gray-50"
-              >
-                Reset
-              </Button>
+                className="border-red-400 focus:outline-red-500 focus:ring-0"
+              />
             </div>
-          </div>
-        </div>
+
+            {/* Sort Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Sắp xếp theo
+                </label>
+                <CustomSelect
+                  options={[
+                    { value: "createdAt", label: "Ngày gửi" },
+                    { value: "expirationDate", label: "HSD" },
+                  ]}
+                  value={sortBy}
+                  onChange={(value) =>
+                    setSortBy(
+                      value as "status" | "createdAt" | "expirationDate",
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Thứ tự
+                </label>
+                <CustomSelect
+                  options={[
+                    { value: "DESC", label: "Giảm dần" },
+                    { value: "ASC", label: "Tăng dần" },
+                  ]}
+                  value={sortOrder}
+                  onChange={(value) => setSortOrder(value as "ASC" | "DESC")}
+                />
+              </div>
+            </div>
+
+            {/* Existing Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Trạng thái
+                </label>
+                <CustomSelect
+                  options={[
+                    { value: "", label: "Tất cả" },
+                    { value: "SUBMITTED", label: "Chờ duyệt" },
+                    { value: "APPROVED", label: "Đã duyệt" },
+                    { value: "REJECTED", label: "Từ chối" },
+                    { value: "RECEIVED", label: "Đã nhận" },
+                    { value: "ALLOCATED", label: "Đã phân bổ" },
+                    { value: "DISPATCHED", label: "Đã gửi" },
+                    { value: "DELIVERED", label: "Đã giao" },
+                  ]}
+                  value={filters.status || ""}
+                  onChange={(value) =>
+                    setFilters({
+                      ...filters,
+                      status: (value || undefined) as
+                        | DonationStatus
+                        | undefined,
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Từ ngày
+                </label>
+                <Input
+                  type="date"
+                  value={filters.from || ""}
+                  onChange={(e) =>
+                    setFilters({ ...filters, from: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Đến ngày
+                </label>
+                <Input
+                  type="date"
+                  value={filters.to || ""}
+                  onChange={(e) =>
+                    setFilters({ ...filters, to: e.target.value })
+                  }
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={() => {
+                    setFilters((prev) => ({
+                      eventId: prev.eventId || selectedEvent?.id,
+                    }));
+                    setSearchQuery("");
+                    setSortBy("createdAt");
+                    setSortOrder("DESC");
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Donations Table */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto border-2 border-gray-100">
-        <table className="w-full min-w-max">
-          <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100 sticky top-0">
-            <tr>
-              <th className="px-6 py-4 text-left whitespace-nowrap">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedIds.size === filteredAndSortedDonations.length &&
-                    filteredAndSortedDonations.length > 0
-                  }
-                  onChange={toggleSelectAll}
-                  className="rounded"
-                />
-              </th>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto rounded-xl border-none">
+            <table className="w-full min-w-max">
+              <thead className="bg-slate-50/80 sticky top-0">
+                <tr>
+                  <th className="px-6 py-4 text-left whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedIds.size ===
+                          filteredAndSortedDonations.length &&
+                        filteredAndSortedDonations.length > 0
+                      }
+                      onChange={toggleSelectAll}
+                      className="accent-red-600 rounded"
+                    />
+                  </th>
 
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Người gửi
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Số lượng
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Trạng thái
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Ngày gửi
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                HSD
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Ghi chú
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Hành động
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {isLoading ? (
-              <tr>
-                <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
-                  Đang tải...
-                </td>
-              </tr>
-            ) : filteredAndSortedDonations.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
-                  {searchQuery
-                    ? "Không tìm thấy kết quả"
-                    : "Không có đơn quyên góp"}
-                </td>
-              </tr>
-            ) : (
-              filteredAndSortedDonations.map((donation) => {
-                const donorName =
-                  donation.creator?.profile?.fullName ||
-                  donation.creator?.email ||
-                  donation.creator?.phone ||
-                  "Ẩn danh";
-
-                const totalQuantity = donation.items.reduce(
-                  (sum, item) => sum + item.quantity,
-                  0,
-                );
-
-                const statusLabelMap: Record<DonationStatus, string> = {
-                  SUBMITTED: "Chờ duyệt",
-                  PENDING: "Đang xử lý",
-                  APPROVED: "Đã duyệt",
-                  REJECTED: "Từ chối",
-                  RECEIVED: "Đã nhận",
-                  ALLOCATED: "Đã phân bổ",
-                  DISPATCHED: "Đã gửi",
-                  DELIVERED: "Đã giao",
-                };
-
-                const statusClassMap: Record<DonationStatus, string> = {
-                  SUBMITTED:
-                    "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 border border-amber-200",
-                  PENDING:
-                    "bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 border border-orange-200",
-                  APPROVED:
-                    "bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 border border-emerald-200",
-                  REJECTED:
-                    "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
-                  RECEIVED:
-                    "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border border-blue-200",
-                  ALLOCATED:
-                    "bg-gradient-to-r from-purple-100 to-violet-100 text-purple-700 border border-purple-200",
-                  DISPATCHED:
-                    "bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-700 border border-cyan-200",
-                  DELIVERED:
-                    "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200",
-                };
-
-                return (
-                  <tr
-                    key={donation.id}
-                    className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200"
-                  >
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(donation.id)}
-                        onChange={() => toggleSelect(donation.id)}
-                        className="rounded"
-                      />
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    Người gửi
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    Số lượng
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    Trạng thái
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    Ngày gửi
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    HSD
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    Ghi chú
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                    Hành động
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-6 py-4 text-center text-slate-600"
+                    >
+                      Đang tải...
                     </td>
-
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900">{donorName}</p>
-                        <p className="text-sm text-gray-500">
-                          {donation.creator?.phone || ""}
-                        </p>
-                      </div>
+                  </tr>
+                ) : filteredAndSortedDonations.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-6 py-4 text-center text-slate-600"
+                    >
+                      {searchQuery
+                        ? "Không tìm thấy kết quả"
+                        : "Không có đơn quyên góp"}
                     </td>
-                    <td className="px-6 py-4">{totalQuantity}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1.5 rounded-xl text-sm font-semibold ${
-                          statusClassMap[donation.status]
-                        }`}
+                  </tr>
+                ) : (
+                  filteredAndSortedDonations.map((donation) => {
+                    const donorName =
+                      donation.creator?.profile?.fullName ||
+                      donation.creator?.email ||
+                      donation.creator?.phone ||
+                      "Ẩn danh";
+
+                    const totalQuantity = donation.items.reduce(
+                      (sum, item) => sum + item.quantity,
+                      0,
+                    );
+
+                    const statusLabelMap: Record<DonationStatus, string> = {
+                      SUBMITTED: "Chờ duyệt",
+                      PENDING: "Đang xử lý",
+                      APPROVED: "Đã duyệt",
+                      REJECTED: "Từ chối",
+                      RECEIVED: "Đã nhận",
+                      ALLOCATED: "Đã phân bổ",
+                      DISPATCHED: "Đã gửi",
+                      DELIVERED: "Đã giao",
+                    };
+
+                    const statusClassMap: Record<DonationStatus, string> = {
+                      SUBMITTED:
+                        "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 border border-amber-200",
+                      PENDING:
+                        "bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 border border-orange-200",
+                      APPROVED:
+                        "bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 border border-emerald-200",
+                      REJECTED:
+                        "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
+                      RECEIVED:
+                        "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
+                      ALLOCATED:
+                        "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
+                      DISPATCHED:
+                        "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
+                      DELIVERED:
+                        "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200",
+                    };
+
+                    return (
+                      <tr
+                        key={donation.id}
+                        className="hover:bg-slate-50/80 transition-all duration-200"
                       >
-                        {statusLabelMap[donation.status]}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(donation.createdAt).toLocaleDateString("vi-VN")}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {donation.items[0]?.expirationDate
-                        ? new Date(
-                            donation.items[0].expirationDate,
-                          ).toLocaleDateString("vi-VN")
-                        : "Không có"}
-                    </td>
-                    <td className="px-6 py-4 max-w-xs">
-                      <div>
-                        <p
-                          className="font-medium text-gray-900 truncate"
-                          title={donation.note || ""}
-                        >
-                          {donation.note || "(Không có ghi chú)"}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => setSelectedDonation(donation)}
-                          variant="outline"
-                          className="flex items-center gap-1 rounded-xl border-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          Chi tiết
-                        </Button>
-                        {donation.status === "SUBMITTED" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveDonation(donation.id)}
-                              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-xl shadow-sm"
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(donation.id)}
+                            onChange={() => toggleSelect(donation.id)}
+                            className="accent-red-600 rounded"
+                          />
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {donorName}
+                            </p>
+                            <p className="text-sm text-slate-600">
+                              {donation.creator?.phone || ""}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-700">
+                          {totalQuantity}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1.5 rounded-xl text-sm font-semibold ${
+                              statusClassMap[donation.status]
+                            }`}
+                          >
+                            {statusLabelMap[donation.status]}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {new Date(donation.createdAt).toLocaleDateString(
+                            "vi-VN",
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {donation.items[0]?.expirationDate
+                            ? new Date(
+                                donation.items[0].expirationDate,
+                              ).toLocaleDateString("vi-VN")
+                            : "Không có"}
+                        </td>
+                        <td className="px-6 py-4 max-w-xs">
+                          <div>
+                            <p
+                              className="font-semibold text-slate-900 truncate"
+                              title={donation.note || ""}
                             >
-                              Duyệt
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleRejectDonation(donation.id)}
-                              variant="outline"
-                              className="border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-xl"
-                            >
-                              Từ chối
-                            </Button>
-                          </>
-                        )}
-                        {donation.status === "APPROVED" && (
+                              {donation.note || "(Không có ghi chú)"}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => handleReceiveDonation(donation.id)}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              Nhập kho
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                toast.info(
-                                  "Chức năng phân phối đang phát triển",
-                                );
-                              }}
+                              onClick={() => setSelectedDonation(donation)}
                               variant="outline"
-                              className="rounded-xl border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                              className="flex items-center gap-1 rounded-xl border-2 border-red-200 text-red-700"
                             >
-                              Phân phối
+                              <Eye className="h-4 w-4" />
+                              Chi tiết
                             </Button>
+                            {donation.status === "SUBMITTED" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    handleApproveDonation(donation.id)
+                                  }
+                                  className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-xl shadow-sm"
+                                >
+                                  Duyệt
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    handleRejectDonation(donation.id)
+                                  }
+                                  variant="outline"
+                                  className="border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-xl"
+                                >
+                                  Từ chối
+                                </Button>
+                              </>
+                            )}
+                            {donation.status === "APPROVED" && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    handleReceiveDonation(donation.id)
+                                  }
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Nhập kho
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    toast.info(
+                                      "Chức năng phân phối đang phát triển",
+                                    );
+                                  }}
+                                  variant="outline"
+                                  className="rounded-xl border-2 border-red-500 text-red-600 hover:bg-red-50"
+                                >
+                                  Phân phối
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center gap-3">
+        <div className="flex justify-center items-center gap-3">
           <Button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             variant="outline"
-            className="rounded-xl border-2"
+            className="rounded-lg"
           >
             Trước
           </Button>
-          <span className="flex items-center px-4 py-2 bg-white rounded-xl border-2 border-gray-100 font-semibold text-gray-700">
+          <span className="text-sm text-slate-600">
             Trang {page} / {totalPages}
           </span>
           <Button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
             variant="outline"
-            className="rounded-xl border-2"
+            className="rounded-lg"
           >
             Sau
           </Button>

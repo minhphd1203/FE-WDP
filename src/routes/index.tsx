@@ -27,6 +27,7 @@ import ProductManagement from "../pages/staff/ProductManagement";
 import VolunteerList from "../pages/staff/VolunteerList";
 import CommonWarehouse from "../pages/staff/CommonWarehouse";
 import TeamWarehouse from "../pages/staff/TeamWarehouse";
+import RescueRequests from "../pages/staff/RescueRequests";
 
 // Auth Pages
 import Login from "../pages/auth/Login";
@@ -139,6 +140,14 @@ const router = createBrowserRouter([
       {
         path: "volunteers",
         element: <VolunteerList />,
+      },
+      {
+        path: "rescue-requests",
+        element: <RescueRequests />,
+      },
+      {
+        path: "update-profile",
+        element: <UpdateProfile />,
       },
       {
         path: "warehouse",
