@@ -23,9 +23,10 @@ export default function StaffDashboard() {
       title: "Sản phẩm chờ xác minh",
       value: pendingProductsData?.data?.length || 0,
       icon: Package,
-      color: "text-amber-600",
-      bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
-      borderColor: "border-amber-100",
+      color: "text-red-600",
+      bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
+      borderColor: "border-red-100",
+      badgeColor: "bg-red-100 text-red-700",
     },
     {
       title: "Tổng mặt hàng trong kho",
@@ -34,18 +35,19 @@ export default function StaffDashboard() {
       color: "text-emerald-600",
       bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
       borderColor: "border-emerald-100",
+      badgeColor: "bg-emerald-100 text-emerald-700",
     },
   ];
 
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-br from-slate-50 to-gray-50 min-h-screen">
+    <div className="space-y-6 bg-gradient-to-b from-slate-50 to-red-50/30 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Dashboard Staff
           </h1>
-          <p className="text-gray-500 mt-2 text-lg">
-            Xác minh và phân phối sản phẩm cứu trợ
+          <p className="mt-1 text-lg text-slate-600">
+            Quản lý xác minh và phân phối sản phẩm cứu trợ
           </p>
         </div>
       </div>
@@ -55,22 +57,21 @@ export default function StaffDashboard() {
         {stats.map((stat, index) => (
           <Card
             key={index}
-            className={`border-2 ${stat.borderColor} ${stat.bgColor} rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}
+            className="rounded-2xl border-none bg-white/95 shadow-sm hover:shadow-md transition-shadow"
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-slate-100">
+              <CardTitle className="text-sm font-semibold text-slate-900">
                 {stat.title}
               </CardTitle>
-              <div
-                className={`p-3 rounded-2xl bg-white shadow-sm border border-gray-100`}
-              >
+              <div className={`p-2.5 rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
+            <CardContent className="pt-4">
+              <div className="text-3xl font-bold text-slate-900 mb-1">
                 {stat.value}
               </div>
+              <p className="text-xs text-slate-500">{stat.title}</p>
             </CardContent>
           </Card>
         ))}
@@ -78,44 +79,69 @@ export default function StaffDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">
           Thao tác nhanh
         </h2>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-3">
           <Card
-            className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-2 border-gray-100 rounded-2xl bg-white group"
+            className="rounded-2xl border-none bg-white/95 shadow-sm cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
             onClick={() => navigate(ROUTES.STAFF_PRODUCTS)}
           >
-            <CardHeader>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 group-hover:from-amber-500 group-hover:to-orange-600 flex items-center justify-center mb-4 shadow-lg transition-all duration-300">
-                <CheckCircle className="h-7 w-7 text-white" />
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <CardTitle className="text-lg text-slate-900">
+                  Xác minh sản phẩm
+                </CardTitle>
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">
-                Xác minh sản phẩm
-              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-slate-600">
                 Duyệt và xác minh các sản phẩm quyên góp từ người dân
               </p>
             </CardContent>
           </Card>
 
           <Card
-            className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-2 border-gray-100 rounded-2xl bg-white group"
-            onClick={() => navigate(ROUTES.STAFF_PRODUCTS)}
+            className="rounded-2xl border-none bg-white/95 shadow-sm cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            onClick={() => navigate(ROUTES.STAFF_WAREHOUSE_TEAM)}
           >
-            <CardHeader>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 group-hover:from-emerald-500 group-hover:to-teal-600 flex items-center justify-center mb-4 shadow-lg transition-all duration-300">
-                <Send className="h-7 w-7 text-white" />
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center">
+                  <Send className="h-6 w-6 text-red-600" />
+                </div>
+                <CardTitle className="text-lg text-slate-900">
+                  Phân phối sản phẩm
+                </CardTitle>
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">
-                Phân phối sản phẩm
-              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-slate-600">
                 Phân chia vật phẩm cứu trợ cho các đội và khu vực
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="rounded-2xl border-none bg-white/95 shadow-sm cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            onClick={() => navigate(ROUTES.STAFF_WAREHOUSE_COMMON)}
+          >
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center">
+                  <Package className="h-6 w-6 text-emerald-600" />
+                </div>
+                <CardTitle className="text-lg text-slate-900">
+                  Kho chung
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600">
+                Quản lý và theo dõi tồn kho chung
               </p>
             </CardContent>
           </Card>

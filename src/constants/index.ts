@@ -76,7 +76,9 @@ export const ROUTES = {
   ADMIN_USERS: "/admin/users",
   ADMIN_UPDATE_PROFILE: "/admin/update-profile",
   ADMIN_RELIEF_REQUESTS: "/admin/relief-requests",
+  ADMIN_REPLENISHMENT_REQUESTS: "/admin/replenishment-requests",
   ADMIN_WAREHOUSE: "/admin/warehouse",
+  ADMIN_WAREHOUSE_TRANSACTIONS: "/admin/warehouse-transactions",
 
   // Staff routes
   STAFF: "/staff",
@@ -84,6 +86,7 @@ export const ROUTES = {
   STAFF_PRODUCTS: "/staff/products",
   STAFF_DISTRIBUTE: "/staff/distribute",
   STAFF_VOLUNTEERS: "/staff/volunteers",
+  STAFF_RESCUE_REQUESTS: "/staff/rescue-requests",
   STAFF_WAREHOUSE: "/staff/warehouse",
   STAFF_WAREHOUSE_COMMON: "/staff/warehouse/common",
   STAFF_WAREHOUSE_TEAM: "/staff/warehouse/team",
@@ -131,7 +134,8 @@ export const API_ENDPOINTS = {
     `/rescue-requests/admin/${id}/assignments`,
   RESCUE_REQUEST_REVIEW: (id: string) => `/rescue-requests/admin/${id}/review`,
   RESCUE_REQUEST_CANCEL: (id: string) => `/rescue-requests/${id}/cancel`,
-  RESCUE_REQUEST_EVIDENCE_IMAGES: (id: string) => `/rescue-requests/${id}/evidence-images`,
+  RESCUE_REQUEST_EVIDENCE_IMAGES: (id: string) =>
+    `/rescue-requests/${id}/evidence-images`,
 
   // Warehouse
   WAREHOUSE: "/warehouse",
@@ -142,6 +146,20 @@ export const API_ENDPOINTS = {
   WAREHOUSE_ALLOCATION_BY_ID: (id: string) => `/warehouse/allocations/${id}`,
   WAREHOUSE_ALLOCATION_STATUS: (id: string) =>
     `/warehouse/allocations/${id}/status`,
+  WAREHOUSE_RESCUE_ORDERS: "/warehouse/rescue-orders",
+  WAREHOUSE_RESCUE_ORDER_BY_ID: (id: string) =>
+    `/warehouse/rescue-orders/${id}`,
+  WAREHOUSE_RESCUE_ORDER_CHECK_STOCK: (id: string) =>
+    `/warehouse/rescue-orders/${id}/check-stock`,
+  WAREHOUSE_RESCUE_ORDER_DISPATCH: (id: string) =>
+    `/warehouse/rescue-orders/${id}/dispatch`,
+  WAREHOUSE_RESCUE_ORDER_REPLENISHMENT_REQUESTS: (id: string) =>
+    `/warehouse/rescue-orders/${id}/replenishment-requests`,
+  WAREHOUSE_REPLENISHMENT_REQUEST_REVIEW: (id: string) =>
+    `/warehouse/replenishment-requests/${id}/review`,
+  WAREHOUSE_RESCUE_ORDER_COMPLETE: (id: string) =>
+    `/warehouse/rescue-orders/${id}/complete`,
+  WAREHOUSE_TRANSACTIONS: "/warehouse/transactions",
   WAREHOUSE_RECEIPTS: "/warehouse/receipts",
   WAREHOUSE_RECEIPT_BY_ID: (id: string) => `/warehouse/receipts/${id}`,
 

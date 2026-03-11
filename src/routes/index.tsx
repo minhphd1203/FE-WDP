@@ -20,6 +20,8 @@ import UserManagement from "../pages/admin/UserManagement";
 import UpdateProfile from "../pages/admin/UpdateProfile";
 import ReliefRequests from "../pages/admin/ReliefRequests";
 import Warehouse from "../pages/admin/Warehouse";
+import ReplenishmentRequests from "../pages/admin/ReplenishmentRequests";
+import WarehouseTransactions from "../pages/admin/WarehouseTransactions";
 
 // Staff Pages
 import StaffDashboard from "../pages/staff/Dashboard";
@@ -27,6 +29,7 @@ import ProductManagement from "../pages/staff/ProductManagement";
 import VolunteerList from "../pages/staff/VolunteerList";
 import CommonWarehouse from "../pages/staff/CommonWarehouse";
 import TeamWarehouse from "../pages/staff/TeamWarehouse";
+import RescueRequests from "../pages/staff/RescueRequests";
 
 // Auth Pages
 import Login from "../pages/auth/Login";
@@ -107,8 +110,16 @@ const router = createBrowserRouter([
         element: <ReliefRequests />,
       },
       {
+        path: "replenishment-requests",
+        element: <ReplenishmentRequests />,
+      },
+      {
         path: "warehouse",
         element: <Warehouse />,
+      },
+      {
+        path: "warehouse-transactions",
+        element: <WarehouseTransactions />,
       },
     ],
   },
@@ -139,6 +150,14 @@ const router = createBrowserRouter([
       {
         path: "volunteers",
         element: <VolunteerList />,
+      },
+      {
+        path: "rescue-requests",
+        element: <RescueRequests />,
+      },
+      {
+        path: "update-profile",
+        element: <UpdateProfile />,
       },
       {
         path: "warehouse",

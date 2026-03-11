@@ -7,6 +7,20 @@ import { EventData } from "../../../types/event";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { CustomSelect } from "../../../components/ui/CustomSelect";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../components/ui/table";
 import { toast } from "sonner";
 
 export default function VolunteerList() {
@@ -81,175 +95,189 @@ export default function VolunteerList() {
   });
 
   return (
-    <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 min-h-screen">
+    <div className="space-y-6 bg-gradient-to-b from-slate-50 to-red-50/30 p-4 sm:p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-          Danh sách tình nguyện viên
-        </h1>
-        <p className="text-gray-500 mt-2 text-lg">
-          Quản lý người đăng ký tham gia hoạt động cứu trợ
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Danh sách tình nguyện viên
+          </h1>
+          <p className="mt-1 text-lg text-slate-600">
+            Quản lý người đăng ký tham gia hoạt động cứu trợ
+          </p>
+        </div>
       </div>
 
       {/* Event Selector */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Chọn sự kiện
-        </label>
-        <CustomSelect
-          options={events.map((event) => ({
-            value: event.id,
-            label: `${event.title} - ${new Date(event.startDate).toLocaleDateString("vi-VN")}`,
-          }))}
-          value={selectedEvent?.id || ""}
-          onChange={(value) => {
-            const event = events.find((ev) => ev.id === value);
-            if (event) {
-              setSelectedEvent(event);
-              setPage(1);
-            }
-          }}
-          placeholder="Chọn sự kiện..."
-          className="max-w-2xl"
-        />
-      </div>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardHeader className="border-b border-slate-100">
+          <CardTitle className="text-slate-900">Chọn sự kiện</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CustomSelect
+            options={events.map((event) => ({
+              value: event.id,
+              label: `${event.title} - ${new Date(event.startDate).toLocaleDateString("vi-VN")}`,
+            }))}
+            value={selectedEvent?.id || ""}
+            onChange={(value) => {
+              const event = events.find((ev) => ev.id === value);
+              if (event) {
+                setSelectedEvent(event);
+                setPage(1);
+              }
+            }}
+            placeholder="Chọn sự kiện..."
+          />
+        </CardContent>
+      </Card>
 
       {/* Search */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-gray-100">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Tìm kiếm
-        </label>
-        <Input
-          type="text"
-          placeholder="Tìm kiếm theo tên, email, số điện thoại..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-md rounded-xl"
-        />
-      </div>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardHeader className="border-b border-slate-100">
+          <CardTitle className="text-slate-900">Tìm kiếm</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Input
+            type="text"
+            placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-md rounded-xl border-red-300 focus-visible:border-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-0"
+          />
+        </CardContent>
+      </Card>
 
       {/* Volunteers Table */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-100">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-100">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Tình nguyện viên
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Thông tin liên hệ
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Địa chỉ
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Ngày đăng ký
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {isLoading ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                  Đang tải...
-                </td>
-              </tr>
-            ) : filteredVolunteers.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                  {searchQuery
-                    ? "Không tìm thấy kết quả"
-                    : "Chưa có tình nguyện viên đăng ký"}
-                </td>
-              </tr>
-            ) : (
-              filteredVolunteers.map((volunteer) => (
-                <tr
-                  key={volunteer.id}
-                  className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {volunteer.account?.profile?.avatarUrl ? (
-                        <img
-                          src={volunteer.account.profile.avatarUrl}
-                          alt={volunteer.account.profile.fullName}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-600" />
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
+        <CardHeader className="border-b border-slate-100">
+          <CardTitle className="text-slate-900">
+            Danh sách tình nguyện viên
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto rounded-xl border-none">
+            <Table>
+              <TableHeader className="bg-slate-50/80">
+                <TableRow className="hover:bg-slate-50/80">
+                  <TableHead className="text-slate-600">
+                    Tình nguyện viên
+                  </TableHead>
+                  <TableHead className="text-slate-600">
+                    Thông tin liên hệ
+                  </TableHead>
+                  <TableHead className="text-slate-600">Địa chỉ</TableHead>
+                  <TableHead className="text-slate-600">Ngày đăng ký</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">
+                      Đang tải...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredVolunteers.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-slate-600"
+                    >
+                      {searchQuery
+                        ? "Không tìm thấy kết quả"
+                        : "Chưa có tình nguyện viên đăng ký"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredVolunteers.map((volunteer) => (
+                    <TableRow
+                      key={volunteer.id}
+                      className="transition-all duration-200 hover:bg-slate-50/80"
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {volunteer.account?.profile?.avatarUrl ? (
+                            <img
+                              src={volunteer.account.profile.avatarUrl}
+                              alt={volunteer.account.profile.fullName}
+                              className="w-10 h-10 rounded-full border border-slate-200 object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                              <User className="h-5 w-5 text-slate-500" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {volunteer.account?.profile?.fullName ||
+                                "Chưa cập nhật"}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              ID: {volunteer.id.substring(0, 8)}...
+                            </p>
+                          </div>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {volunteer.account?.profile?.fullName ||
+                      </TableCell>
+                      <TableCell className="text-slate-700">
+                        <div className="space-y-1">
+                          <p className="text-sm flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-slate-500" />
+                            {volunteer.account?.email || "N/A"}
+                          </p>
+                          {volunteer.account?.phone && (
+                            <p className="text-sm flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-slate-500" />
+                              {volunteer.account.phone}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-slate-700">
+                        <p className="text-sm flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-slate-500" />
+                          {volunteer.account?.profile?.address ||
                             "Chưa cập nhật"}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          ID: {volunteer.id.substring(0, 8)}...
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <p className="text-sm flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        {volunteer.account?.email || "N/A"}
-                      </p>
-                      {volunteer.account?.phone && (
+                      </TableCell>
+                      <TableCell className="text-slate-700">
                         <p className="text-sm flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          {volunteer.account.phone}
+                          <Calendar className="h-4 w-4 text-slate-500" />
+                          {new Date(volunteer.registeredAt).toLocaleDateString(
+                            "vi-VN",
+                          )}{" "}
+                          {new Date(volunteer.registeredAt).toLocaleTimeString(
+                            "vi-VN",
+                          )}
                         </p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      {volunteer.account?.profile?.address || "Chưa cập nhật"}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      {new Date(volunteer.registeredAt).toLocaleDateString(
-                        "vi-VN",
-                      )}{" "}
-                      {new Date(volunteer.registeredAt).toLocaleTimeString(
-                        "vi-VN",
-                      )}
-                    </p>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center gap-3">
+        <div className="flex justify-center items-center gap-3">
           <Button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             variant="outline"
-            className="rounded-xl border-2"
+            className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
           >
             Trước
           </Button>
-          <span className="flex items-center px-4 py-2 bg-white rounded-xl border-2 border-gray-100 font-semibold text-gray-700">
+          <span className="text-sm text-slate-600">
             Trang {page} / {totalPages}
           </span>
           <Button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
             variant="outline"
-            className="rounded-xl border-2"
+            className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
           >
             Sau
           </Button>

@@ -70,8 +70,8 @@ export function TeamSelectorDropdown({
           disabled
             ? "bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed"
             : isOpen
-              ? "border-blue-500 bg-blue-50 shadow-md"
-              : "border-gray-300 bg-white hover:border-gray-400"
+              ? "border-red-500 bg-red-50 shadow-md"
+              : "border-red-200 bg-white hover:border-red-300"
         }`}
       >
         <span
@@ -105,7 +105,7 @@ export function TeamSelectorDropdown({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-red-200 rounded-xl shadow-2xl z-50 overflow-hidden">
           {searchable && (
             <div className="p-3 border-b border-gray-100 bg-gray-50">
               <input
@@ -113,7 +113,7 @@ export function TeamSelectorDropdown({
                 placeholder="Tìm đội..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-red-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 autoFocus
               />
             </div>
@@ -135,15 +135,15 @@ export function TeamSelectorDropdown({
                   }}
                   className={`w-full px-4 py-3 text-left border-b border-gray-100 transition-all duration-200 flex items-center justify-between group ${
                     value === team.id
-                      ? "bg-blue-50 border-l-4 border-l-blue-500"
-                      : "hover:bg-gray-50"
+                      ? "bg-red-50 border-l-4 border-l-red-500"
+                      : "hover:bg-red-50"
                   }`}
                 >
                   <div className="flex-1">
                     <div
                       className={`text-sm font-semibold ${
                         value === team.id
-                          ? "text-blue-600"
+                          ? "text-red-600"
                           : "text-gray-900 group-hover:text-gray-700"
                       }`}
                     >
@@ -155,7 +155,7 @@ export function TeamSelectorDropdown({
                     </div>
                   </div>
                   {value === team.id && (
-                    <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <Check className="w-5 h-5 text-red-600 flex-shrink-0" />
                   )}
                 </button>
               ))

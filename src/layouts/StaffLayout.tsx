@@ -10,6 +10,7 @@ import {
   User,
   Package,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
@@ -43,6 +44,11 @@ const navigation: NavigationItem[] = [
     name: "Danh sách tình nguyện viên",
     href: ROUTES.STAFF_VOLUNTEERS,
     icon: Send,
+  },
+  {
+    name: "Danh sách đơn cứu hộ",
+    href: ROUTES.STAFF_RESCUE_REQUESTS,
+    icon: FileText,
   },
   {
     name: "Quản lý kho",
@@ -118,7 +124,7 @@ export default function StaffLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-red-50/30">
       {/* Mobile sidebar */}
       <div
         className={cn(
@@ -130,12 +136,15 @@ export default function StaffLayout() {
           className="fixed inset-0 bg-black/50"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-50 to-white shadow-lg border-r border-blue-100">
+        <div className="fixed inset-y-0 left-0 w-[86vw] max-w-[340px] border-r border-red-100 bg-gradient-to-b from-red-50 to-white shadow-lg">
           <div className="flex h-full flex-col">
             {/* Sidebar header */}
-            <div className="flex items-center justify-between p-4 border-b border-blue-100 bg-white">
-              <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
-              <button onClick={() => setSidebarOpen(false)}>
+            <div className="flex items-center justify-between border-b border-red-100 bg-white px-5">
+              <img src="/logo.png" alt="ResQHub Logo" className="w-[200px]" />
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="rounded-lg p-1 text-red-600 transition-colors hover:bg-red-50"
+              >
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -159,10 +168,10 @@ export default function StaffLayout() {
                           setSidebarOpen(false);
                         }}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-left",
                           submenuActive || isExpanded
-                            ? "bg-primary text-primary-foreground"
-                            : "text-gray-700 hover:bg-gray-100",
+                            ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
+                            : "text-slate-700 hover:bg-red-50 hover:text-red-700",
                         )}
                       >
                         <item.icon className="h-5 w-5" />
@@ -175,7 +184,7 @@ export default function StaffLayout() {
                         />
                       </button>
                       {isExpanded && (
-                        <div className="ml-4 space-y-1 border-l border-gray-200 pl-3 mt-1">
+                        <div className="ml-4 space-y-1 border-l border-red-200 pl-3 mt-1">
                           {item.submenu?.map((subitem) => (
                             <Link
                               key={subitem.name}
@@ -184,8 +193,8 @@ export default function StaffLayout() {
                               className={cn(
                                 "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                                 location.pathname === subitem.href
-                                  ? "bg-primary/20 text-primary"
-                                  : "text-gray-600 hover:bg-gray-100",
+                                  ? "bg-red-100 text-red-700"
+                                  : "text-slate-600 hover:bg-red-50",
                               )}
                             >
                               {subitem.name}
@@ -203,10 +212,10 @@ export default function StaffLayout() {
                     to={item.href || "#"}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-gray-700 hover:bg-gray-100",
+                        ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
+                        : "text-slate-700 hover:bg-red-50 hover:text-red-700",
                     )}
                   >
                     <item.icon className="h-5 w-5" />
@@ -217,7 +226,7 @@ export default function StaffLayout() {
             </nav>
 
             {/* User section */}
-            <div className="border-t p-4">
+            <div className="border-t border-red-100 p-4 pb-5">
               <div className="flex items-center gap-3 mb-3">
                 {currentUser?.profile?.avatarUrl ? (
                   <img
@@ -226,8 +235,8 @@ export default function StaffLayout() {
                     className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-semibold">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                    <span className="font-semibold text-red-700">
                       {getFirstChar()}
                     </span>
                   </div>
@@ -236,21 +245,21 @@ export default function StaffLayout() {
                   <p className="text-sm font-medium truncate">
                     {getFullName()}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-slate-500 truncate">
                     {displayUser?.role}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => navigate(ROUTES.STAFF_UPDATE_PROFILE)}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors mb-2"
+                className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
               >
                 <User className="h-4 w-4" />
                 Cập nhật hồ sơ
               </button>
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -263,10 +272,14 @@ export default function StaffLayout() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-1 bg-gradient-to-b from-blue-50 to-white border-r border-blue-100">
+        <div className="flex flex-1 flex-col border-r border-red-100 bg-gradient-to-b from-red-50 to-white">
           {/* Sidebar header */}
-          <div className="flex items-center justify-center h-16 px-4 border-b border-blue-100 bg-white">
-            <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
+          <div className="flex items-center justify-center border-b border-red-100 bg-white px-4">
+            <img
+              src="/logo.png"
+              alt="ResQHub Logo"
+              className="h-[100px] object-cover w-auto"
+            />
           </div>
 
           {/* Navigation */}
@@ -285,10 +298,10 @@ export default function StaffLayout() {
                     <button
                       onClick={() => toggleMenu(item.name)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-left",
                         submenuActive || isExpanded
-                          ? "bg-primary text-primary-foreground"
-                          : "text-gray-700 hover:bg-gray-100",
+                          ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
+                          : "text-slate-700 hover:bg-red-50 hover:text-red-700",
                       )}
                     >
                       <item.icon className="h-5 w-5" />
@@ -301,7 +314,7 @@ export default function StaffLayout() {
                       />
                     </button>
                     {isExpanded && (
-                      <div className="ml-4 space-y-1 border-l border-gray-200 pl-3 mt-1">
+                      <div className="ml-4 space-y-1 border-l border-red-200 pl-3 mt-1">
                         {item.submenu?.map((subitem) => (
                           <Link
                             key={subitem.name}
@@ -309,8 +322,8 @@ export default function StaffLayout() {
                             className={cn(
                               "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                               location.pathname === subitem.href
-                                ? "bg-primary/20 text-primary"
-                                : "text-gray-600 hover:bg-gray-100",
+                                ? "bg-red-100 text-red-700"
+                                : "text-slate-600 hover:bg-red-50",
                             )}
                           >
                             {subitem.name}
@@ -327,10 +340,10 @@ export default function StaffLayout() {
                   key={item.name}
                   to={item.href || "#"}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-gray-700 hover:bg-gray-100",
+                      ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
+                      : "text-slate-700 hover:bg-red-50 hover:text-red-700",
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -341,7 +354,7 @@ export default function StaffLayout() {
           </nav>
 
           {/* User section */}
-          <div className="border-t p-4">
+          <div className="border-t border-red-100 p-4">
             <div className="flex items-center gap-3 mb-3">
               {currentUser?.profile?.avatarUrl ? (
                 <img
@@ -350,27 +363,31 @@ export default function StaffLayout() {
                   className="h-10 w-10 rounded-full object-cover"
                 />
               ) : (
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary font-semibold">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                  <span className="font-semibold text-red-700">
                     {getFirstChar()}
                   </span>
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{getFullName()}</p>
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-slate-500 truncate">
                   {displayUser?.role}
                 </p>
               </div>
             </div>
             <button
               onClick={() => navigate(ROUTES.STAFF_UPDATE_PROFILE)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors mb-2"
+              className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
             >
               <User className="h-4 w-4" />
               Cập nhật hồ sơ
             </button>
-            <Button variant="outline" className="w-full" onClick={handleLogout}>
+            <Button
+              variant="outline"
+              className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Đăng xuất
             </Button>
@@ -381,14 +398,14 @@ export default function StaffLayout() {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-4 shadow-sm lg:hidden">
+        <div className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-red-100 bg-gradient-to-r from-red-50 to-white px-4 shadow-sm lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-primary hover:text-primary/80"
+            className="text-red-700 transition-colors hover:text-red-600"
           >
             <Menu className="h-6 w-6" />
           </button>
-          <img src="/logo.png" alt="ResQHub Logo" className="h-40 w-auto" />
+          <img src="/logo.png" alt="ResQHub Logo" className="h-10 w-auto" />
         </div>
 
         {/* Page content */}

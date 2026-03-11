@@ -113,11 +113,13 @@ export default function VerifyProducts() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 bg-gradient-to-b from-slate-50 to-slate-100/60 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Xác Minh Sản Phẩm</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Xác Minh Sản Phẩm
+          </h1>
+          <p className="mt-1 text-lg text-slate-600">
             Kiểm tra và xác minh các sản phẩm quyên góp từ người dân
           </p>
         </div>
@@ -129,18 +131,23 @@ export default function VerifyProducts() {
       </div>
 
       {/* Event Selection */}
-      <Card>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
         <CardHeader>
-          <CardTitle>Chọn sự kiện</CardTitle>
+          <CardTitle className="text-slate-900">Chọn sự kiện</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label htmlFor="event-select">Sự kiện đang diễn ra</Label>
+            <Label htmlFor="event-select" className="text-slate-700">
+              Sự kiện đang diễn ra
+            </Label>
             <Select
               value={selectedEventId}
               onValueChange={(value) => setSelectedEventId(value)}
             >
-              <SelectTrigger id="event-select" className="w-full">
+              <SelectTrigger
+                id="event-select"
+                className="w-full border-red-400 focus:outline-red-500 focus:ring-0"
+              >
                 <SelectValue placeholder="Chọn sự kiện để xem sản phẩm chờ xác minh" />
               </SelectTrigger>
               <SelectContent>
@@ -167,119 +174,143 @@ export default function VerifyProducts() {
       </Card>
 
       {/* Pending Products Table */}
-      <Card>
+      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
         <CardHeader>
-          <CardTitle>Sản phẩm chờ xác minh</CardTitle>
+          <CardTitle className="text-slate-900">
+            Sản phẩm chờ xác minh
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Đang tải...</div>
+            <div className="text-center py-8 text-slate-600">Đang tải...</div>
           ) : productsData?.data && productsData.data.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Hình ảnh</TableHead>
-                  <TableHead>Tên sản phẩm</TableHead>
-                  <TableHead>Danh mục</TableHead>
-                  <TableHead>Số lượng</TableHead>
-                  <TableHead>Tình trạng</TableHead>
-                  <TableHead>Người quyên góp</TableHead>
-                  <TableHead>Liên hệ</TableHead>
-                  <TableHead>Ngày gửi</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {productsData.data.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                          <Package className="h-6 w-6 text-gray-400" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        {product.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{product.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {product.quantity} {product.unit}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          product.condition === "new" ? "success" : "default"
-                        }
-                      >
-                        {product.condition === "new"
-                          ? "Mới"
-                          : product.condition === "used"
-                            ? "Đã qua sử dụng"
-                            : "Tân trang"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{product.donorName}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <p>{product.donorEmail}</p>
-                        {product.donorPhone && (
-                          <p className="text-muted-foreground">
-                            {product.donorPhone}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(product.createdAt).toLocaleDateString("vi-VN")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedProduct(product);
-                            setIsDetailDialogOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleQuickApprove(product)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Duyệt
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleQuickReject(product)}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Từ chối
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto rounded-xl border-none">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-slate-600">Hình ảnh</TableHead>
+                    <TableHead className="text-slate-600">
+                      Tên sản phẩm
+                    </TableHead>
+                    <TableHead className="text-slate-600">Danh mục</TableHead>
+                    <TableHead className="text-slate-600">Số lượng</TableHead>
+                    <TableHead className="text-slate-600">Tình trạng</TableHead>
+                    <TableHead className="text-slate-600">
+                      Người quyên góp
+                    </TableHead>
+                    <TableHead className="text-slate-600">Liên hệ</TableHead>
+                    <TableHead className="text-slate-600">Ngày gửi</TableHead>
+                    <TableHead className="text-right text-slate-600">
+                      Thao tác
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {productsData.data.map((product) => (
+                    <TableRow key={product.id} className="hover:bg-slate-50/80">
+                      <TableCell>
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded border border-slate-200"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-200 rounded flex items-center justify-center">
+                            <Package className="h-6 w-6 text-slate-400" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-semibold text-slate-900">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-slate-500" />
+                          {product.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-slate-700">
+                          {product.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-700">
+                        {product.quantity} {product.unit}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            product.condition === "new" ? "success" : "default"
+                          }
+                          className={
+                            product.condition === "new"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-red-100 text-red-800"
+                          }
+                        >
+                          {product.condition === "new"
+                            ? "Mới"
+                            : product.condition === "used"
+                              ? "Đã qua sử dụng"
+                              : "Tân trang"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-700">
+                        {product.donorName}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <p className="text-slate-700">{product.donorEmail}</p>
+                          {product.donorPhone && (
+                            <p className="text-slate-600">
+                              {product.donorPhone}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-slate-600">
+                        {new Date(product.createdAt).toLocaleDateString(
+                          "vi-VN",
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setIsDetailDialogOpen(true);
+                            }}
+                            className="hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleQuickApprove(product)}
+                            className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 rounded-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Duyệt
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleQuickReject(product)}
+                            className="bg-red-600 hover:bg-red-700 rounded-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Từ chối
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-600">
               Không có sản phẩm nào chờ xác minh
             </div>
           )}
