@@ -132,6 +132,7 @@ export const API_ENDPOINTS = {
     `/rescue-requests/admin/${id}/assignments`,
   RESCUE_REQUEST_REVIEW: (id: string) => `/rescue-requests/admin/${id}/review`,
   RESCUE_REQUEST_CANCEL: (id: string) => `/rescue-requests/${id}/cancel`,
+  RESCUE_REQUEST_EVIDENCE_IMAGES: (id: string) => `/rescue-requests/${id}/evidence-images`,
 
   // Warehouse
   WAREHOUSE: "/warehouse",

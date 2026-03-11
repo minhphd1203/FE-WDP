@@ -63,10 +63,10 @@ export const useApproveDonation = () => {
     onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
       queryClient.invalidateQueries({ queryKey: donationKeys.detail(variables.id) });
-      toast.success('Phê duyệt donation thành công!');
+      toast.success('Phê duyệt quyên góp thành công!');
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || error.message || 'Phê duyệt donation thất bại';
+      const message = error?.response?.data?.message || error.message || 'Phê duyệt quyên góp thất bại';
       toast.error(message);
     },
   });
@@ -84,10 +84,10 @@ export const useRejectDonation = () => {
     onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
       queryClient.invalidateQueries({ queryKey: donationKeys.detail(variables.id) });
-      toast.success('Từ chối donation thành công!');
+      toast.success('Từ chối quyên góp thành công!');
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || error.message || 'Từ chối donation thất bại';
+      const message = error?.response?.data?.message || error.message || 'Từ chối quyên góp thất bại';
       toast.error(message);
     },
   });
@@ -104,7 +104,7 @@ export const useBulkApproveDonations = () => {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
-      toast.success(`Đã phê duyệt ${response.data?.count || 0} donations!`);
+      toast.success(`Đã phê duyệt ${response.data?.count || 0} đơn quyên góp thành công!`);
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Phê duyệt hàng loạt thất bại';
@@ -124,7 +124,7 @@ export const useBulkRejectDonations = () => {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: donationKeys.lists() });
-      toast.success(`Đã từ chối ${response.data?.count || 0} donations!`);
+      toast.success(`Đã từ chối ${response.data?.count || 0} đơn quyên góp thành công!`);
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Từ chối hàng loạt thất bại';

@@ -159,6 +159,7 @@ export interface ReliefRequest {
     respondedAt: string | null;
   }>;
   isAssigned: boolean;
+  evidenceImages: string[];
   teamSummary: {
     required: number;
     assigned: number;
