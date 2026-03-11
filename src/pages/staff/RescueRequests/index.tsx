@@ -145,7 +145,7 @@ export default function RescueRequests() {
     setIsLoading(true);
     try {
       const response = await rescueRequestApi.getRescueRequests({
-        status: RescueRequestStatus.ASSIGNED,
+        status: RescueRequestStatus.ACCEPTED,
         q: searchQuery.trim() || undefined,
         page,
         limit: LIMIT,
@@ -677,12 +677,15 @@ export default function RescueRequests() {
                 ) : (
                   requests.map((request) => {
                     const existingOrder = ordersByRequestId[request.id];
-                    const visibleTeams = request.assignedTeams.slice(
+                    const acceptedTeams = request.assignedTeams.filter(
+                      (team) => team.status === "ACCEPTED",
+                    );
+                    const visibleTeams = acceptedTeams.slice(
                       0,
                       MAX_VISIBLE_TEAMS,
                     );
                     const remainingTeamsCount = Math.max(
-                      request.assignedTeams.length - MAX_VISIBLE_TEAMS,
+                      acceptedTeams.length - MAX_VISIBLE_TEAMS,
                       0,
                     );
 
@@ -724,11 +727,11 @@ export default function RescueRequests() {
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
                               <Users className="h-4 w-4 text-red-500" />
-                              {request.teamSummary.assigned}/
+                              {acceptedTeams.length}/
                               {request.teamSummary.required} đội
                             </div>
                             <div className="flex flex-wrap gap-1.5">
-                              {request.assignedTeams.length > 0 ? (
+                              {acceptedTeams.length > 0 ? (
                                 <>
                                   {visibleTeams.map((team) => (
                                     <Badge
@@ -866,8 +869,12 @@ export default function RescueRequests() {
                   <div>
                     <p className="text-sm text-slate-500">Đội đã phân</p>
                     <p className="mt-1 font-semibold text-slate-900">
-                      {selectedRequest.teamSummary.assigned}/
-                      {selectedRequest.teamSummary.required}
+                      {
+                        selectedRequest.assignedTeams.filter(
+                          (team) => team.status === "ACCEPTED",
+                        ).length
+                      }
+                      /{selectedRequest.teamSummary.required}
                     </p>
                   </div>
                 </div>
