@@ -24,6 +24,7 @@ export interface Vehicle {
 export interface RescueTeam {
   id: string;
   teamId: string;
+  accountId?: string | null;
   teamName: string;
   teamCode: string;
   membersCount: number;

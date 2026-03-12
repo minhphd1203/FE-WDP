@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   listTeams,
   getTeamById,
@@ -9,21 +9,25 @@ import {
   ListTeamsParams,
   CreateTeamDto,
   UpdateTeamDto,
-} from '../apis/teamApi';
+} from "../apis/teamApi";
 
 const TEAM_KEYS = {
-  all: ['teams'] as const,
-  lists: () => [...TEAM_KEYS.all, 'list'] as const,
+  all: ["teams"] as const,
+  lists: () => [...TEAM_KEYS.all, "list"] as const,
   list: (params?: ListTeamsParams) => [...TEAM_KEYS.lists(), params] as const,
-  details: () => [...TEAM_KEYS.all, 'detail'] as const,
+  details: () => [...TEAM_KEYS.all, "detail"] as const,
   detail: (id: string) => [...TEAM_KEYS.details(), id] as const,
 };
 
 // List teams
-export const useTeams = (params?: ListTeamsParams) => {
+export const useTeams = (
+  params?: ListTeamsParams,
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: TEAM_KEYS.list(params),
     queryFn: () => listTeams(params),
+    enabled: options?.enabled ?? true,
   });
 };
 
@@ -44,10 +48,10 @@ export const useCreateTeam = () => {
     mutationFn: (data: CreateTeamDto) => createTeam(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEAM_KEYS.lists() });
-      toast.success('Tạo đội cứu hộ thành công');
+      toast.success("Tạo đội cứu hộ thành công");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Tạo đội cứu hộ thất bại');
+      toast.error(error?.response?.data?.message || "Tạo đội cứu hộ thất bại");
     },
   });
 };
@@ -57,14 +61,19 @@ export const useUpdateTeam = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTeamDto }) => updateTeam(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateTeamDto }) =>
+      updateTeam(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: TEAM_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: TEAM_KEYS.detail(variables.id) });
-      toast.success('Cập nhật đội cứu hộ thành công');
+      queryClient.invalidateQueries({
+        queryKey: TEAM_KEYS.detail(variables.id),
+      });
+      toast.success("Cập nhật đội cứu hộ thành công");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Cập nhật đội cứu hộ thất bại');
+      toast.error(
+        error?.response?.data?.message || "Cập nhật đội cứu hộ thất bại",
+      );
     },
   });
 };
@@ -77,10 +86,10 @@ export const useDeleteTeam = () => {
     mutationFn: (id: string) => deleteTeam(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEAM_KEYS.lists() });
-      toast.success('Xóa đội cứu hộ thành công');
+      toast.success("Xóa đội cứu hộ thành công");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Xóa đội cứu hộ thất bại');
+      toast.error(error?.response?.data?.message || "Xóa đội cứu hộ thất bại");
     },
   });
 };

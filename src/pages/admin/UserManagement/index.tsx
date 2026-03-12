@@ -15,6 +15,7 @@ import {
   useUpdateUser,
   useUpdateUserStatus,
 } from "../../../hooks/useUser";
+import { useTeams } from "../../../hooks/useTeam";
 import {
   createAccountSchema,
   updateAccountSchema,
@@ -28,6 +29,7 @@ import {
 } from "./constants";
 import { transformUsersToRescueTeams, getVisiblePages } from "./utils";
 import { RoleFilter, User, RescueTeam } from "./types";
+import { getTeamById, updateTeam } from "../../../apis/teamApi";
 import RescueTeamCard from "./components/RescueTeamCard";
 import RescueTeamDetailDialog from "./components/RescueTeamDetailDialog";
 import UserTable from "./components/UserTable";
@@ -43,26 +45,52 @@ export default function UserManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createAvatarFilePreview, setCreateAvatarFilePreview] = useState("");
   const [editAvatarFilePreview, setEditAvatarFilePreview] = useState("");
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
   const createFileInputRef = useRef<HTMLInputElement | null>(null);
   const editFileInputRef = useRef<HTMLInputElement | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [detailRescueTeam, setDetailRescueTeam] = useState<RescueTeam | null>(
     null,
   );
+  const isRescueTeamView = roleFilter === "RESCUE_TEAM";
 
   const {
     data: usersResponse,
-    isLoading,
-    isFetching,
+    isLoading: isUsersLoading,
+    isFetching: isUsersFetching,
     refetch: refetchUsers,
-  } = useUsers({
-    role: roleFilter,
-    q: debouncedSearch || undefined,
-    page,
-    limit,
-    sortBy: "createdAt",
-    order: "DESC",
-  });
+  } = useUsers(
+    {
+      role: roleFilter,
+      q: debouncedSearch || undefined,
+      page,
+      limit,
+      sortBy: "createdAt",
+      order: "DESC",
+    },
+    {
+      enabled: !isRescueTeamView,
+    },
+  );
+
+  const {
+    data: teamsResponse,
+    isLoading: isTeamsLoading,
+    isFetching: isTeamsFetching,
+    refetch: refetchTeams,
+  } = useTeams(
+    {
+      q: debouncedSearch || undefined,
+      page,
+      limit,
+      sortBy: "createdAt",
+      order: "DESC",
+    },
+    {
+      enabled: isRescueTeamView,
+    },
+  );
+
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
   const updateStatusMutation = useUpdateUserStatus();
@@ -71,9 +99,20 @@ export default function UserManagement() {
   const users = ((paginatedUsers?.data || []) as unknown as User[]).filter(
     (user: any) => user.role !== "ADMIN",
   );
-  const meta = paginatedUsers?.meta;
-  const totalPages = Math.max(meta?.pages || 1, 1);
-  const totalItems = meta?.total || users.length;
+  const rescueTeams = transformUsersToRescueTeams(
+    (teamsResponse?.items || []) as unknown as User[],
+  );
+
+  const usersMeta = paginatedUsers?.meta;
+  const totalPages = Math.max(
+    isRescueTeamView ? teamsResponse?.pages || 1 : usersMeta?.pages || 1,
+    1,
+  );
+  const totalItems = isRescueTeamView
+    ? teamsResponse?.total || rescueTeams.length
+    : usersMeta?.total || users.length;
+  const isLoading = isRescueTeamView ? isTeamsLoading : isUsersLoading;
+  const isFetching = isRescueTeamView ? isTeamsFetching : isUsersFetching;
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -124,21 +163,45 @@ export default function UserManagement() {
   const onSubmitEdit = async (data: UpdateAccountFormData) => {
     if (!editingUser) return;
     try {
-      await updateUserMutation.mutateAsync({ id: editingUser.id, data });
+      const formData = new FormData();
+      if (data.email) formData.append("email", data.email);
+      if (data.phone) formData.append("phone", data.phone);
+      if (data.role) formData.append("role", data.role);
+      if (data.fullName) formData.append("fullName", data.fullName);
+      if (data.address) formData.append("address", data.address);
+      if (data.avatarUrl) formData.append("avatarUrl", data.avatarUrl);
+      if (editAvatarFile) formData.append("avatar", editAvatarFile);
+
+      await updateUserMutation.mutateAsync({
+        id: editingUser.id,
+        data: formData,
+      });
       await new Promise((resolve) => setTimeout(resolve, 300));
       await refetchUsers();
       setEditingUser(null);
       resetEdit();
       setEditAvatarFilePreview("");
+      setEditAvatarFile(null);
     } catch (error) {
       // Error handled in hook
     }
   };
 
-  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    if (isRescueTeamView) {
+      try {
+        await updateTeam(id, { isActive: !currentStatus });
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await refetchTeams();
+      } catch (error) {
+        // Error handled in API layer
+      }
+      return;
+    }
+
     try {
       await updateStatusMutation.mutateAsync({
-        id: userId,
+        id,
         data: { isActive: !currentStatus },
       });
       await new Promise((resolve) => setTimeout(resolve, 300));
@@ -164,6 +227,7 @@ export default function UserManagement() {
       avatarUrl: avatarUrl,
     });
     setEditAvatarFilePreview("");
+    setEditAvatarFile(null);
   };
 
   const handleCreateImagePick = (event: ChangeEvent<HTMLInputElement>) => {
@@ -179,7 +243,7 @@ export default function UserManagement() {
     if (!file) return;
     const blobUrl = URL.createObjectURL(file);
     setEditAvatarFilePreview(blobUrl);
-    setValueEdit("avatarUrl", blobUrl, { shouldValidate: true });
+    setEditAvatarFile(file);
   };
 
   useEffect(() => {
@@ -193,9 +257,23 @@ export default function UserManagement() {
     };
   }, [createAvatarFilePreview, editAvatarFilePreview]);
 
-  const isRescueTeamView = roleFilter === "RESCUE_TEAM";
-  const rescueTeams = transformUsersToRescueTeams(users);
   const visiblePages = getVisiblePages(page, totalPages);
+
+  const handleViewRescueTeamDetail = async (team: RescueTeam) => {
+    const teamId = team.teamId || team.id;
+    if (!teamId) {
+      setDetailRescueTeam(team);
+      return;
+    }
+
+    try {
+      const detail = await getTeamById(teamId);
+      const mappedDetail = transformUsersToRescueTeams([detail as any])[0];
+      setDetailRescueTeam(mappedDetail || team);
+    } catch {
+      setDetailRescueTeam(team);
+    }
+  };
 
   const handleCloseCreateDialog = () => {
     setIsCreateDialogOpen(false);
@@ -207,6 +285,7 @@ export default function UserManagement() {
     setEditingUser(null);
     resetEdit();
     setEditAvatarFilePreview("");
+    setEditAvatarFile(null);
   };
 
   return (
@@ -275,26 +354,30 @@ export default function UserManagement() {
         <CardContent>
           {isLoading ? (
             <div className="py-8 text-center">Đang tải...</div>
-          ) : users.length > 0 ? (
-            isRescueTeamView ? (
+          ) : isRescueTeamView ? (
+            rescueTeams.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {rescueTeams.map((team) => (
                   <RescueTeamCard
-                    key={team.id}
+                    key={team.teamId}
                     team={team}
-                    onViewDetail={setDetailRescueTeam}
+                    onViewDetail={handleViewRescueTeamDetail}
                     onEdit={(team) => handleEditUser(team as any)}
                     onToggleStatus={handleToggleStatus}
                   />
                 ))}
               </div>
             ) : (
-              <UserTable
-                users={users}
-                onEdit={handleEditUser}
-                onToggleStatus={handleToggleStatus}
-              />
+              <div className="py-8 text-center text-muted-foreground">
+                Không tìm thấy đội cứu hộ nào
+              </div>
             )
+          ) : users.length > 0 ? (
+            <UserTable
+              users={users}
+              onEdit={handleEditUser}
+              onToggleStatus={handleToggleStatus}
+            />
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               Không tìm thấy tài khoản nào

@@ -130,7 +130,7 @@ export default function RescueTeamCard({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onToggleStatus(team.id, team.isActive)}
+          onClick={() => onToggleStatus(team.teamId || team.id, team.isActive)}
           className="rounded-lg hover:bg-red-50"
         >
           {team.isActive ? (
