@@ -32,6 +32,7 @@ export const getRescueStatusLabel = (status: string) => {
 export const getMemberRoleLabel = (role: string) => {
   const labels: Record<string, string> = {
     team_leader: "Đội trưởng",
+    member: "Thành viên",
     doctor: "Bác sĩ",
     nurse: "Y tá",
     rescuer: "Cứu hộ viên",

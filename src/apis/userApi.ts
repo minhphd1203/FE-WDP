@@ -33,6 +33,7 @@ export interface UpdateAccountDto {
   fullName?: string;
   address?: string;
   avatarUrl?: string;
+  avatar?: File;
 }
 
 export interface UserListParams extends Partial<PaginationParams> {
@@ -78,11 +79,19 @@ export const userApi = {
   // Update account
   updateUser: async (
     id: string,
-    data: UpdateAccountDto,
+    data: UpdateAccountDto | FormData,
   ): Promise<ApiResponse<User>> => {
+    const isMultipart = data instanceof FormData;
     return httpClient.patch<ApiResponse<User>>(
       ACCOUNT_ENDPOINTS.ACCOUNT_BY_ID(id),
       data,
+      isMultipart
+        ? {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        : undefined,
     );
   },
 

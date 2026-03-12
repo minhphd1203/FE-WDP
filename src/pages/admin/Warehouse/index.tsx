@@ -32,6 +32,39 @@ type Tab = "stocks" | "receipts";
 const viewButtonClass =
   "h-9 rounded-lg border border-red-300 bg-white text-red-700 text-sm font-medium transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-700 disabled:border-red-200 disabled:bg-red-50 disabled:text-red-300";
 
+const getPersonName = (account: any) =>
+  account?.profile?.fullName || account?.fullName || account?.email || "-";
+
+const mapReceiptItem = (item: any) => ({
+  ...item,
+  name: item?.name || item?.productName || "-",
+  unit: item?.unit || "-",
+  categoryName: item?.categoryName || item?.category?.name || "-",
+});
+
+const mapReceipt = (receipt: any) => {
+  const donation = receipt?.donation || {};
+  const donor = receipt?.donor || donation?.creator || null;
+  const createdBy = receipt?.createdBy || null;
+
+  return {
+    ...receipt,
+    donation,
+    donor,
+    createdBy,
+    donorName: getPersonName(donor),
+    donorEmail: donor?.email || "-",
+    donorPhone: donor?.phone || "-",
+    createdByName: getPersonName(createdBy),
+    createdByEmail: createdBy?.email || "-",
+    receivedAt: receipt?.receivedAt || receipt?.createdAt,
+    note: receipt?.note || donation?.note || null,
+    items: Array.isArray(receipt?.items)
+      ? receipt.items.map(mapReceiptItem)
+      : [],
+  };
+};
+
 export default function Warehouse() {
   const [activeTab, setActiveTab] = useState<Tab>("stocks");
   const [stocks, setStocks] = useState<any[]>([]);
@@ -70,7 +103,8 @@ export default function Warehouse() {
     try {
       const response = await warehouseApi.getReceipts(1, 20);
       if (response.success && response.data) {
-        setReceipts(response.data.data || []);
+        const rawReceipts = response.data.data || [];
+        setReceipts(rawReceipts.map(mapReceipt));
       }
     } catch (error: any) {
       toast.error("Không thể tải danh sách biên lai");
@@ -90,12 +124,12 @@ export default function Warehouse() {
     try {
       const response = await warehouseApi.getReceiptById(receipt.id);
       if (response.success && response.data) {
-        setSelectedReceipt(response.data);
+        setSelectedReceipt(mapReceipt(response.data));
       } else {
-        setSelectedReceipt(receipt);
+        setSelectedReceipt(mapReceipt(receipt));
       }
     } catch (error: any) {
-      setSelectedReceipt(receipt);
+      setSelectedReceipt(mapReceipt(receipt));
       toast.error("Không thể tải chi tiết biên lai");
     } finally {
       setIsLoadingDetail(false);
@@ -433,6 +467,22 @@ export default function Warehouse() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-600">
+                    Email người quyên góp
+                  </p>
+                  <p className="text-sm mt-1">
+                    {selectedReceipt.donorEmail || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
+                    SĐT người quyên góp
+                  </p>
+                  <p className="text-sm mt-1">
+                    {selectedReceipt.donorPhone || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
                     Ngày nhận
                   </p>
                   <p className="text-sm mt-1">
@@ -447,6 +497,38 @@ export default function Warehouse() {
                     {selectedReceipt.createdAt
                       ? formatDate(selectedReceipt.createdAt)
                       : "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
+                    Người tạo biên lai
+                  </p>
+                  <p className="text-sm mt-1">
+                    {selectedReceipt.createdByName || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
+                    Email người tạo
+                  </p>
+                  <p className="text-sm mt-1">
+                    {selectedReceipt.createdByEmail || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
+                    Trạng thái quyên góp
+                  </p>
+                  <p className="text-sm mt-1">
+                    {selectedReceipt.donation?.status || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
+                    ID Sự kiện
+                  </p>
+                  <p className="text-sm font-mono mt-1">
+                    {selectedReceipt.donation?.eventId || "-"}
                   </p>
                 </div>
               </div>
@@ -475,7 +557,9 @@ export default function Warehouse() {
                                 {item.name || "-"}
                               </TableCell>
                               <TableCell>
-                                {item.category?.name || "-"}
+                                {item.categoryName ||
+                                  item.category?.name ||
+                                  "-"}
                               </TableCell>
                               <TableCell>
                                 <span className="font-semibold">

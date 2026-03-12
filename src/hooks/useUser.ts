@@ -19,7 +19,10 @@ export const userKeys = {
 };
 
 // Hook to get users list
-export const useUsers = (params?: UserListParams) => {
+export const useUsers = (
+  params?: UserListParams,
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: async () => {
@@ -28,6 +31,7 @@ export const useUsers = (params?: UserListParams) => {
       console.log("[useUsers] Query response:", response);
       return response;
     },
+    enabled: options?.enabled ?? true,
     staleTime: 0,
     refetchOnMount: true,
   });
@@ -84,7 +88,7 @@ export const useUpdateUser = () => {
       data,
     }: {
       id: string;
-      data: UpdateAccountDto;
+      data: UpdateAccountDto | FormData;
     }) => {
       console.log(
         "[useUpdateUser] Mutation function called with id:",
