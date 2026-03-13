@@ -22,6 +22,7 @@ import ReliefRequests from "../pages/admin/ReliefRequests";
 import Warehouse from "../pages/admin/Warehouse";
 import ReplenishmentRequests from "../pages/admin/ReplenishmentRequests";
 import WarehouseTransactions from "../pages/admin/WarehouseTransactions";
+import TeamRegistrationRequests from "../pages/admin/TeamRegistrationRequests";
 
 // Staff Pages
 import StaffDashboard from "../pages/staff/Dashboard";
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
       {
         path: "replenishment-requests",
         element: <ReplenishmentRequests />,
+      },
+      {
+        path: "team-registration-requests",
+        element: <TeamRegistrationRequests />,
       },
       {
         path: "warehouse",

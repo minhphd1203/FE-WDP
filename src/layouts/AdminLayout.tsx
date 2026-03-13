@@ -11,6 +11,7 @@ import {
   X,
   UserCog,
   BarChart3,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
@@ -39,6 +40,11 @@ const navigation = [
     name: "Yêu cầu cứu hộ",
     href: ROUTES.ADMIN_RELIEF_REQUESTS,
     icon: AlertCircle,
+  },
+  {
+    name: "Đăng ký đội cứu hộ",
+    href: ROUTES.ADMIN_TEAM_REGISTRATION_REQUESTS,
+    icon: ShieldCheck,
   },
   {
     name: "Tiếp tế vật phẩm",
