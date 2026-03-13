@@ -143,7 +143,7 @@ export default function StaffLayout() {
               <img src="/logo.png" alt="ResQHub Logo" className="w-[200px]" />
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="rounded-lg p-1 text-red-600 transition-colors hover:bg-red-50"
+                className="rounded-lg p-1 text-red-600 transition-colors "
               >
                 <X className="h-6 w-6" />
               </button>
@@ -215,7 +215,7 @@ export default function StaffLayout() {
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                       isActive
                         ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
-                        : "text-slate-700 hover:bg-red-50 hover:text-red-700",
+                        : "text-slate-700 hover:bg-red-50  hover:text-red-700",
                     )}
                   >
                     <item.icon className="h-5 w-5" />
@@ -252,14 +252,14 @@ export default function StaffLayout() {
               </div>
               <button
                 onClick={() => navigate(ROUTES.STAFF_UPDATE_PROFILE)}
-                className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+                className="mb-2 flex w-full hover:bg-red-50 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors "
               >
                 <User className="h-4 w-4" />
                 Cập nhật hồ sơ
               </button>
               <Button
                 variant="outline"
-                className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                className="w-full border-red-200 text-red-700  hover:text-white"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -309,7 +309,7 @@ export default function StaffLayout() {
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 ml-auto transition-transform",
-                          isExpanded ? "rotate-180" : "",
+                          isExpanded ? "rotate-180" : "hover:text-red-700",
                         )}
                       />
                     </button>
@@ -323,7 +323,7 @@ export default function StaffLayout() {
                               "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                               location.pathname === subitem.href
                                 ? "bg-red-100 text-red-700"
-                                : "text-slate-600 hover:bg-red-50",
+                                : "text-slate-600 hover:bg-red-50 hover:text-red-700",
                             )}
                           >
                             {subitem.name}
@@ -378,14 +378,14 @@ export default function StaffLayout() {
             </div>
             <button
               onClick={() => navigate(ROUTES.STAFF_UPDATE_PROFILE)}
-              className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+              className="mb-2 flex hover:bg-red-50 w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors "
             >
               <User className="h-4 w-4" />
               Cập nhật hồ sơ
             </button>
             <Button
               variant="outline"
-              className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              className="w-full border-red-200 text-red-700  hover:text-white"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4 mr-2" />

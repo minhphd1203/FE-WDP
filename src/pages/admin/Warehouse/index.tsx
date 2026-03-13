@@ -29,7 +29,7 @@ import { toast } from "sonner";
 type Tab = "stocks" | "receipts";
 
 const viewButtonClass =
-  "h-9 rounded-lg border border-red-300 bg-white text-red-700 text-sm font-medium transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-700 disabled:border-red-200 disabled:bg-red-50 disabled:text-red-300";
+  "h-9 rounded-lg border border-red-300 bg-white text-red-700 text-sm font-medium transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-200 disabled:border-red-200 disabled:bg-red-50 disabled:text-red-300";
 
 const getPersonName = (account: any) =>
   account?.profile?.fullName || account?.fullName || account?.email || "-";
@@ -207,7 +207,7 @@ export default function Warehouse() {
               onClick={fetchStocks}
               variant="outline"
               size="sm"
-              className="h-9 rounded-lg border-red-300 text-red-700 hover:bg-red-50"
+              className="h-9 rounded-lg border-red-300 text-red-700 "
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
@@ -250,6 +250,7 @@ export default function Warehouse() {
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
+                          variant="outline"
                           size="sm"
                           className={viewButtonClass}
                           onClick={() => handleViewStockDetail(stock)}
@@ -282,7 +283,7 @@ export default function Warehouse() {
               onClick={fetchReceipts}
               variant="outline"
               size="sm"
-              className="h-9 rounded-lg border-red-300 text-red-700 hover:bg-red-50"
+              className="h-9 rounded-lg border-red-300 text-red-700 "
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Làm mới
@@ -321,6 +322,7 @@ export default function Warehouse() {
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
+                          variant="outline"
                           size="sm"
                           className={viewButtonClass}
                           onClick={() => handleViewReceiptDetail(receipt)}

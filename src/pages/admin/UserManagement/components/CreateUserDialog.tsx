@@ -1,5 +1,10 @@
 import { type ChangeEvent, type RefObject } from "react";
-import { UseFormRegister, UseFormSetValue, UseFormWatch, FieldErrors } from "react-hook-form";
+import {
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+  FieldErrors,
+} from "react-hook-form";
 import {
   UserPlus,
   Mail,
@@ -311,7 +316,7 @@ export default function CreateUserDialog({
             <Button
               type="button"
               variant="outline"
-              className="h-11 flex-1 rounded-xl border-2 border-red-200 bg-white text-red-600 transition-all hover:border-red-400 sm:flex-none sm:px-8"
+              className="h-11 flex-1 rounded-xl border-2 border-red-200 bg-white  text-red-600 transition-all hover:border-red-400 sm:flex-none sm:px-8"
               onClick={onClose}
             >
               Hủy

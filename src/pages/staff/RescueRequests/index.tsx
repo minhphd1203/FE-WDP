@@ -95,6 +95,16 @@ const replenishmentStatusClassMap: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-800",
 };
 
+const requestStatusLabelMap: Partial<Record<RescueRequestStatus, string>> = {
+  [RescueRequestStatus.ACCEPTED]: "Đã chấp nhận",
+  [RescueRequestStatus.DONE]: "Hoàn tất",
+};
+
+const requestStatusClassMap: Partial<Record<RescueRequestStatus, string>> = {
+  [RescueRequestStatus.ACCEPTED]: "bg-blue-100 text-blue-700",
+  [RescueRequestStatus.DONE]: "bg-emerald-100 text-emerald-700",
+};
+
 const getActiveAssignedTeams = (request: ReliefRequest) =>
   (request.assignedTeams || []).filter(
     (team) => team.status !== "CANCELED" && team.status !== "REJECTED",
@@ -113,6 +123,9 @@ const getEstimatedPeopleFromTeams = (request: ReliefRequest) => {
 
 export default function RescueRequests() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<RescueRequestStatus>(
+    RescueRequestStatus.ACCEPTED,
+  );
   const [page, setPage] = useState(1);
   const [requests, setRequests] = useState<ReliefRequest[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -150,7 +163,7 @@ export default function RescueRequests() {
 
   useEffect(() => {
     void fetchAssignedRequests();
-  }, [page, searchQuery]);
+  }, [page, searchQuery, statusFilter]);
 
   useEffect(() => {
     void fetchExistingOrders(requests);
@@ -160,7 +173,7 @@ export default function RescueRequests() {
     setIsLoading(true);
     try {
       const response = await rescueRequestApi.getRescueRequests({
-        status: RescueRequestStatus.ACCEPTED,
+        status: statusFilter,
         q: searchQuery.trim() || undefined,
         page,
         limit: LIMIT,
@@ -626,9 +639,33 @@ export default function RescueRequests() {
 
       <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
         <CardHeader className="border-b border-slate-100">
-          <CardTitle className="text-slate-900">Tìm kiếm</CardTitle>
+          <CardTitle className="text-slate-900">Tìm kiếm & Lọc</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex gap-2">
+            {(
+              [RescueRequestStatus.ACCEPTED, RescueRequestStatus.DONE] as const
+            ).map((s) => (
+              <button
+                key={s}
+                onClick={() => {
+                  setPage(1);
+                  setStatusFilter(s);
+                }}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  statusFilter === s
+                    ? requestStatusClassMap[s] +
+                      " ring-2 ring-offset-1 " +
+                      (s === RescueRequestStatus.ACCEPTED
+                        ? "ring-blue-400"
+                        : "ring-emerald-400")
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {requestStatusLabelMap[s]}
+              </button>
+            ))}
+          </div>
           <div className="relative max-w-xl">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -653,6 +690,9 @@ export default function RescueRequests() {
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow className="hover:bg-slate-50/80">
+                  <TableHead className="min-w-[110px] whitespace-nowrap text-slate-600">
+                    Trạng thái
+                  </TableHead>
                   <TableHead className="w-[280px] text-slate-600">
                     Địa chỉ
                   </TableHead>
@@ -675,7 +715,7 @@ export default function RescueRequests() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="py-10 text-center text-slate-600"
                     >
                       Đang tải danh sách đơn cứu hộ...
@@ -684,10 +724,11 @@ export default function RescueRequests() {
                 ) : requests.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="py-10 text-center text-slate-600"
                     >
-                      Không có đơn cứu hộ nào ở trạng thái đã phân công.
+                      Không có đơn cứu hộ nào ở trạng thái{" "}
+                      {requestStatusLabelMap[statusFilter]}.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -710,6 +751,19 @@ export default function RescueRequests() {
                         key={request.id}
                         className="transition-all duration-200 hover:bg-slate-50/80"
                       >
+                        <TableCell className="py-3 whitespace-nowrap">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                              requestStatusClassMap[
+                                request.status as RescueRequestStatus
+                              ] ?? "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {requestStatusLabelMap[
+                              request.status as RescueRequestStatus
+                            ] ?? request.status}
+                          </span>
+                        </TableCell>
                         <TableCell className="w-[280px] max-w-[280px] py-3 text-slate-700">
                           <div className="space-y-1.5">
                             <div className="flex items-start gap-2">
@@ -831,7 +885,7 @@ export default function RescueRequests() {
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             disabled={page === 1}
             variant="outline"
-            className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+            className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
           >
             Trước
           </Button>
@@ -844,7 +898,7 @@ export default function RescueRequests() {
             }
             disabled={page === totalPages}
             variant="outline"
-            className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+            className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
           >
             Sau
           </Button>
@@ -954,7 +1008,7 @@ export default function RescueRequests() {
             <Button
               variant="outline"
               onClick={() => setIsCreateDialogOpen(false)}
-              className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
             >
               Hủy
             </Button>
@@ -1518,7 +1572,7 @@ export default function RescueRequests() {
                 <Button
                   onClick={handleOpenCompleteDialog}
                   variant="outline"
-                  className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                  className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
                 >
                   Hoàn tất phiếu
                 </Button>
@@ -1528,7 +1582,7 @@ export default function RescueRequests() {
               <Button
                 onClick={() => void handleDispatchOrder()}
                 disabled={isDispatching}
-                className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
+                className="rounded-lg  bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
               >
                 {isDispatching ? "Đang xuất kho..." : "Xuất kho"}
               </Button>
@@ -1674,7 +1728,7 @@ export default function RescueRequests() {
             <Button
               variant="outline"
               onClick={() => setIsCompleteDialogOpen(false)}
-              className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
             >
               Hủy
             </Button>
@@ -1742,7 +1796,7 @@ export default function RescueRequests() {
             <Button
               variant="outline"
               onClick={() => setIsReplenishmentDialogOpen(false)}
-              className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
             >
               Hủy
             </Button>

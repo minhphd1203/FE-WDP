@@ -267,7 +267,7 @@ export default function DateFilterPicker({
             <button
               type="button"
               onClick={() => handlePickDate(today)}
-              className="rounded-lg px-2 py-1.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+              className="rounded-lg px-2 py-1.5 text-sm font-semibold text-red-700 transition-colors "
             >
               Hôm nay
             </button>

@@ -74,7 +74,7 @@ export function CustomSelect({
               className={`w-full px-4 py-3 text-left transition-all duration-150 flex items-center justify-between group ${
                 option.value === value
                   ? "bg-gradient-to-r from-red-50 to-rose-50 text-red-700 font-semibold"
-                  : "text-gray-700 hover:bg-red-50"
+                  : "text-gray-700 "
               }`}
             >
               <span>{option.label}</span>

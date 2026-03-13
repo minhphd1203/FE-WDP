@@ -217,7 +217,7 @@ export default function ReplenishmentRequests() {
         <Button
           onClick={() => void fetchOrders()}
           variant="outline"
-          className="rounded-xl border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+          className="rounded-xl border-red-200 hover:text-white text-red-700"
         >
           <RefreshCw className="h-4 w-4" />
           Làm mới

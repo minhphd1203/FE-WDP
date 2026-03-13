@@ -195,9 +195,7 @@ export default function DateTimePicker({
                   type="button"
                   onClick={() => setDay(cell)}
                   className={`h-9 rounded-lg text-sm transition-colors ${
-                    selectedDay
-                      ? "bg-red-600 text-white"
-                      : "text-slate-700 hover:bg-red-50"
+                    selectedDay ? "bg-red-600 text-white" : "text-slate-700 "
                   }`}
                 >
                   {cell}

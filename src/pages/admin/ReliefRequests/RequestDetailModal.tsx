@@ -35,6 +35,7 @@ import {
   useAssignTeams,
   useCancelRequest,
   useReviewRequest,
+  useRescueRequest,
 } from "../../../hooks/useRescueRequest";
 import { useTeams } from "../../../hooks/useTeam";
 import { cn, formatDateTime } from "../../../lib/utils";
@@ -97,6 +98,57 @@ const PRIORITY_STYLES: Record<RescueRequestPriority, string> = {
   [RescueRequestPriority.CRITICAL]: "bg-red-100 text-red-700 border-red-200",
 };
 
+type DetailAssignment = {
+  id?: string;
+  teamId?: string;
+  status?: string;
+  respondedAt?: string | null;
+  team?: {
+    id?: string;
+    name?: string;
+    area?: string;
+    teamSize?: number;
+  };
+};
+
+const normalizeAssignedTeams = (
+  src: unknown,
+): ReliefRequest["assignedTeams"] => {
+  if (!src || typeof src !== "object") {
+    return [];
+  }
+
+  const data = src as ReliefRequest & { assignments?: DetailAssignment[] };
+
+  if (Array.isArray(data.assignedTeams)) {
+    return data.assignedTeams;
+  }
+
+  const assignments: DetailAssignment[] = Array.isArray(data.assignments)
+    ? data.assignments
+    : [];
+
+  return assignments.reduce<ReliefRequest["assignedTeams"]>(
+    (acc, item: DetailAssignment) => {
+      const teamId = item.teamId ?? item.team?.id ?? "";
+      if (!teamId) return acc;
+
+      acc.push({
+        assignmentId: item.id ?? `${teamId}-${item.status ?? "SENT"}`,
+        teamId,
+        teamName: item.team?.name ?? "Đội chưa rõ tên",
+        area: item.team?.area,
+        teamSize: item.team?.teamSize,
+        status: item.status ?? "SENT",
+        respondedAt: item.respondedAt ?? null,
+      });
+
+      return acc;
+    },
+    [],
+  );
+};
+
 export const RequestDetailModal = ({
   request,
   open,
@@ -123,26 +175,35 @@ export const RequestDetailModal = ({
   const { data: teamsData, isLoading: loadingTeams } = useTeams({ limit: 100 });
   const teams = teamsData?.items || [];
 
+  // Fetch fresh detail when modal opens
+  const { data: detailData } = useRescueRequest(
+    open && request?.id ? request.id : "",
+  );
+  const detail: ReliefRequest = (detailData as any) ?? request;
+  const assignedTeams = useMemo(() => normalizeAssignedTeams(detail), [detail]);
+
   const assignTeamsMutation = useAssignTeams();
   const reviewRequestMutation = useReviewRequest();
   const cancelRequestMutation = useCancelRequest();
 
   useEffect(() => {
-    if (!request) return;
+    const src = detailData ?? request;
+    if (!src) return;
 
-    setSelectedTeamIds(request.assignedTeams?.map((team) => team.teamId) || []);
+    const currentAssignedTeams = normalizeAssignedTeams(src);
+    setSelectedTeamIds(currentAssignedTeams.map((team) => team.teamId));
     setEvaluateForm({
-      priority: request.priority,
-      requiredTeams: request.requiredTeams || 1,
-      note: request.note || "",
+      priority: (src as ReliefRequest).priority,
+      requiredTeams: (src as ReliefRequest).requiredTeams || 1,
+      note: (src as ReliefRequest).note || "",
     });
     setUpdateForm({
-      status: request.status,
-      priority: request.priority,
-      requiredTeams: request.requiredTeams || 1,
+      status: (src as ReliefRequest).status,
+      priority: (src as ReliefRequest).priority,
+      requiredTeams: (src as ReliefRequest).requiredTeams || 1,
       note: "",
     });
-  }, [request]);
+  }, [detailData, request]);
 
   useEffect(() => {
     if (!open) return;
@@ -162,7 +223,7 @@ export const RequestDetailModal = ({
         setLightboxIndex(lightboxIndex - 1);
       } else if (
         event.key === "ArrowRight" &&
-        lightboxIndex < (request?.evidenceImages?.length || 0) - 1
+        lightboxIndex < (detail?.evidenceImages?.length || 0) - 1
       ) {
         setLightboxIndex(lightboxIndex + 1);
       } else if (event.key === "+" || event.key === "=") {
@@ -180,22 +241,24 @@ export const RequestDetailModal = ({
       window.removeEventListener("keydown", onEscape);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onOpenChange, lightboxIndex, request?.evidenceImages]);
+  }, [open, onOpenChange, lightboxIndex, detail?.evidenceImages]);
 
   const teamSummary = useMemo(
     () => ({
-      required: request?.teamSummary?.required ?? request?.requiredTeams ?? 0,
-      assigned:
-        request?.teamSummary?.assigned ?? request?.assignedTeams?.length ?? 0,
-      accepted: request?.teamSummary?.accepted ?? 0,
+      required: detail?.teamSummary?.required ?? detail?.requiredTeams ?? 0,
+      assigned: detail?.teamSummary?.assigned ?? assignedTeams.length,
+      accepted: detail?.teamSummary?.accepted ?? 0,
     }),
-    [request],
+    [detail, assignedTeams],
   );
+
+  const hasAssignedTeams =
+    (detail?.isAssigned ?? false) || assignedTeams.length > 0;
 
   const redPrimaryButtonClass =
     "w-full border border-red-600 bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-[0_10px_24px_-14px_rgba(220,38,38,0.95)] hover:from-red-600 hover:via-red-700 hover:to-rose-800";
   const redOutlineButtonClass =
-    "border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800";
+    "border-red-300 text-red-700  hover:text-red-800";
 
   if (!open || !request) return null;
 
@@ -304,7 +367,7 @@ export const RequestDetailModal = ({
                     Chi tiết yêu cầu cứu trợ
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    Mã đơn: {request.id.slice(0, 8).toUpperCase()}
+                    Mã đơn: {detail.id.slice(0, 8).toUpperCase()}
                   </p>
                 </div>
                 <Button
@@ -317,9 +380,9 @@ export const RequestDetailModal = ({
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-5 pt-2 pb-5">
-                <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                  <div className="space-y-4">
+              <div className="flex-1 overflow-hidden px-5 pt-2 pb-5">
+                <div className="grid h-full gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                  <div className="h-full space-y-4 overflow-y-auto pr-1">
                     <Card>
                       <CardHeader className="px-6 pt-2 pb-3">
                         <CardTitle className="text-sm">
@@ -334,7 +397,7 @@ export const RequestDetailModal = ({
                             </p>
                             <p className="mt-1 flex items-center gap-2 font-medium">
                               <User className="h-4 w-4 text-muted-foreground" />
-                              {request.guestName || "N/A"}
+                              {detail.guestName || "N/A"}
                             </p>
                           </div>
                           <div className="rounded-lg border border-border p-3">
@@ -343,7 +406,7 @@ export const RequestDetailModal = ({
                             </p>
                             <p className="mt-1 flex items-center gap-2 font-medium">
                               <Phone className="h-4 w-4 text-muted-foreground" />
-                              {request.guestPhone || "N/A"}
+                              {detail.guestPhone || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -354,7 +417,7 @@ export const RequestDetailModal = ({
                           </p>
                           <p className="mt-1 flex items-start gap-2 font-medium">
                             <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                            {request.address || "N/A"}
+                            {detail.address || "N/A"}
                           </p>
                         </div>
 
@@ -362,18 +425,18 @@ export const RequestDetailModal = ({
                           <div
                             className={cn(
                               "w-fit border rounded-full text-sm font-semibold border-border p-2",
-                              PRIORITY_STYLES[request.priority],
+                              PRIORITY_STYLES[detail.priority],
                             )}
                           >
-                            Mức độ: {PRIORITY_LABELS[request.priority]}
+                            Mức độ: {PRIORITY_LABELS[detail.priority]}
                           </div>
                           <div
                             className={cn(
                               "w-fit border rounded-full text-sm font-semibold border-border p-2",
-                              STATUS_STYLES[request.status],
+                              STATUS_STYLES[detail.status],
                             )}
                           >
-                            Trạng thái: {STATUS_LABELS[request.status]}
+                            Trạng thái: {STATUS_LABELS[detail.status]}
                           </div>
                         </div>
 
@@ -384,7 +447,7 @@ export const RequestDetailModal = ({
                             </p>
                             <p className="mt-1 flex items-center gap-2 text-sm">
                               <Clock3 className="h-4 w-4 text-muted-foreground" />
-                              {formatDateTime(request.createdAt)}
+                              {formatDateTime(detail.createdAt)}
                             </p>
                           </div>
                           <div className="rounded-lg border border-border p-3">
@@ -392,7 +455,7 @@ export const RequestDetailModal = ({
                               Cập nhật gần nhất
                             </p>
                             <p className="mt-1 text-sm">
-                              {formatDateTime(request.updatedAt)}
+                              {formatDateTime(detail.updatedAt)}
                             </p>
                           </div>
                         </div>
@@ -404,7 +467,7 @@ export const RequestDetailModal = ({
                             </p>
                             <p className="mt-1 flex items-center gap-2 font-medium">
                               <Users className="h-4 w-4 text-muted-foreground" />
-                              {request.estimatedPeople || "Không có thông tin"}
+                              {detail.estimatedPeople || "Không có thông tin"}
                             </p>
                           </div>
                           <div className="rounded-lg border border-border p-3">
@@ -412,7 +475,7 @@ export const RequestDetailModal = ({
                               Trạng thái gán đội
                             </p>
                             <p className="mt-1 font-medium">
-                              {request.isAssigned ? (
+                              {hasAssignedTeams ? (
                                 <span className="text-green-600">
                                   Đã gán đội
                                 </span>
@@ -425,15 +488,15 @@ export const RequestDetailModal = ({
                           </div>
                         </div>
 
-                        {request.evidenceImages &&
-                          request.evidenceImages.length > 0 && (
+                        {detail.evidenceImages &&
+                          detail.evidenceImages.length > 0 && (
                             <div className="rounded-lg border border-border p-3">
                               <p className="text-xs text-muted-foreground">
                                 Hình ảnh bằng chứng (
-                                {request.evidenceImages.length})
+                                {detail.evidenceImages.length})
                               </p>
                               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
-                                {request.evidenceImages.map((img, idx) => (
+                                {detail.evidenceImages.map((img, idx) => (
                                   <button
                                     key={idx}
                                     type="button"
@@ -488,7 +551,7 @@ export const RequestDetailModal = ({
                               className="absolute right-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm transition-all hover:bg-black/70 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
                               disabled={
                                 lightboxIndex ===
-                                request.evidenceImages.length - 1
+                                detail.evidenceImages.length - 1
                               }
                               onClick={() =>
                                 setLightboxIndex(lightboxIndex + 1)
@@ -508,7 +571,7 @@ export const RequestDetailModal = ({
                             >
                               <img
                                 key={lightboxIndex}
-                                src={request.evidenceImages[lightboxIndex]}
+                                src={detail.evidenceImages[lightboxIndex]}
                                 alt={`Evidence ${lightboxIndex + 1}`}
                                 className="max-h-[85vh] max-w-[95vw] object-contain transition-transform duration-200 ease-out"
                                 style={{ transform: `scale(${zoom})` }}
@@ -567,12 +630,12 @@ export const RequestDetailModal = ({
                             {/* Counter */}
                             <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1.5 text-sm text-white backdrop-blur-md">
                               {lightboxIndex + 1} /{" "}
-                              {request.evidenceImages.length}
+                              {detail.evidenceImages.length}
                             </div>
 
                             {/* Thumbnails */}
                             <div className="absolute bottom-20 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/60 p-2 backdrop-blur-md">
-                              {request.evidenceImages.map((img, idx) => (
+                              {detail.evidenceImages.map((img, idx) => (
                                 <button
                                   key={idx}
                                   type="button"
@@ -597,12 +660,12 @@ export const RequestDetailModal = ({
                           </div>
                         )}
 
-                        {request.note && (
+                        {detail.note && (
                           <div className="rounded-lg border border-border p-3">
                             <p className="text-xs text-muted-foreground">
                               Ghi chú
                             </p>
-                            <p className="mt-1 text-sm">{request.note}</p>
+                            <p className="mt-1 text-sm">{detail.note}</p>
                           </div>
                         )}
                       </CardContent>
@@ -636,9 +699,9 @@ export const RequestDetailModal = ({
                           </div>
                         </div>
 
-                        {request.assignedTeams?.length > 0 ? (
+                        {assignedTeams.length > 0 ? (
                           <div className="space-y-2">
-                            {request.assignedTeams.map((team) => (
+                            {assignedTeams.map((team) => (
                               <div
                                 key={team.assignmentId}
                                 className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
@@ -667,7 +730,7 @@ export const RequestDetailModal = ({
                   </div>
 
                   <div className="space-y-4">
-                    <Card className="sticky top-0">
+                    <Card className=" top-0">
                       <CardHeader className="px-6 pt-2 pb-3">
                         <CardTitle className="text-sm">
                           Hành động xử lý
@@ -675,7 +738,7 @@ export const RequestDetailModal = ({
                       </CardHeader>
                       <CardContent className="space-y-2">
                         {/* Dynamic buttons based on status */}
-                        {request.status === RescueRequestStatus.NEW && (
+                        {detail.status === RescueRequestStatus.NEW && (
                           <Button
                             type="button"
                             className={redPrimaryButtonClass}
@@ -685,8 +748,8 @@ export const RequestDetailModal = ({
                           </Button>
                         )}
 
-                        {request.status === RescueRequestStatus.REVIEWED &&
-                          !request.isAssigned && (
+                        {detail.status === RescueRequestStatus.REVIEWED &&
+                          !hasAssignedTeams && (
                             <Button
                               type="button"
                               className={redPrimaryButtonClass}
@@ -696,10 +759,10 @@ export const RequestDetailModal = ({
                             </Button>
                           )}
 
-                        {(request.status === RescueRequestStatus.ASSIGNED ||
-                          request.status === RescueRequestStatus.ACCEPTED ||
-                          request.status === RescueRequestStatus.IN_PROGRESS ||
-                          request.status === RescueRequestStatus.DONE) && (
+                        {(detail.status === RescueRequestStatus.ASSIGNED ||
+                          detail.status === RescueRequestStatus.ACCEPTED ||
+                          detail.status === RescueRequestStatus.IN_PROGRESS ||
+                          detail.status === RescueRequestStatus.DONE) && (
                           <Button
                             type="button"
                             className={redPrimaryButtonClass}
@@ -718,7 +781,7 @@ export const RequestDetailModal = ({
                             RescueRequestStatus.ACCEPTED,
                             RescueRequestStatus.IN_PROGRESS,
                             RescueRequestStatus.DONE,
-                          ].includes(request.status) && (
+                          ].includes(detail.status) && (
                             <div className="grid grid-cols-3 gap-2">
                               <Button
                                 type="button"
@@ -787,6 +850,18 @@ export const RequestDetailModal = ({
 
                         {activeMode === "evaluate" && (
                           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-medium text-muted-foreground">
+                                Đánh giá yêu cầu
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setActiveMode(null)}
+                                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
                             <div>
                               <Label>Mức độ</Label>
                               <Select
@@ -881,10 +956,19 @@ export const RequestDetailModal = ({
 
                         {activeMode === "assign" && (
                           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-                            <p className="text-xs text-muted-foreground">
-                              Chọn đội cần gán. Bạn vẫn giữ nguyên phần chi tiết
-                              bên trái để đối chiếu.
-                            </p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs text-muted-foreground">
+                                Chọn đội cần gán. Bạn vẫn giữ nguyên phần chi
+                                tiết bên trái để đối chiếu.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setActiveMode(null)}
+                                className="ml-2 shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
 
                             <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
                               {loadingTeams ? (
@@ -940,6 +1024,18 @@ export const RequestDetailModal = ({
 
                         {activeMode === "update" && (
                           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-medium text-muted-foreground">
+                                Cập nhật yêu cầu
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setActiveMode(null)}
+                                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
                             <div>
                               <Label>Trạng thái mới</Label>
                               <Select

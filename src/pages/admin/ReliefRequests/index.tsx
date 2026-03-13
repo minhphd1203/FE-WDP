@@ -264,7 +264,7 @@ export default function ReliefRequests() {
             variant="outline"
             size="sm"
             disabled={isLoading}
-            className="h-9 rounded-lg border-red-300 text-red-700 hover:bg-red-50"
+            className="h-9 rounded-lg border-red-300 text-red-700 "
           >
             <RefreshCw
               className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}

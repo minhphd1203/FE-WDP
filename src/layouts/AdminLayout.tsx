@@ -120,7 +120,7 @@ export default function AdminLayout() {
               <img src="/logo.png" alt="ResQHub Logo" className="w-[200px]" />
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="rounded-lg p-1 text-red-600 transition-colors hover:bg-red-50"
+                className="rounded-lg p-1 text-red-600 transition-colors "
               >
                 <X className="h-6 w-6" />
               </button>
@@ -177,14 +177,14 @@ export default function AdminLayout() {
                   navigate(ROUTES.ADMIN_UPDATE_PROFILE);
                   setSidebarOpen(false);
                 }}
-                className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+                className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors "
               >
                 <UserCog className="h-4 w-4" />
                 Cập nhật hồ sơ
               </button>
               <Button
                 variant="outline"
-                className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                className="w-full border-red-200 text-red-700  hover:text-white"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -254,14 +254,14 @@ export default function AdminLayout() {
             </div>
             <button
               onClick={() => navigate(ROUTES.ADMIN_UPDATE_PROFILE)}
-              className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+              className="mb-2 flex w-full hover:bg-red-50 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-700 transition-colors "
             >
-              <UserCog className="h-4 w-4" />
+              <UserCog className="h-4 w-4 " />
               Cập nhật hồ sơ
             </button>
             <Button
               variant="outline"
-              className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              className="w-full border-red-200 text-red-700  hover:text-white"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4 mr-2" />

@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
   Eye,
   MapPin,
   Phone,
@@ -29,6 +32,201 @@ import {
 } from "../../../components/ui/card";
 import { toast } from "sonner";
 import { CustomSelect } from "../../../components/ui/CustomSelect";
+
+const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+const formatDateValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const parseDateValue = (value?: string) => {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getMonthDays = (year: number, month: number) => {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: Array<number | null> = [];
+
+  for (let i = 0; i < firstDay; i += 1) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) cells.push(day);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return cells;
+};
+
+interface FilterDatePickerProps {
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+function FilterDatePicker({
+  value,
+  onChange,
+  placeholder = "mm/dd/yyyy",
+}: FilterDatePickerProps) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const selected = parseDateValue(value);
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(
+    selected?.getFullYear() ?? today.getFullYear(),
+  );
+  const [viewMonth, setViewMonth] = useState(
+    selected?.getMonth() ?? today.getMonth(),
+  );
+
+  const monthDays = useMemo(
+    () => getMonthDays(viewYear, viewMonth),
+    [viewYear, viewMonth],
+  );
+
+  useEffect(() => {
+    if (!selected) return;
+    setViewYear(selected.getFullYear());
+    setViewMonth(selected.getMonth());
+  }, [value]);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!wrapperRef.current) return;
+      if (!wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) window.addEventListener("mousedown", onClickOutside);
+    return () => window.removeEventListener("mousedown", onClickOutside);
+  }, [open]);
+
+  const selectDate = (day: number) => {
+    const nextDate = new Date(viewYear, viewMonth, day);
+    onChange(formatDateValue(nextDate));
+    setOpen(false);
+  };
+
+  const goPrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((prev) => prev - 1);
+      return;
+    }
+    setViewMonth((prev) => prev - 1);
+  };
+
+  const goNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((prev) => prev + 1);
+      return;
+    }
+    setViewMonth((prev) => prev + 1);
+  };
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex h-12 w-full items-center justify-between rounded-xl border border-red-200 bg-white px-4 text-left transition-all hover:border-red-300 focus:border-red-400 focus:outline-none focus:ring-0"
+      >
+        <span className={selected ? "text-slate-900" : "text-slate-500"}>
+          {selected ? selected.toLocaleDateString("vi-VN") : placeholder}
+        </span>
+        <Calendar className="h-4 w-4 text-slate-700" />
+      </button>
+
+      {open ? (
+        <div className="absolute left-0 top-full z-50 mt-2 w-[280px] rounded-xl border border-red-200 bg-white p-3 shadow-xl">
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={goPrevMonth}
+              className="rounded-md p-1 text-slate-600 hover:bg-red-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <p className="text-sm font-semibold text-slate-800">
+              {new Date(viewYear, viewMonth).toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={goNextMonth}
+              className="rounded-md p-1 text-slate-600 hover:bg-red-50"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500">
+            {WEEKDAYS.map((weekday) => (
+              <span key={weekday}>{weekday}</span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {monthDays.map((day, idx) => {
+              if (!day) return <span key={`blank-${idx}`} className="h-8" />;
+
+              const isSelected =
+                selected &&
+                selected.getDate() === day &&
+                selected.getMonth() === viewMonth &&
+                selected.getFullYear() === viewYear;
+
+              return (
+                <button
+                  key={`${viewYear}-${viewMonth}-${day}`}
+                  type="button"
+                  onClick={() => selectDate(day)}
+                  className={`h-8 rounded-md text-sm transition-colors ${
+                    isSelected
+                      ? "bg-red-600 text-white"
+                      : "text-slate-700 hover:bg-red-50"
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-2 flex items-center justify-between pt-1 text-sm">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+              className="text-slate-600 hover:text-red-600"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onChange(formatDateValue(new Date()));
+                setOpen(false);
+              }}
+              className="text-slate-600 hover:text-red-600"
+            >
+              Today
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default function ProductManagement() {
   const [donations, setDonations] = useState<Donation[]>([]);
@@ -1011,6 +1209,7 @@ export default function ProductManagement() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-3">
             <Button
+              className="hover:bg-red-50 hover:text-red-700 hover:border-red-100"
               onClick={() => setShowFilters(!showFilters)}
               variant="outline"
             >
@@ -1028,13 +1227,14 @@ export default function ProductManagement() {
                 <Button
                   onClick={handleBulkReject}
                   variant="outline"
-                  className="border-red-500 text-red-600 hover:bg-red-50"
+                  className="border-red-500 text-red-600 hover:border-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl"
                 >
                   Từ chối ({selectedIds.size})
                 </Button>
                 <Button
                   onClick={() => setSelectedIds(new Set())}
                   variant="outline"
+                  className="hover:bg-red-50 hover:text-red-700 hover:border-red-100"
                 >
                   <X className="h-4 w-4 mr-2" />
                   Xoá chọn
@@ -1071,42 +1271,8 @@ export default function ProductManagement() {
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="border-red-400 focus:outline-red-500 focus:ring-0"
+                className="border-red-300 rounded-xl focus:border-red-500 focus:outline-none focus:ring-0 focus-visible:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
-            </div>
-
-            {/* Sort Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Sắp xếp theo
-                </label>
-                <CustomSelect
-                  options={[
-                    { value: "createdAt", label: "Ngày gửi" },
-                    { value: "expirationDate", label: "HSD" },
-                  ]}
-                  value={sortBy}
-                  onChange={(value) =>
-                    setSortBy(
-                      value as "status" | "createdAt" | "expirationDate",
-                    )
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Thứ tự
-                </label>
-                <CustomSelect
-                  options={[
-                    { value: "DESC", label: "Giảm dần" },
-                    { value: "ASC", label: "Tăng dần" },
-                  ]}
-                  value={sortOrder}
-                  onChange={(value) => setSortOrder(value as "ASC" | "DESC")}
-                />
-              </div>
             </div>
 
             {/* Existing Filters */}
@@ -1141,24 +1307,18 @@ export default function ProductManagement() {
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Từ ngày
                 </label>
-                <Input
-                  type="date"
+                <FilterDatePicker
                   value={filters.from || ""}
-                  onChange={(e) =>
-                    setFilters({ ...filters, from: e.target.value })
-                  }
+                  onChange={(value) => setFilters({ ...filters, from: value })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Đến ngày
                 </label>
-                <Input
-                  type="date"
+                <FilterDatePicker
                   value={filters.to || ""}
-                  onChange={(e) =>
-                    setFilters({ ...filters, to: e.target.value })
-                  }
+                  onChange={(value) => setFilters({ ...filters, to: value })}
                 />
               </div>
               <div className="flex items-end">
@@ -1172,7 +1332,7 @@ export default function ProductManagement() {
                     setSortOrder("DESC");
                   }}
                   variant="outline"
-                  className="w-full"
+                  className="h-12 rounded-xl w-full border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                 >
                   Reset
                 </Button>
@@ -1198,29 +1358,27 @@ export default function ProductManagement() {
                         filteredAndSortedDonations.length > 0
                       }
                       onChange={toggleSelectAll}
-                      className="accent-red-600 rounded"
+                      className="h-5 w-5 cursor-pointer rounded-full border-2 border-red-300 accent-red-600 transition-transform hover:scale-105"
                     />
                   </th>
 
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
                     Người gửi
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600 whitespace-nowrap">
                     Số lượng
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600 whitespace-nowrap">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600 whitespace-nowrap">
                     Ngày gửi
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
-                    HSD
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600 whitespace-nowrap">
                     Ghi chú
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">
+                  <th className="px-6 text-center py-4  text-sm font-semibold text-slate-600 whitespace-nowrap">
                     Hành động
                   </th>
                 </tr>
@@ -1299,7 +1457,7 @@ export default function ProductManagement() {
                             type="checkbox"
                             checked={selectedIds.has(donation.id)}
                             onChange={() => toggleSelect(donation.id)}
-                            className="accent-red-600 rounded"
+                            className="h-5 w-5 cursor-pointer rounded-full border-2 border-red-300 accent-red-600 transition-transform hover:scale-105"
                           />
                         </td>
 
@@ -1313,10 +1471,10 @@ export default function ProductManagement() {
                             </p>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">
+                        <td className="px-6 py-4 text-slate-700 text-center">
                           {totalQuantity}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span
                             className={`px-3 py-1.5 rounded-xl text-sm font-semibold ${
                               statusClassMap[donation.status]
@@ -1325,19 +1483,13 @@ export default function ProductManagement() {
                             {statusLabelMap[donation.status]}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
+                        <td className="px-6 py-4 text-sm text-slate-600 text-center">
                           {new Date(donation.createdAt).toLocaleDateString(
                             "vi-VN",
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
-                          {donation.items[0]?.expirationDate
-                            ? new Date(
-                                donation.items[0].expirationDate,
-                              ).toLocaleDateString("vi-VN")
-                            : "Không có"}
-                        </td>
-                        <td className="px-6 py-4 max-w-xs">
+
+                        <td className="px-6 py-4 max-w-xs text-center">
                           <div>
                             <p
                               className="font-semibold text-slate-900 truncate"
@@ -1347,7 +1499,7 @@ export default function ProductManagement() {
                             </p>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <div className="flex gap-2">
                             <Button
                               size="sm"
@@ -1375,7 +1527,7 @@ export default function ProductManagement() {
                                     handleRejectDonation(donation.id)
                                   }
                                   variant="outline"
-                                  className="border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-xl"
+                                  className="border-2 border-red-500 text-red-600  rounded-xl"
                                 >
                                   Từ chối
                                 </Button>
@@ -1400,7 +1552,7 @@ export default function ProductManagement() {
                                     );
                                   }}
                                   variant="outline"
-                                  className="rounded-xl border-2 border-red-500 text-red-600 hover:bg-red-50"
+                                  className="rounded-xl border-2 border-red-500 text-red-600 "
                                 >
                                   Phân phối
                                 </Button>

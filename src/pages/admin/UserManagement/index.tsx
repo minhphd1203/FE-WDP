@@ -29,7 +29,7 @@ import {
 } from "./constants";
 import { transformUsersToRescueTeams, getVisiblePages } from "./utils";
 import { RoleFilter, User, RescueTeam } from "./types";
-import { getTeamById, updateTeam } from "../../../apis/teamApi";
+import { getTeamById } from "../../../apis/teamApi";
 import RescueTeamCard from "./components/RescueTeamCard";
 import RescueTeamDetailDialog from "./components/RescueTeamDetailDialog";
 import UserTable from "./components/UserTable";
@@ -189,12 +189,22 @@ export default function UserManagement() {
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     if (isRescueTeamView) {
+      const matchedTeam = rescueTeams.find(
+        (team) => team.teamId === id || team.id === id || team.accountId === id,
+      );
+      const accountId = matchedTeam?.accountId || id;
+
+      if (!accountId) return;
+
       try {
-        await updateTeam(id, { isActive: !currentStatus });
+        await updateStatusMutation.mutateAsync({
+          id: accountId,
+          data: { isActive: !currentStatus },
+        });
         await new Promise((resolve) => setTimeout(resolve, 300));
         await refetchTeams();
       } catch (error) {
-        // Error handled in API layer
+        // Error handled in hook
       }
       return;
     }
@@ -396,7 +406,7 @@ export default function UserManagement() {
                 size="sm"
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 disabled={page <= 1 || isFetching}
-                className={secondaryButtonClass}
+                className={`${secondaryButtonClass} hover:bg-red-50`}
               >
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Trước
@@ -410,7 +420,7 @@ export default function UserManagement() {
                   variant={pageItem === page ? "default" : "outline"}
                   onClick={() => setPage(pageItem)}
                   disabled={isFetching}
-                  className={`min-w-9 rounded-xl ${pageItem === page ? primaryButtonClass : secondaryButtonClass}`}
+                  className={`min-w-9 rounded-xl ${pageItem === page ? primaryButtonClass : `${secondaryButtonClass} hover:bg-red-50`}`}
                 >
                   {pageItem}
                 </Button>
@@ -424,7 +434,7 @@ export default function UserManagement() {
                   setPage((prev) => Math.min(totalPages, prev + 1))
                 }
                 disabled={page >= totalPages || isFetching}
-                className={secondaryButtonClass}
+                className={`${secondaryButtonClass} hover:bg-red-50`}
               >
                 Sau
                 <ChevronRight className="ml-1 h-4 w-4" />

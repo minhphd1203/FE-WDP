@@ -139,6 +139,12 @@ const isSameDay = (a: Date, b: Date) =>
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
+// Compare the UTC calendar date of a createdAt timestamp against a local calendar date
+const isSameDayUTC = (utcDate: Date, localDate: Date) =>
+  utcDate.getUTCFullYear() === localDate.getFullYear() &&
+  utcDate.getUTCMonth() === localDate.getMonth() &&
+  utcDate.getUTCDate() === localDate.getDate();
+
 const isToday = (d: Date) => isSameDay(d, new Date());
 
 const getDateStrip = (baseDate: Date, days = 14) => {
@@ -153,7 +159,7 @@ const getDateStrip = (baseDate: Date, days = 14) => {
 
 const formatTime = (date: string | Date) => {
   const d = new Date(date);
-  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  return `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}`;
 };
 
 const relativeTime = (date: string | Date) => {
@@ -352,7 +358,7 @@ const HourCardRow = ({ list, onRequestClick }: HourCardRowProps) => {
               "flex h-full min-h-[140px] w-[48px] shrink-0 flex-col items-center justify-center gap-1 rounded-3xl border-2 border-dashed transition-all",
               showOverflow
                 ? "border-red-400 bg-red-50 text-red-600 shadow-md"
-                : "border-red-200 bg-white text-red-500 hover:border-red-400 hover:bg-red-50 hover:shadow-md",
+                : "border-red-200 bg-white text-red-500 hover:border-red-400  hover:shadow-md",
             )}
           >
             <Plus className="h-4 w-4" />
@@ -372,7 +378,7 @@ const HourCardRow = ({ list, onRequestClick }: HourCardRowProps) => {
             <button
               type="button"
               onClick={() => setShowOverflow(false)}
-              className="rounded-lg p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+              className="rounded-lg p-1 text-slate-400 hover:text-red-600"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -444,7 +450,7 @@ const DateScrollbar = ({
 
   const getMaxPriority = (day: Date): RescueRequestPriority | null => {
     const dayReqs = requests.filter((r) =>
-      isSameDay(new Date(r.createdAt), day),
+      isSameDayUTC(new Date(r.createdAt), day),
     );
     if (dayReqs.length === 0) return null;
     const order = [
@@ -487,7 +493,7 @@ const DateScrollbar = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+            className="h-8 w-8 rounded-full text-slate-400  hover:text-red-600"
             onClick={goPrev}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -496,7 +502,7 @@ const DateScrollbar = ({
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 rounded-full border-red-200 px-3 text-[11px] font-medium text-red-600 hover:bg-red-50"
+            className="h-8 rounded-full border-red-200 px-3 text-[11px] font-medium text-red-600 "
             onClick={() => onDateChange(new Date())}
           >
             Hôm nay
@@ -505,7 +511,7 @@ const DateScrollbar = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+            className="h-8 w-8 rounded-full text-slate-400  hover:text-red-600"
             onClick={goNext}
           >
             <ChevronRight className="h-4 w-4" />
@@ -523,7 +529,7 @@ const DateScrollbar = ({
             const active = isSameDay(day, selectedDate);
             const today = isToday(day);
             const count = requests.filter((r) =>
-              isSameDay(new Date(r.createdAt), day),
+              isSameDayUTC(new Date(r.createdAt), day),
             ).length;
             const maxPrio = getMaxPriority(day);
 
@@ -656,8 +662,8 @@ export const CalendarView = ({
     const grouped: Record<number, ReliefRequest[]> = {};
     for (const req of requests) {
       const created = new Date(req.createdAt);
-      if (!isSameDay(created, selectedDate)) continue;
-      const hour = created.getHours();
+      if (!isSameDayUTC(created, selectedDate)) continue;
+      const hour = created.getUTCHours();
       if (!grouped[hour]) grouped[hour] = [];
       grouped[hour].push(req);
     }
@@ -731,7 +737,7 @@ export const CalendarView = ({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[11px] text-red-700 hover:bg-red-50"
+                className="h-7 text-[11px] text-red-700 "
                 onClick={() => setShowEmptyHours(true)}
               >
                 Hiện tất cả 24h
@@ -742,7 +748,7 @@ export const CalendarView = ({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[11px] text-red-700 hover:bg-red-50"
+                className="h-7 text-[11px] text-red-700 "
                 onClick={() => setShowEmptyHours(false)}
               >
                 Chỉ giờ có yêu cầu
