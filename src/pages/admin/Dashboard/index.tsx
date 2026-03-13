@@ -6,6 +6,7 @@ import {
   Package,
   AlertCircle,
   UserCog,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Card,
@@ -65,6 +66,14 @@ export default function AdminDashboard() {
       description: "Xem và xử lý các yêu cầu cứu hộ",
       action: () => navigate(ROUTES.ADMIN_RELIEF_REQUESTS),
       icon: AlertCircle,
+      color:
+        "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700",
+    },
+    {
+      title: "Đăng ký đội cứu hộ",
+      description: "Duyệt hồ sơ đăng ký đội cứu hộ mới",
+      action: () => navigate(ROUTES.ADMIN_TEAM_REGISTRATION_REQUESTS),
+      icon: ShieldCheck,
       color:
         "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700",
     },

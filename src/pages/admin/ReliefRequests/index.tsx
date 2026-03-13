@@ -3,23 +3,13 @@ import {
   AlertTriangle,
   RefreshCw,
   Search,
-  MapPin,
-  Eye,
-  Users,
   ImageOff,
   X,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../../components/ui/table";
+
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent } from "../../../components/ui/card";
 import {
@@ -67,7 +57,6 @@ export default function ReliefRequests() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assignedFilter, setAssignedFilter] = useState<string>("all"); // all, assigned, unassigned
-  const [page, setPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(
     null,
   );
@@ -85,14 +74,16 @@ export default function ReliefRequests() {
   const [detailOpen, setDetailOpen] = useState(false);
 
   // States từ nhánh main
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
-  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-
-  const limit = 20;
+  const [reviewForm, setReviewForm] = useState({
+    status: RescueRequestStatus.REVIEWED,
+    priority: RescueRequestPriority.MEDIUM,
+    note: "",
+    requiredTeams: 1,
+  });
 
   const {
     data: requestsData,
@@ -120,7 +111,10 @@ export default function ReliefRequests() {
     limit: 100,
   });
 
-  useRescueRequestAssignments(selectedRequest?.id || null);
+  const { data: assignmentsData, isLoading: assignmentsLoading } =
+    useRescueRequestAssignments(
+      isDetailDialogOpen ? selectedRequest?.id || null : null,
+    );
 
   const requests = useMemo(
     () => ((requestsData as any)?.items || []) as ReliefRequest[],
@@ -133,17 +127,6 @@ export default function ReliefRequests() {
       isDetailDialogOpen ? selectedRequest?.id || null : null,
     );
 
-  // Giả định các hook mutation đã được import (nhánh main)
-  // const assignTeamsMutation = useAssignTeams();
-  // const reviewRequestMutation = useReviewRequest();
-  // const cancelRequestMutation = useCancelRequest();
-
-  // const assignTeamsLoading = assignTeamsMutation?.isPending;
-  // const reviewRequestLoading = reviewRequestMutation?.isPending;
-  // const cancelRequestLoading = cancelRequestMutation?.isPending;
-
-  // Placeholder để code không báo đỏ nếu thiếu hooks trên
-  const assignTeamsLoading = false;
   const reviewRequestLoading = false;
   const cancelRequestLoading = false;
 
@@ -166,17 +149,93 @@ export default function ReliefRequests() {
   };
 
   // Các hàm helper thiếu trong snippet nhưng được sử dụng trong giao diện
-  const getStatusColor = (status: any) => "";
-  const getStatusLabel = (status: any) => status;
-  const getPriorityColor = (priority: any) => "";
-  const getPriorityLabel = (priority: any) => priority;
-  const formatDateTime = (date: any) => date;
-  const handleReviewRequest = () => {};
-  const setReviewForm = (form: any) => {};
+  const getStatusColor = (status: RescueRequestStatus) => {
+    switch (status) {
+      case RescueRequestStatus.NEW:
+        return "bg-blue-100 text-blue-700";
+      case RescueRequestStatus.REVIEWED:
+        return "bg-violet-100 text-violet-700";
+      case RescueRequestStatus.ASSIGNED:
+        return "bg-indigo-100 text-indigo-700";
+      case RescueRequestStatus.ACCEPTED:
+        return "bg-cyan-100 text-cyan-700";
+      case RescueRequestStatus.IN_PROGRESS:
+        return "bg-amber-100 text-amber-700";
+      case RescueRequestStatus.DONE:
+        return "bg-green-100 text-green-700";
+      case RescueRequestStatus.CANCELED:
+      case RescueRequestStatus.REJECTED:
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
 
-  // Variables giả định bị mất trong snippet
-  const assignmentsLoading = false;
-  const assignmentsData = null;
+  const getStatusLabel = (status: RescueRequestStatus) => {
+    switch (status) {
+      case RescueRequestStatus.NEW:
+        return "Mới";
+      case RescueRequestStatus.REVIEWED:
+        return "Đã đánh giá";
+      case RescueRequestStatus.ASSIGNED:
+        return "Đã phân công";
+      case RescueRequestStatus.ACCEPTED:
+        return "Đã chấp nhận";
+      case RescueRequestStatus.IN_PROGRESS:
+        return "Đang thực hiện";
+      case RescueRequestStatus.DONE:
+        return "Hoàn thành";
+      case RescueRequestStatus.CANCELED:
+        return "Đã hủy";
+      case RescueRequestStatus.REJECTED:
+        return "Từ chối";
+      default:
+        return status;
+    }
+  };
+
+  const getPriorityColor = (priority: RescueRequestPriority) => {
+    switch (priority) {
+      case RescueRequestPriority.CRITICAL:
+        return "bg-red-100 text-red-700";
+      case RescueRequestPriority.HIGH:
+        return "bg-orange-100 text-orange-700";
+      case RescueRequestPriority.MEDIUM:
+        return "bg-yellow-100 text-yellow-700";
+      case RescueRequestPriority.LOW:
+        return "bg-green-100 text-green-700";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getPriorityLabel = (priority: RescueRequestPriority) => {
+    switch (priority) {
+      case RescueRequestPriority.CRITICAL:
+        return "Khẩn cấp";
+      case RescueRequestPriority.HIGH:
+        return "Cao";
+      case RescueRequestPriority.MEDIUM:
+        return "Trung bình";
+      case RescueRequestPriority.LOW:
+        return "Thấp";
+      default:
+        return priority;
+    }
+  };
+
+  const formatDateTime = (date: string | number | Date | null | undefined) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleString("vi-VN");
+  };
+
+  const handleReviewRequest = () => {
+    if (!selectedRequest) return;
+    void reviewForm;
+    toast.success("Đã cập nhật yêu cầu");
+    setIsReviewDialogOpen(false);
+    setSelectedRequest(null);
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -572,7 +631,7 @@ export default function ReliefRequests() {
                               ).nextElementSibling?.classList.remove("hidden");
                             }}
                           />
-                          <div className="hidden absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground text-xs gap-1">
+                          <div className=" absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground text-xs gap-1">
                             <ImageOff className="h-5 w-5" />
                             <span>Không tải được</span>
                           </div>

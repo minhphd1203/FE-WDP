@@ -77,6 +77,7 @@ export const ROUTES = {
   ADMIN_UPDATE_PROFILE: "/admin/update-profile",
   ADMIN_RELIEF_REQUESTS: "/admin/relief-requests",
   ADMIN_REPLENISHMENT_REQUESTS: "/admin/replenishment-requests",
+  ADMIN_TEAM_REGISTRATION_REQUESTS: "/admin/team-registration-requests",
   ADMIN_WAREHOUSE: "/admin/warehouse",
   ADMIN_WAREHOUSE_TRANSACTIONS: "/admin/warehouse-transactions",
 
@@ -162,6 +163,13 @@ export const API_ENDPOINTS = {
   WAREHOUSE_TRANSACTIONS: "/warehouse/transactions",
   WAREHOUSE_RECEIPTS: "/warehouse/receipts",
   WAREHOUSE_RECEIPT_BY_ID: (id: string) => `/warehouse/receipts/${id}`,
+
+  // Team registration requests
+  TEAM_REGISTRATION_REQUESTS_ADMIN: "/team-registration-requests/admin",
+  TEAM_REGISTRATION_REQUEST_BY_ID_ADMIN: (id: string) =>
+    `/team-registration-requests/admin/${id}`,
+  TEAM_REGISTRATION_REQUEST_REVIEW_ADMIN: (id: string) =>
+    `/team-registration-requests/admin/${id}/review`,
 
   // Categories
   CATEGORIES: "/categories",
