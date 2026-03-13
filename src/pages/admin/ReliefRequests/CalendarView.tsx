@@ -15,7 +15,6 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../lib/utils";
 import {
   ReliefRequest,
@@ -183,7 +182,11 @@ interface RequestCardProps {
   onClick: () => void;
 }
 
-const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) => {
+const RequestCard = ({
+  request,
+  compact = false,
+  onClick,
+}: RequestCardProps) => {
   const statusStyle = STATUS_STYLES[request.status];
   const priorityStyle = PRIORITY_STYLES[request.priority];
   const isCritical = request.priority === RescueRequestPriority.CRITICAL;
@@ -204,9 +207,21 @@ const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) =>
       )}
     >
       {/* Top accent stripe */}
-      <div className={cn("h-2 rounded-t-[22px]", isCritical ? "bg-gradient-to-r from-red-500 via-orange-400 to-red-500" : statusStyle.dot)} />
+      <div
+        className={cn(
+          "h-2 rounded-t-[22px]",
+          isCritical
+            ? "bg-gradient-to-r from-red-500 via-orange-400 to-red-500"
+            : statusStyle.dot,
+        )}
+      />
 
-      <div className={cn("flex flex-col gap-3 px-4 pb-4 pt-3", compact && "gap-2 px-3 pb-3 pt-2")}>
+      <div
+        className={cn(
+          "flex flex-col gap-3 px-4 pb-4 pt-3",
+          compact && "gap-2 px-3 pb-3 pt-2",
+        )}
+      >
         {/* Avatar + Name */}
         <div className="flex items-center gap-2.5">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-100 to-rose-100 text-red-500 shadow-sm">
@@ -216,7 +231,9 @@ const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) =>
             <p className="truncate text-sm font-semibold text-slate-900">
               {request.guestName || "Không rõ"}
             </p>
-            <p className="text-[11px] text-slate-400">{relativeTime(request.createdAt)}</p>
+            <p className="text-[11px] text-slate-400">
+              {relativeTime(request.createdAt)}
+            </p>
           </div>
         </div>
 
@@ -262,7 +279,9 @@ const RequestCard = ({ request, compact = false, onClick }: RequestCardProps) =>
           {teamRequired > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
               <Users className="h-3.5 w-3.5" />
-              <span className="tabular-nums">{teamAssigned}/{teamRequired}</span>
+              <span className="tabular-nums">
+                {teamAssigned}/{teamRequired}
+              </span>
             </span>
           )}
         </div>
@@ -295,7 +314,10 @@ const HourCardRow = ({ list, onRequestClick }: HourCardRowProps) => {
       setVisibleCount(list.length);
     } else {
       // Leave room for the +N button
-      const maxWithBtn = Math.floor((width - PLUS_BTN_WIDTH - CARD_GAP + CARD_GAP) / (CARD_WIDTH + CARD_GAP));
+      const maxWithBtn = Math.floor(
+        (width - PLUS_BTN_WIDTH - CARD_GAP + CARD_GAP) /
+          (CARD_WIDTH + CARD_GAP),
+      );
       setVisibleCount(Math.max(1, maxWithBtn));
     }
   }, [list.length]);
@@ -315,7 +337,11 @@ const HourCardRow = ({ list, onRequestClick }: HourCardRowProps) => {
     <div ref={containerRef} className="relative">
       <div className="flex items-start gap-2">
         {visibleCards.map((req) => (
-          <RequestCard key={req.id} request={req} onClick={() => onRequestClick(req)} />
+          <RequestCard
+            key={req.id}
+            request={req}
+            onClick={() => onRequestClick(req)}
+          />
         ))}
 
         {overflowCount > 0 && (
@@ -380,7 +406,11 @@ interface DateScrollbarProps {
   requests: ReliefRequest[];
 }
 
-const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarProps) => {
+const DateScrollbar = ({
+  selectedDate,
+  onDateChange,
+  requests,
+}: DateScrollbarProps) => {
   const days = useMemo(() => getDateStrip(selectedDate), [selectedDate]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -388,9 +418,15 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-    const activeBtn = container.querySelector("[data-active=true]") as HTMLElement | null;
+    const activeBtn = container.querySelector(
+      "[data-active=true]",
+    ) as HTMLElement | null;
     if (activeBtn) {
-      activeBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      activeBtn.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
     }
   }, [selectedDate]);
 
@@ -407,7 +443,9 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
   };
 
   const getMaxPriority = (day: Date): RescueRequestPriority | null => {
-    const dayReqs = requests.filter((r) => isSameDay(new Date(r.createdAt), day));
+    const dayReqs = requests.filter((r) =>
+      isSameDay(new Date(r.createdAt), day),
+    );
     if (dayReqs.length === 0) return null;
     const order = [
       RescueRequestPriority.CRITICAL,
@@ -422,7 +460,10 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
   };
 
   /* Month-year label from selectedDate */
-  const monthLabel = selectedDate.toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+  const monthLabel = selectedDate.toLocaleDateString("vi-VN", {
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="rounded-2xl border border-red-100 bg-gradient-to-br from-white to-red-50/30 shadow-sm">
@@ -433,12 +474,22 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
             <CalendarDays className="h-4.5 w-4.5 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold capitalize text-slate-900">{monthLabel}</h3>
-            <p className="text-[11px] text-slate-400">Chọn ngày để xem timeline</p>
+            <h3 className="text-sm font-semibold capitalize text-slate-900">
+              {monthLabel}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              Chọn ngày để xem timeline
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={goPrev}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+            onClick={goPrev}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
@@ -450,19 +501,30 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
           >
             Hôm nay
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={goNext}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+            onClick={goNext}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Scrollable date strip */}
-      <div ref={scrollRef} className="overflow-x-auto border-t border-red-100/60 px-3 pb-4 pt-3 scrollbar-hide">
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto border-t border-red-100/60 px-3 pb-4 pt-3 scrollbar-hide"
+      >
         <div className="flex min-w-max gap-1.5">
           {days.map((day) => {
             const active = isSameDay(day, selectedDate);
             const today = isToday(day);
-            const count = requests.filter((r) => isSameDay(new Date(r.createdAt), day)).length;
+            const count = requests.filter((r) =>
+              isSameDay(new Date(r.createdAt), day),
+            ).length;
             const maxPrio = getMaxPriority(day);
 
             return (
@@ -493,7 +555,9 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
                 <span
                   className={cn(
                     "mt-0.5 font-bold leading-none transition-all",
-                    active ? "text-2xl text-white" : "text-xl text-slate-800 group-hover:text-red-600",
+                    active
+                      ? "text-2xl text-white"
+                      : "text-xl text-slate-800 group-hover:text-red-600",
                   )}
                 >
                   {day.getDate()}
@@ -502,7 +566,12 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
                 {/* Count badge + priority */}
                 <div className="mt-1.5 flex items-center gap-1">
                   {count > 0 && maxPrio && (
-                    <span className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-white/60" : PRIORITY_STYLES[maxPrio].dot)} />
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        active ? "bg-white/60" : PRIORITY_STYLES[maxPrio].dot,
+                      )}
+                    />
                   )}
                   {count > 0 ? (
                     <span
@@ -516,7 +585,14 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
                       {count}
                     </span>
                   ) : (
-                    <span className={cn("text-[10px]", active ? "text-white/40" : "text-slate-300")}>—</span>
+                    <span
+                      className={cn(
+                        "text-[10px]",
+                        active ? "text-white/40" : "text-slate-300",
+                      )}
+                    >
+                      —
+                    </span>
                   )}
                 </div>
 
@@ -540,7 +616,10 @@ const DateScrollbar = ({ selectedDate, onDateChange, requests }: DateScrollbarPr
 const TimelineSkeleton = () => (
   <div className="animate-pulse space-y-0">
     {[8, 9, 10, 11, 12].map((h) => (
-      <div key={h} className="grid grid-cols-[56px_1fr] border-b border-red-100">
+      <div
+        key={h}
+        className="grid grid-cols-[56px_1fr] border-b border-red-100"
+      >
         <div className="flex items-start justify-end px-2 py-3">
           <div className="h-3 w-8 rounded bg-red-100" />
         </div>
@@ -584,13 +663,17 @@ export const CalendarView = ({
     }
     for (const hour of Object.keys(grouped)) {
       grouped[Number(hour)].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
     }
     return grouped;
   }, [requests, selectedDate]);
 
-  const dailyCount = Object.values(requestsByHour).reduce((sum, list) => sum + list.length, 0);
+  const dailyCount = Object.values(requestsByHour).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  );
   const activeHours = hours.filter((h) => (requestsByHour[h]?.length ?? 0) > 0);
   const currentHour = new Date().getHours();
   const viewingToday = isSameDay(selectedDate, new Date());
@@ -599,19 +682,30 @@ export const CalendarView = ({
   useEffect(() => {
     if (viewingToday && currentHourRef.current) {
       setTimeout(() => {
-        currentHourRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        currentHourRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }, 300);
     }
   }, [viewingToday, selectedDate]);
 
-  const visibleHours = showEmptyHours ? hours : activeHours.length > 0 ? activeHours : hours;
+  const visibleHours = showEmptyHours
+    ? hours
+    : activeHours.length > 0
+      ? activeHours
+      : hours;
 
   // Count empty hidden hours
   const hiddenEmpty = hours.length - activeHours.length;
 
   return (
     <div className="space-y-4">
-      <DateScrollbar selectedDate={selectedDate} onDateChange={onDateChange} requests={requests} />
+      <DateScrollbar
+        selectedDate={selectedDate}
+        onDateChange={onDateChange}
+        requests={requests}
+      />
 
       <div className="rounded-xl border border-red-100 bg-gradient-to-br from-white to-red-50/30 shadow-sm">
         {/* Header */}
@@ -626,7 +720,9 @@ export const CalendarView = ({
                   year: "numeric",
                 })}
               </h3>
-              <p className="text-[11px] text-slate-500">Timeline yêu cầu trong ngày</p>
+              <p className="text-[11px] text-slate-500">
+                Timeline yêu cầu trong ngày
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -652,16 +748,16 @@ export const CalendarView = ({
                 Chỉ giờ có yêu cầu
               </Button>
             )}
-            <Badge
+            <div
               className={cn(
-                "border text-xs tabular-nums",
+                "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums",
                 dailyCount > 0
                   ? "bg-red-50 text-red-700 border-red-200"
-                  : "bg-slate-100 text-slate-600",
+                  : "bg-slate-100 text-slate-600 border-slate-200",
               )}
             >
               {dailyCount} yêu cầu
-            </Badge>
+            </div>
           </div>
         </div>
 
@@ -673,7 +769,9 @@ export const CalendarView = ({
             <div className="rounded-full bg-red-100 p-3">
               <Siren className="h-6 w-6 text-red-400" />
             </div>
-            <p className="text-sm font-medium text-slate-600">Không có yêu cầu nào</p>
+            <p className="text-sm font-medium text-slate-600">
+              Không có yêu cầu nào
+            </p>
             <p className="text-xs text-slate-400">
               Chưa có yêu cầu cứu trợ nào cho ngày này.
             </p>
@@ -698,7 +796,9 @@ export const CalendarView = ({
                     <span
                       className={cn(
                         "text-[11px] font-medium tabular-nums",
-                        isCurrentHour ? "text-red-600 font-semibold" : "text-slate-500",
+                        isCurrentHour
+                          ? "text-red-600 font-semibold"
+                          : "text-slate-500",
                       )}
                     >
                       {hour.toString().padStart(2, "0")}:00
@@ -727,7 +827,10 @@ export const CalendarView = ({
                         Trống
                       </div>
                     ) : (
-                      <HourCardRow list={list} onRequestClick={onRequestClick} />
+                      <HourCardRow
+                        list={list}
+                        onRequestClick={onRequestClick}
+                      />
                     )}
                   </div>
                 </div>
@@ -766,12 +869,19 @@ export const CalendarView = ({
                 RescueRequestStatus.DONE,
               ].map((s) => {
                 const c = requests.filter(
-                  (r) => isSameDay(new Date(r.createdAt), selectedDate) && r.status === s,
+                  (r) =>
+                    isSameDay(new Date(r.createdAt), selectedDate) &&
+                    r.status === s,
                 ).length;
                 if (c === 0) return null;
                 return (
                   <span key={s} className="flex items-center gap-1">
-                    <span className={cn("h-1.5 w-1.5 rounded-full", STATUS_STYLES[s].dot)} />
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        STATUS_STYLES[s].dot,
+                      )}
+                    />
                     {c} {STATUS_STYLES[s].label.toLowerCase()}
                   </span>
                 );

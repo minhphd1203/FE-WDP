@@ -1,15 +1,15 @@
 import { useMemo, useState } from "react";
-import { 
-  AlertTriangle, 
-  RefreshCw, 
-  Search, 
-  MapPin, 
-  Eye, 
-  Users, 
-  ImageOff, 
-  X, 
-  ChevronLeft, 
-  ChevronRight 
+import {
+  AlertTriangle,
+  RefreshCw,
+  Search,
+  MapPin,
+  Eye,
+  Users,
+  ImageOff,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -42,9 +42,14 @@ import {
   RescueRequestStatus,
 } from "../../../types";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog"; // Giả định import để tránh lỗi
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../../components/ui/dialog"; // Giả định import để tránh lỗi
 import { Label } from "../../../components/ui/label"; // Giả định import
-import { Badge } from "../../../components/ui/badge"; // Giả định import
 
 // Helper to format date as YYYY-MM-DD
 const formatDate = (date: Date): string => {
@@ -63,7 +68,9 @@ export default function ReliefRequests() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assignedFilter, setAssignedFilter] = useState<string>("all"); // all, assigned, unassigned
   const [page, setPage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(
+    null,
+  );
 
   // Calculate date range for calendar view (14 days: 4 days before + 9 days after selected date)
   const dateRange = useMemo(() => {
@@ -73,10 +80,10 @@ export default function ReliefRequests() {
     to.setDate(to.getDate() + 9);
     return { from: formatDate(from), to: formatDate(to) };
   }, [selectedDate]);
-  
+
   // States từ nhánh Thong
   const [detailOpen, setDetailOpen] = useState(false);
-  
+
   // States từ nhánh main
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -123,7 +130,7 @@ export default function ReliefRequests() {
   // Fetch evidence images for selected request (only when detail dialog is open)
   const { data: evidenceImages = [], isLoading: evidenceImagesLoading } =
     useRescueRequestEvidenceImages(
-      isDetailDialogOpen ? (selectedRequest?.id || null) : null
+      isDetailDialogOpen ? selectedRequest?.id || null : null,
     );
 
   // Giả định các hook mutation đã được import (nhánh main)
@@ -141,9 +148,15 @@ export default function ReliefRequests() {
   const cancelRequestLoading = false;
 
   const stats = useMemo(() => {
-    const critical = requests.filter((r) => r.priority === RescueRequestPriority.CRITICAL).length;
-    const newReqs = requests.filter((r) => r.status === RescueRequestStatus.NEW).length;
-    const inProgress = requests.filter((r) => r.status === RescueRequestStatus.IN_PROGRESS).length;
+    const critical = requests.filter(
+      (r) => r.priority === RescueRequestPriority.CRITICAL,
+    ).length;
+    const newReqs = requests.filter(
+      (r) => r.status === RescueRequestStatus.NEW,
+    ).length;
+    const inProgress = requests.filter(
+      (r) => r.status === RescueRequestStatus.IN_PROGRESS,
+    ).length;
     return { total: requests.length, critical, newReqs, inProgress };
   }, [requests]);
 
@@ -194,7 +207,9 @@ export default function ReliefRequests() {
             disabled={isLoading}
             className="h-9 rounded-lg border-red-300 text-red-700 hover:bg-red-50"
           >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+            />
             Làm mới
           </Button>
         </div>
@@ -219,9 +234,13 @@ export default function ReliefRequests() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả mức độ</SelectItem>
-                <SelectItem value={RescueRequestPriority.CRITICAL}>Khẩn cấp</SelectItem>
+                <SelectItem value={RescueRequestPriority.CRITICAL}>
+                  Khẩn cấp
+                </SelectItem>
                 <SelectItem value={RescueRequestPriority.HIGH}>Cao</SelectItem>
-                <SelectItem value={RescueRequestPriority.MEDIUM}>Trung bình</SelectItem>
+                <SelectItem value={RescueRequestPriority.MEDIUM}>
+                  Trung bình
+                </SelectItem>
                 <SelectItem value={RescueRequestPriority.LOW}>Thấp</SelectItem>
               </SelectContent>
             </Select>
@@ -244,13 +263,27 @@ export default function ReliefRequests() {
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value={RescueRequestStatus.NEW}>Mới</SelectItem>
-                <SelectItem value={RescueRequestStatus.REVIEWED}>Đã đánh giá</SelectItem>
-                <SelectItem value={RescueRequestStatus.ASSIGNED}>Đã phân công</SelectItem>
-                <SelectItem value={RescueRequestStatus.ACCEPTED}>Đã chấp nhận</SelectItem>
-                <SelectItem value={RescueRequestStatus.IN_PROGRESS}>Đang thực hiện</SelectItem>
-                <SelectItem value={RescueRequestStatus.DONE}>Hoàn thành</SelectItem>
-                <SelectItem value={RescueRequestStatus.CANCELED}>Đã hủy</SelectItem>
-                <SelectItem value={RescueRequestStatus.REJECTED}>Từ chối</SelectItem>
+                <SelectItem value={RescueRequestStatus.REVIEWED}>
+                  Đã đánh giá
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.ASSIGNED}>
+                  Đã phân công
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.ACCEPTED}>
+                  Đã chấp nhận
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.IN_PROGRESS}>
+                  Đang thực hiện
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.DONE}>
+                  Hoàn thành
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.CANCELED}>
+                  Đã hủy
+                </SelectItem>
+                <SelectItem value={RescueRequestStatus.REJECTED}>
+                  Từ chối
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -340,11 +373,11 @@ export default function ReliefRequests() {
                         Trạng thái
                       </Label>
                       <div className="mt-1">
-                        <Badge
-                          className={getStatusColor(selectedRequest.status)}
+                        <div
+                          className={`${getStatusColor(selectedRequest.status)} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                         >
                           {getStatusLabel(selectedRequest.status)}
-                        </Badge>
+                        </div>
                       </div>
                     </div>
                     <div>
@@ -352,11 +385,11 @@ export default function ReliefRequests() {
                         Mức độ ưu tiên
                       </Label>
                       <div className="mt-1">
-                        <Badge
-                          className={getPriorityColor(selectedRequest.priority)}
+                        <div
+                          className={`${getPriorityColor(selectedRequest.priority)} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                         >
                           {getPriorityLabel(selectedRequest.priority)}
-                        </Badge>
+                        </div>
                       </div>
                     </div>
                     <div>
@@ -515,7 +548,9 @@ export default function ReliefRequests() {
                   {evidenceImagesLoading ? (
                     <div className="flex items-center justify-center py-6">
                       <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-                      <p className="text-sm text-muted-foreground ml-2">Đang tải ảnh hiện trường...</p>
+                      <p className="text-sm text-muted-foreground ml-2">
+                        Đang tải ảnh hiện trường...
+                      </p>
                     </div>
                   ) : evidenceImages.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
@@ -530,8 +565,11 @@ export default function ReliefRequests() {
                             alt={`Ảnh hiện trường ${index + 1}`}
                             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none";
-                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
+                              (
+                                e.target as HTMLImageElement
+                              ).nextElementSibling?.classList.remove("hidden");
                             }}
                           />
                           <div className="hidden absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground text-xs gap-1">
@@ -610,7 +648,10 @@ export default function ReliefRequests() {
           {lightboxIndex > 0 && (
             <button
               className="absolute left-4 text-white hover:text-gray-300 transition-colors p-2"
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(lightboxIndex - 1);
+              }}
             >
               <ChevronLeft className="h-10 w-10" />
             </button>
@@ -626,7 +667,10 @@ export default function ReliefRequests() {
           {lightboxIndex < evidenceImages.length - 1 && (
             <button
               className="absolute right-4 text-white hover:text-gray-300 transition-colors p-2"
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(lightboxIndex + 1);
+              }}
             >
               <ChevronRight className="h-10 w-10" />
             </button>

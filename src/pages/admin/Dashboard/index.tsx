@@ -150,31 +150,6 @@ export default function AdminDashboard() {
           ))}
         </div>
       </div>
-
-      {/* Recent Activities - Placeholder */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-red-100 bg-gradient-to-br from-white to-red-50/30">
-          <CardHeader className="border-b border-red-100 pb-4">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Sự kiện gần đây
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600">Chưa có sự kiện nào</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-red-100 bg-gradient-to-br from-white to-red-50/30">
-          <CardHeader className="border-b border-red-100 pb-4">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Yêu cầu cứu hộ mới
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <p className="text-sm text-slate-600">Chưa có yêu cầu nào</p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

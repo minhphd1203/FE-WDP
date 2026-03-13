@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/ui/table";
-import { Badge } from "../../../components/ui/badge";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Allocation } from "@/types";
@@ -292,15 +291,12 @@ export default function TeamWarehouse() {
                               {item.category}
                             </TableCell>
                             <TableCell>
-                              <Badge
-                                variant="secondary"
-                                className={
-                                  conditionClassMap[item.condition] || ""
-                                }
+                              <div
+                                className={`${conditionClassMap[item.condition] || "bg-slate-100 text-slate-700"} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                               >
                                 {conditionLabelMap[item.condition] ||
                                   item.condition}
-                              </Badge>
+                              </div>
                             </TableCell>
                             <TableCell className="text-slate-700">
                               {item.quantity}

@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Event } from "@/types";
 import { primaryButtonClass, secondaryButtonClass } from "../constants";
@@ -94,9 +93,11 @@ export default function EventItemsSection({
                     <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
                       {getTypeLabel(event.type)}
                     </span>
-                    <Badge className={statusConfig.className}>
+                    <div
+                      className={`${statusConfig.className} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
+                    >
                       {statusConfig.label}
-                    </Badge>
+                    </div>
                   </div>
 
                   <h3 className="text-lg font-bold text-slate-900">

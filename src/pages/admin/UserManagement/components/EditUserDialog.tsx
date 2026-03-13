@@ -1,5 +1,10 @@
 import { type ChangeEvent, type RefObject } from "react";
-import { UseFormRegister, UseFormSetValue, UseFormWatch, FieldErrors } from "react-hook-form";
+import {
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+  FieldErrors,
+} from "react-hook-form";
 import {
   Edit,
   Mail,
@@ -118,13 +123,13 @@ export default function EditUserDialog({
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="USER" className="rounded-lg">
-                      👤 Người dùng
+                      Người dùng
                     </SelectItem>
                     <SelectItem value="STAFF" className="rounded-lg">
-                      👔 Nhân viên
+                      Nhân viên
                     </SelectItem>
                     <SelectItem value="RESCUE_TEAM" className="rounded-lg">
-                      🚑 Đội cứu hộ
+                      Đội cứu hộ
                     </SelectItem>
                   </SelectContent>
                 </Select>

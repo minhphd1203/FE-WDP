@@ -13,7 +13,6 @@ import {
   TableRow,
 } from "../../../components/ui/table";
 import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
 import {
   Card,
   CardContent,
@@ -124,9 +123,9 @@ export default function VerifyProducts() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="warning" className="text-lg px-4 py-2">
+          <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-lg font-semibold text-amber-800">
             {productsData?.data?.length || 0} sản phẩm chờ xác minh
-          </Badge>
+          </div>
         </div>
       </div>
 
@@ -228,30 +227,27 @@ export default function VerifyProducts() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-slate-700">
+                        <div className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
                           {product.category}
-                        </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-slate-700">
                         {product.quantity} {product.unit}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            product.condition === "new" ? "success" : "default"
-                          }
-                          className={
+                        <div
+                          className={`${
                             product.condition === "new"
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-red-100 text-red-800"
-                          }
+                          } inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                         >
                           {product.condition === "new"
                             ? "Mới"
                             : product.condition === "used"
                               ? "Đã qua sử dụng"
                               : "Tân trang"}
-                        </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-slate-700">
                         {product.donorName}

@@ -66,6 +66,7 @@ export interface UpdateProfileRequest {
   phone?: string;
   address?: string;
   avatarUrl?: string;
+  avatar?: File;
 }
 
 export interface AuthApiResponse<T> {
