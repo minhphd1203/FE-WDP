@@ -155,6 +155,8 @@ export interface ReliefRequest {
     assignmentId: string;
     teamId: string;
     teamName: string;
+    area?: string;
+    teamSize?: number;
     status: string;
     respondedAt: string | null;
   }>;
@@ -166,7 +168,7 @@ export interface ReliefRequest {
     accepted: number;
     isFulfilled: boolean;
   };
-  
+
   // Deprecated fields for backward compatibility
   /** @deprecated Use guestName instead */
   title?: string;

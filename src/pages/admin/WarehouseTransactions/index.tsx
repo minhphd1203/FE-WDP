@@ -13,7 +13,6 @@ import {
   WarehouseTransactionFilters,
 } from "../../../apis/rescueOrderApi";
 import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
 import {
   Card,
   CardContent,
@@ -35,8 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { Input } from "../../../components/ui/input";
 import { formatDateTime } from "../../../lib/utils";
+import DateFilterPicker from "./DateFilterPicker";
 
 const LIMIT = 20;
 
@@ -201,10 +200,15 @@ export default function WarehouseTransactions() {
         </Card>
       </div>
 
-      <Card className="rounded-2xl border-none bg-white/95 shadow-sm">
-        <CardHeader className="border-b border-slate-100">
+      <Card className="overflow-visible rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-[linear-gradient(135deg,rgba(248,250,252,0.95),rgba(255,255,255,0.95))]">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-slate-900">Bộ lọc</CardTitle>
+            <div>
+              <CardTitle className="text-slate-900">Bộ lọc giao dịch</CardTitle>
+              <p className="mt-1 text-sm text-slate-500">
+                Tinh chỉnh theo loại giao dịch, chiều hàng và khoảng thời gian.
+              </p>
+            </div>
             {(selectedSource ||
               selectedType ||
               selectedCategory ||
@@ -221,17 +225,17 @@ export default function WarehouseTransactions() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-5">
-            <div>
-              <label className="text-sm font-medium text-slate-600">
+        <CardContent className="overflow-visible pt-6">
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr_1fr_1fr_180px]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+              <label className="text-sm font-semibold text-slate-700">
                 Loại giao dịch
               </label>
               <Select
                 value={selectedSource || "ALL"}
                 onValueChange={(v) => setSelectedSource(v === "ALL" ? "" : v)}
               >
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 h-11 rounded-xl border-slate-200 bg-white shadow-sm">
                   <SelectValue placeholder="Tất cả" />
                 </SelectTrigger>
                 <SelectContent>
@@ -255,15 +259,15 @@ export default function WarehouseTransactions() {
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-600">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+              <label className="text-sm font-semibold text-slate-700">
                 Chiều hàng
               </label>
               <Select
                 value={selectedType || "ALL"}
                 onValueChange={(v) => setSelectedType(v === "ALL" ? "" : v)}
               >
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 h-11 rounded-xl border-slate-200 bg-white shadow-sm">
                   <SelectValue placeholder="Tất cả" />
                 </SelectTrigger>
                 <SelectContent>
@@ -274,34 +278,28 @@ export default function WarehouseTransactions() {
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-600">
-                Từ ngày
-              </label>
-              <Input
-                type="date"
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+              <DateFilterPicker
+                label="Từ ngày"
                 value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="mt-2"
+                onChange={setFromDate}
+                maxDate={toDate || undefined}
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-600">
-                Đến ngày
-              </label>
-              <Input
-                type="date"
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+              <DateFilterPicker
+                label="Đến ngày"
                 value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="mt-2"
+                onChange={setToDate}
+                minDate={fromDate || undefined}
               />
             </div>
 
             <div className="flex items-end">
               <Button
                 onClick={handleFilterChange}
-                className="w-full rounded-lg bg-red-600 text-white hover:bg-red-700"
+                className="h-14 w-full rounded-2xl bg-gradient-to-r from-red-600 via-red-600 to-rose-700 text-white shadow-[0_16px_32px_-16px_rgba(220,38,38,0.75)] hover:from-red-700 hover:to-rose-800"
               >
                 <Filter className="h-4 w-4" />
                 Lọc
@@ -322,24 +320,30 @@ export default function WarehouseTransactions() {
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow className="hover:bg-slate-50/80">
-                  <TableHead className="text-slate-600">
+                  <TableHead className="text-slate-600 text-center">
                     Loại giao dịch
                   </TableHead>
-                  <TableHead className="text-slate-600">Hạng mục</TableHead>
+                  <TableHead className="text-slate-600 text-center">
+                    Hạng mục
+                  </TableHead>
                   <TableHead className="text-center text-slate-600">
                     Chiều
                   </TableHead>
-                  <TableHead className="text-right text-slate-600">
+                  <TableHead className="text-center text-slate-600">
                     Số lượng
                   </TableHead>
-                  <TableHead className="text-right text-slate-600">
+                  <TableHead className="text-center text-slate-600">
                     Trước
                   </TableHead>
-                  <TableHead className="text-right text-slate-600">
+                  <TableHead className="text-center text-slate-600">
                     Sau
                   </TableHead>
-                  <TableHead className="text-slate-600">Thời gian</TableHead>
-                  <TableHead className="text-slate-600">Ghi chú</TableHead>
+                  <TableHead className="text-center text-slate-600">
+                    Thời gian
+                  </TableHead>
+                  <TableHead className="text-center text-slate-600">
+                    Ghi chú
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -367,24 +371,18 @@ export default function WarehouseTransactions() {
                       key={transaction.id}
                       className="hover:bg-slate-50/80"
                     >
-                      <TableCell className="py-3">
-                        <Badge
-                          className={
-                            sourceColors[transaction.source] ||
-                            "bg-slate-100 text-slate-700"
-                          }
+                      <TableCell className="py-3 text-center">
+                        <div
+                          className={`${sourceColors[transaction.source] || "bg-slate-100 text-slate-700"} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                         >
                           {sourceLabels[transaction.source] ||
                             transaction.source}
-                        </Badge>
+                        </div>
                       </TableCell>
-                      <TableCell className="py-3 text-slate-700">
+                      <TableCell className="py-3 text-slate-700 text-center">
                         <div>
                           <p className="font-medium">
                             {transaction.category?.name || "Không xác định"}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            ID: {transaction.categoryId.substring(0, 8)}...
                           </p>
                         </div>
                       </TableCell>
@@ -405,22 +403,22 @@ export default function WarehouseTransactions() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="py-3 text-right font-semibold text-slate-900">
+                      <TableCell className="py-3 text-center font-semibold text-slate-900">
                         {transaction.quantity}
                       </TableCell>
-                      <TableCell className="py-3 text-right text-slate-600">
+                      <TableCell className="py-3 text-center text-slate-600">
                         {transaction.balanceBefore}
                       </TableCell>
-                      <TableCell className="py-3 text-right text-slate-600">
+                      <TableCell className="py-3 text-center text-slate-600">
                         {transaction.balanceAfter}
                       </TableCell>
-                      <TableCell className="py-3 text-slate-600 whitespace-nowrap">
-                        <div className="flex items-center gap-1 text-sm">
+                      <TableCell className="py-3 text-center text-slate-600 whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1 text-sm">
                           <Calendar className="h-3 w-3 text-slate-400" />
                           {formatDateTime(transaction.createdAt)}
                         </div>
                       </TableCell>
-                      <TableCell className="py-3 text-slate-600">
+                      <TableCell className="py-3 text-center text-slate-600">
                         <div className="max-w-xs truncate text-sm">
                           {transaction.note || "-"}
                         </div>

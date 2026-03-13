@@ -21,10 +21,26 @@ export interface Vehicle {
   status: string;
 }
 
+export interface RescueTeamAccount {
+  id: string;
+  email?: string;
+  phone?: string;
+  fullName?: string;
+  role?: string;
+  isActive?: boolean;
+}
+
 export interface RescueTeam {
   id: string;
   teamId: string;
   accountId?: string | null;
+  name?: string;
+  area?: string;
+  teamSize?: number;
+  totalVehicles?: number;
+  latitude?: string;
+  longitude?: string;
+  account?: RescueTeamAccount;
   teamName: string;
   teamCode: string;
   membersCount: number;

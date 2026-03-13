@@ -53,21 +53,40 @@ export const transformUsersToRescueTeams = (users: User[]): RescueTeam[] => {
       source.fullName ||
       `Đội cứu hộ ${index + 1}`;
     const teamCode = source.team_code || source.teamCode || "-";
-    const teamId =
+    const teamRecordId =
       source.team_id ||
       source.teamId ||
       source.id ||
       `T${String(index + 1).padStart(3, "0")}`;
     const accountId = source.accountId || source.account?.id || null;
+    const account =
+      source.account && typeof source.account === "object"
+        ? {
+            id: source.account.id || accountId || "-",
+            email: source.account.email || source.email,
+            phone: source.account.phone || source.phone || source.phoneNumber,
+            fullName: source.account.fullName || source.fullName || source.name,
+            role: source.account.role || source.role,
+            isActive:
+              typeof source.account.isActive === "boolean"
+                ? source.account.isActive
+                : undefined,
+          }
+        : undefined;
 
     const membersCount = toNumber(
       source.totalMembers ?? source.membersCount ?? source.teamSize,
       rawMembers.length,
     );
-    const vehiclesCount = toNumber(
-      source.vehiclesCount ?? capacity.vehicles,
+    const totalVehicles = toNumber(
+      source.totalVehicles ?? source.vehiclesCount ?? capacity.vehicles,
       rawVehicles.length,
     );
+    const teamSize = toNumber(
+      source.teamSize ?? source.totalMembers,
+      membersCount,
+    );
+    const vehiclesCount = totalVehicles;
     const rating = toNumber(source.rating, 0).toFixed(2);
     const missionTotal = toNumber(
       source.total_missions ?? source.totalMissions ?? source.missionTotal,
@@ -103,7 +122,7 @@ export const transformUsersToRescueTeams = (users: User[]): RescueTeam[] => {
         member.member_id ||
         member.account_id ||
         member.membership_id ||
-        `${teamId}-M${memberIndex + 1}`,
+        `${teamRecordId}-M${memberIndex + 1}`,
       full_name: member.full_name || member.fullName || "-",
       role: member.role || "member",
       phone: member.phone || "-",
@@ -112,7 +131,8 @@ export const transformUsersToRescueTeams = (users: User[]): RescueTeam[] => {
 
     const equipmentList = rawEquipmentList.map(
       (item: any, equipmentIndex: number) => ({
-        equipment_id: item.equipment_id || `${teamId}-EQ${equipmentIndex + 1}`,
+        equipment_id:
+          item.equipment_id || `${teamRecordId}-EQ${equipmentIndex + 1}`,
         equipment_name: item.equipment_name || item.name || "-",
         quantity: toNumber(item.quantity, 0),
         status: item.status || "ready",
@@ -120,7 +140,7 @@ export const transformUsersToRescueTeams = (users: User[]): RescueTeam[] => {
     );
 
     const vehicles = rawVehicles.map((vehicle: any, vehicleIndex: number) => ({
-      vehicle_id: vehicle.vehicle_id || `${teamId}-V${vehicleIndex + 1}`,
+      vehicle_id: vehicle.vehicle_id || `${teamRecordId}-V${vehicleIndex + 1}`,
       vehicle_type: vehicle.vehicle_type || vehicle.type || "-",
       plate_number: vehicle.plate_number || "-",
       capacity: toNumber(vehicle.capacity, 0),
@@ -143,9 +163,16 @@ export const transformUsersToRescueTeams = (users: User[]): RescueTeam[] => {
 
     return {
       ...source,
-      id: accountId || teamId,
-      teamId,
+      id: accountId || teamRecordId,
+      teamId: teamRecordId,
       accountId,
+      account,
+      name: source.name || teamName,
+      area: source.area || coverageArea,
+      teamSize,
+      totalVehicles,
+      latitude: lat,
+      longitude: lng,
       teamName,
       teamCode,
       membersCount,

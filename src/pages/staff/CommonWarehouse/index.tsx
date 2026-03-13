@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/ui/table";
-import { Badge } from "../../../components/ui/badge";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Receipt, StockItem } from "@/types/warehouse";
@@ -283,13 +282,12 @@ export default function CommonWarehouse() {
                           {stock.category?.name || "Chưa phân loại"}
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant="secondary"
-                            className={conditionClassMap[stock.condition] || ""}
+                          <div
+                            className={`${conditionClassMap[stock.condition] || "bg-slate-100 text-slate-700"} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                           >
                             {conditionLabelMap[stock.condition] ||
                               stock.condition}
-                          </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="text-slate-700">
                           {stock.quantity}
@@ -469,12 +467,11 @@ export default function CommonWarehouse() {
                       <span className="font-medium">
                         {item.category?.name || "Chưa phân loại"}
                       </span>
-                      <Badge
-                        variant="secondary"
-                        className={`ml-2 ${conditionClassMap[item.condition] || ""}`}
+                      <div
+                        className={`ml-2 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${conditionClassMap[item.condition] || "bg-slate-100 text-slate-700"}`}
                       >
                         {conditionLabelMap[item.condition] || item.condition}
-                      </Badge>
+                      </div>
                     </div>
                     <span className="font-semibold">×{item.quantity}</span>
                   </div>

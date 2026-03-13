@@ -9,7 +9,6 @@ import {
   TableRow,
 } from "../../../components/ui/table";
 import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
 import {
   Card,
   CardContent,
@@ -152,11 +151,11 @@ export default function Warehouse() {
     };
 
     return (
-      <Badge
-        className={conditionColors[condition] || "bg-slate-100 text-slate-800"}
+      <div
+        className={`${conditionColors[condition] || "bg-slate-100 text-slate-800"} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
       >
         {conditionLabels[condition] || condition}
-      </Badge>
+      </div>
     );
   };
 
@@ -443,22 +442,6 @@ export default function Warehouse() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-600">
-                    ID Biên lai
-                  </p>
-                  <p className="text-sm font-mono font-semibold mt-1">
-                    {selectedReceipt.id}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">
-                    ID Quyên góp
-                  </p>
-                  <p className="text-sm font-mono font-semibold mt-1">
-                    {selectedReceipt.donationId || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">
                     Người quyên góp
                   </p>
                   <p className="text-sm font-semibold mt-1">
@@ -521,14 +504,6 @@ export default function Warehouse() {
                   </p>
                   <p className="text-sm mt-1">
                     {selectedReceipt.donation?.status || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600">
-                    ID Sự kiện
-                  </p>
-                  <p className="text-sm font-mono mt-1">
-                    {selectedReceipt.donation?.eventId || "-"}
                   </p>
                 </div>
               </div>

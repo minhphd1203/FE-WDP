@@ -16,7 +16,6 @@ import {
   RescueOrderListItem,
 } from "../../../apis/rescueOrderApi";
 import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
 import {
   Card,
   CardContent,
@@ -327,13 +326,11 @@ export default function ReplenishmentRequests() {
                           </div>
                         </TableCell>
                         <TableCell className="py-3 whitespace-nowrap">
-                          <Badge
-                            className={getPriorityClassName(
-                              String(order.priority),
-                            )}
+                          <div
+                            className={`${getPriorityClassName(String(order.priority))} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                           >
                             {getPriorityLabel(String(order.priority))}
-                          </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="py-3 whitespace-nowrap text-slate-700">
                           <div className="flex items-center gap-2">
@@ -344,31 +341,28 @@ export default function ReplenishmentRequests() {
                             người
                           </div>
                         </TableCell>
-                        <TableCell className="min-w-[220px] py-3 text-slate-700">
+                        <TableCell className="min-w-[150px] py-3 text-slate-700">
                           <div className="flex flex-wrap gap-1.5">
                             {shortageItems.map((item) => (
-                              <Badge
+                              <div
                                 key={item.orderItemId}
-                                variant="outline"
-                                className="border-amber-200 bg-amber-50 text-amber-800"
+                                className="inline-flex w-fit items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800"
                               >
                                 {item.categoryName}: {item.shortageQuantity}
-                              </Badge>
+                              </div>
                             ))}
                           </div>
                         </TableCell>
                         <TableCell className="min-w-[260px] py-3 text-slate-700">
                           {latestRequest ? (
                             <div className="space-y-2">
-                              <Badge
-                                className={getReplenishmentStatusClassName(
-                                  latestRequest.status,
-                                )}
+                              <div
+                                className={`${getReplenishmentStatusClassName(latestRequest.status)} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                               >
                                 {getReplenishmentStatusLabel(
                                   latestRequest.status,
                                 )}
-                              </Badge>
+                              </div>
                               <p className="line-clamp-2 text-sm text-slate-600">
                                 {latestRequest.note}
                               </p>
@@ -422,14 +416,14 @@ export default function ReplenishmentRequests() {
                   <div className="grid gap-4 md:grid-cols-4">
                     <div>
                       <p className="text-sm text-slate-500">Trạng thái phiếu</p>
-                      <Badge
-                        className={`mt-2 ${getReplenishmentStatusClassName(selectedOrder.replenishmentRequests?.[0]?.status || "PENDING")}`}
+                      <div
+                        className={`mt-2 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getReplenishmentStatusClassName(selectedOrder.replenishmentRequests?.[0]?.status || "PENDING")}`}
                       >
                         {getReplenishmentStatusLabel(
                           selectedOrder.replenishmentRequests?.[0]?.status ||
                             "PENDING",
                         )}
-                      </Badge>
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Địa chỉ cứu hộ</p>
@@ -503,21 +497,11 @@ export default function ReplenishmentRequests() {
                             className="rounded-xl border border-slate-100 bg-slate-50/70 p-4"
                           >
                             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                              <div>
-                                <p className="font-semibold text-slate-900">
-                                  {request.id.substring(0, 12)}...
-                                </p>
-                                <p className="text-sm text-slate-500">
-                                  {formatDateTime(request.createdAt)}
-                                </p>
-                              </div>
-                              <Badge
-                                className={getReplenishmentStatusClassName(
-                                  request.status,
-                                )}
+                              <div
+                                className={`${getReplenishmentStatusClassName(request.status)} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                               >
                                 {getReplenishmentStatusLabel(request.status)}
-                              </Badge>
+                              </div>
                             </div>
                             <p className="mt-3 text-sm text-slate-700">
                               {request.note}

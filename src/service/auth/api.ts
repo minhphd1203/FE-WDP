@@ -32,8 +32,20 @@ export const authService = {
   getCurrentUser: () =>
     httpClient.get<AuthApiResponse<CurrentUserData>>(AUTH_ENDPOINTS.ME),
 
-  updateProfile: (data: UpdateProfileRequest) =>
-    httpClient.put<AuthApiResponse<CurrentUserData>>(AUTH_ENDPOINTS.ME, data),
+  updateProfile: (data: UpdateProfileRequest | FormData) => {
+    const isMultipart = data instanceof FormData;
+    return httpClient.put<AuthApiResponse<CurrentUserData>>(
+      AUTH_ENDPOINTS.ME,
+      data,
+      isMultipart
+        ? {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        : undefined,
+    );
+  },
 };
 
 export default authService;

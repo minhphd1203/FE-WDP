@@ -247,7 +247,7 @@ export default function OSMLocationPicker({
         <Button
           type="button"
           variant="outline"
-          className="h-11 rounded-xl border-red-300 text-red-700 hover:bg-red-50"
+          className="h-11 rounded-xl border-red-300 text-red-700"
           disabled={isGettingCurrentLocation}
           onClick={handleGetCurrentLocation}
         >

@@ -23,7 +23,6 @@ import {
 } from "@/hooks/useEvent";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -264,7 +263,13 @@ export default function EventsList() {
     };
 
     const config = statusMap[normalizedStatus] || statusMap.DRAFT;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    return (
+      <div
+        className={`${config.className} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
+      >
+        {config.label}
+      </div>
+    );
   };
 
   const getTypeLabel = (type: string) => {

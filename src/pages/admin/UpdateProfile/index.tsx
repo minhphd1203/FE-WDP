@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { UserCog, Save, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  UserCog,
+  Save,
+  Loader2,
+  Image as ImageIcon,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { authService } from "../../../service/auth/api";
 import { CurrentUserData, UpdateProfileRequest } from "../../../types/auth";
@@ -16,6 +23,9 @@ export default function UpdateProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUserData | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     fullName: "",
     phone: "",
@@ -37,6 +47,7 @@ export default function UpdateProfile() {
             address: user.address || user.profile?.address || "",
             avatarUrl: user.profile?.avatarUrl || "",
           });
+          setAvatarPreview(user.profile?.avatarUrl || "");
         }
       } catch (error) {
         toast.error("Không thể tải thông tin hồ sơ");
@@ -55,17 +66,83 @@ export default function UpdateProfile() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAvatarPick = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (avatarPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    const blobUrl = URL.createObjectURL(file);
+    setAvatarFile(file);
+    setAvatarPreview(blobUrl);
+    setFormData((prev) => ({ ...prev, avatarUrl: "" }));
+  };
+
+  const handleRemoveSelectedAvatar = () => {
+    if (avatarPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    setAvatarFile(null);
+    setAvatarPreview(currentUser?.profile?.avatarUrl || "");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     try {
       setSaving(true);
-      await authService.updateProfile({
-        fullName: formData.fullName?.trim() || undefined,
-        phone: formData.phone?.trim() || undefined,
-        address: formData.address?.trim() || undefined,
-        avatarUrl: formData.avatarUrl?.trim() || undefined,
-      });
+      const payload = new FormData();
+
+      if (formData.fullName?.trim()) {
+        payload.append("fullName", formData.fullName.trim());
+      }
+      if (formData.phone?.trim()) {
+        payload.append("phone", formData.phone.trim());
+      }
+      if (formData.address?.trim()) {
+        payload.append("address", formData.address.trim());
+      }
+      if (formData.avatarUrl?.trim()) {
+        payload.append("avatarUrl", formData.avatarUrl.trim());
+      }
+      if (avatarFile) {
+        payload.append("avatar", avatarFile);
+      }
+
+      const response = await authService.updateProfile(payload);
+
+      if (response.success) {
+        setCurrentUser(response.data);
+        setFormData({
+          fullName:
+            response.data.fullName || response.data.profile?.fullName || "",
+          phone: response.data.phone || response.data.profile?.phone || "",
+          address:
+            response.data.address || response.data.profile?.address || "",
+          avatarUrl: response.data.profile?.avatarUrl || "",
+        });
+        setAvatarFile(null);
+        if (avatarPreview.startsWith("blob:")) {
+          URL.revokeObjectURL(avatarPreview);
+        }
+        setAvatarPreview(response.data.profile?.avatarUrl || "");
+      }
+
       toast.success("Cập nhật hồ sơ thành công");
     } catch (error) {
       toast.error("Cập nhật hồ sơ thất bại");
@@ -145,15 +222,73 @@ export default function UpdateProfile() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="avatarUrl">URL Avatar</Label>
-              <input
-                id="avatarUrl"
-                name="avatarUrl"
-                value={formData.avatarUrl || ""}
-                onChange={handleInputChange}
-                className="h-11 w-full rounded-xl border border-red-300 px-3 text-base focus:outline-red-500"
-                placeholder="https://example.com/avatar.jpg"
-              />
+              <Label>Ảnh đại diện</Label>
+              <div className="rounded-2xl border border-red-100 bg-red-50/30 p-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                  <div className="flex items-center justify-center">
+                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border-2 border-red-200 bg-white shadow-sm">
+                      {avatarPreview ? (
+                        <img
+                          src={avatarPreview}
+                          alt="Avatar preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-10 w-10 text-red-300" />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">
+                        Chọn ảnh từ máy tính
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Ảnh sẽ được hiển thị xem trước trước khi lưu.
+                      </p>
+                    </div>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarPick}
+                    />
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 rounded-xl border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Chọn ảnh
+                      </Button>
+
+                      {avatarFile ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-11 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                          onClick={handleRemoveSelectedAvatar}
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Bỏ ảnh đã chọn
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    {!avatarFile && formData.avatarUrl ? (
+                      <p className="text-xs text-slate-500">
+                        Đang dùng ảnh hiện tại của tài khoản.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50/40 px-4 py-3 text-sm">

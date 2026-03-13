@@ -26,7 +26,6 @@ import {
 import { formatDateTime } from "../../../lib/utils";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Badge } from "../../../components/ui/badge";
 import {
   Card,
   CardContent,
@@ -94,6 +93,22 @@ const replenishmentStatusClassMap: Record<string, string> = {
   APPROVED: "bg-emerald-100 text-emerald-700",
   REJECTED: "bg-red-100 text-red-800",
   PENDING: "bg-amber-100 text-amber-800",
+};
+
+const getActiveAssignedTeams = (request: ReliefRequest) =>
+  (request.assignedTeams || []).filter(
+    (team) => team.status !== "CANCELED" && team.status !== "REJECTED",
+  );
+
+const getEstimatedPeopleFromTeams = (request: ReliefRequest) => {
+  const activeTeams = getActiveAssignedTeams(request);
+  const totalTeamSize = activeTeams.reduce(
+    (sum, team) => sum + Math.max(0, Number(team.teamSize || 0)),
+    0,
+  );
+
+  if (totalTeamSize > 0) return totalTeamSize;
+  return request.estimatedPeople || 1;
 };
 
 export default function RescueRequests() {
@@ -211,9 +226,10 @@ export default function RescueRequests() {
   };
 
   const handleOpenCreateDialog = (request: ReliefRequest) => {
+    const estimatedPeopleFromTeams = getEstimatedPeopleFromTeams(request);
     setSelectedRequest(request);
     setFormData({
-      estimatedPeople: request.estimatedPeople || 1,
+      estimatedPeople: estimatedPeopleFromTeams,
       note: `Phiếu cấp phát cho đợt cứu trợ tại ${request.address}`,
     });
     setIsCreateDialogOpen(true);
@@ -677,17 +693,17 @@ export default function RescueRequests() {
                 ) : (
                   requests.map((request) => {
                     const existingOrder = ordersByRequestId[request.id];
-                    const acceptedTeams = request.assignedTeams.filter(
-                      (team) => team.status === "ACCEPTED",
-                    );
-                    const visibleTeams = acceptedTeams.slice(
+                    const activeTeams = getActiveAssignedTeams(request);
+                    const visibleTeams = activeTeams.slice(
                       0,
                       MAX_VISIBLE_TEAMS,
                     );
                     const remainingTeamsCount = Math.max(
-                      acceptedTeams.length - MAX_VISIBLE_TEAMS,
+                      activeTeams.length - MAX_VISIBLE_TEAMS,
                       0,
                     );
+                    const totalTeamResponders =
+                      getEstimatedPeopleFromTeams(request);
 
                     return (
                       <TableRow
@@ -727,28 +743,31 @@ export default function RescueRequests() {
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
                               <Users className="h-4 w-4 text-red-500" />
-                              {acceptedTeams.length}/
-                              {request.teamSummary.required} đội
+                              {request.teamSummary.accepted || 0}/
+                              {request.teamSummary.required} đội (đã nhận)
                             </div>
+                            <p className="text-xs text-slate-500">
+                              Đã phân: {request.teamSummary.assigned || 0} •
+                              Tổng quân số: {totalTeamResponders}
+                            </p>
                             <div className="flex flex-wrap gap-1.5">
-                              {acceptedTeams.length > 0 ? (
+                              {activeTeams.length > 0 ? (
                                 <>
                                   {visibleTeams.map((team) => (
-                                    <Badge
+                                    <div
                                       key={team.assignmentId}
-                                      variant="outline"
-                                      className="border-red-200 bg-red-50 px-2 py-0.5 text-xs text-red-700"
+                                      className="inline-flex w-fit items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700"
                                     >
                                       {team.teamName}
-                                    </Badge>
+                                      {team.teamSize
+                                        ? ` (${team.teamSize} người)`
+                                        : ""}
+                                    </div>
                                   ))}
                                   {remainingTeamsCount > 0 && (
-                                    <Badge
-                                      variant="outline"
-                                      className="border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600"
-                                    >
+                                    <div className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                                       +{remainingTeamsCount} đội
-                                    </Badge>
+                                    </div>
                                   )}
                                 </>
                               ) : (
@@ -765,13 +784,11 @@ export default function RescueRequests() {
                         <TableCell className="py-3 text-right">
                           {existingOrder ? (
                             <div className="flex flex-col items-end gap-2">
-                              <Badge
-                                className={getOrderStatusClassName(
-                                  existingOrder.status,
-                                )}
+                              <div
+                                className={`${getOrderStatusClassName(existingOrder.status)} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                               >
                                 {getOrderStatusLabel(existingOrder.status)}
-                              </Badge>
+                              </div>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -845,39 +862,57 @@ export default function RescueRequests() {
           <div className="space-y-6 px-6 py-5">
             {selectedRequest && (
               <div className="rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 p-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-sm text-slate-500">Đơn cứu hộ</p>
-                    <p className="mt-1 font-semibold text-slate-900">
-                      {selectedRequest.id.substring(0, 12)}...
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">Địa chỉ</p>
-                    <p className="mt-1 font-semibold text-slate-900">
-                      {selectedRequest.address}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">Ưu tiên</p>
-                    <Badge
-                      className={`mt-2 ${getPriorityClassName(selectedRequest.priority)}`}
-                    >
-                      {getPriorityLabel(selectedRequest.priority)}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">Đội đã phân</p>
-                    <p className="mt-1 font-semibold text-slate-900">
-                      {
-                        selectedRequest.assignedTeams.filter(
-                          (team) => team.status === "ACCEPTED",
-                        ).length
-                      }
-                      /{selectedRequest.teamSummary.required}
-                    </p>
-                  </div>
-                </div>
+                {(() => {
+                  const estimatedPeopleFromTeams =
+                    getEstimatedPeopleFromTeams(selectedRequest);
+                  return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <p className="text-sm text-slate-500">Đơn cứu hộ</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedRequest.id.substring(0, 12)}...
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">Địa chỉ</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedRequest.address}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">Ưu tiên</p>
+                        <div
+                          className={`mt-2 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getPriorityClassName(selectedRequest.priority)}`}
+                        >
+                          {getPriorityLabel(selectedRequest.priority)}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">Đội đã phân</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedRequest.teamSummary.accepted || 0}/
+                          {selectedRequest.teamSummary.required} đội (đã nhận)
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">
+                          Đội đã phân công
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedRequest.teamSummary.assigned || 0} đội
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">
+                          Tổng quân số đội
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {estimatedPeopleFromTeams} người
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -888,14 +923,13 @@ export default function RescueRequests() {
                 type="number"
                 min={1}
                 value={formData.estimatedPeople}
-                onChange={(event) =>
-                  setFormData((current) => ({
-                    ...current,
-                    estimatedPeople: Number(event.target.value),
-                  }))
-                }
+                readOnly
                 className="rounded-xl border-red-300 focus-visible:border-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-0"
               />
+              <p className="text-xs text-slate-500">
+                Tự động tính theo tổng teamSize của các đội đã phân công (không
+                tính đội đã hủy/từ chối).
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -960,11 +994,11 @@ export default function RescueRequests() {
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Trạng thái</p>
-                      <Badge
-                        className={`mt-2 ${getOrderStatusClassName(selectedOrderDetail.status)}`}
+                      <div
+                        className={`mt-2 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getOrderStatusClassName(selectedOrderDetail.status)}`}
                       >
                         {getOrderStatusLabel(selectedOrderDetail.status)}
-                      </Badge>
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Số người hỗ trợ</p>
@@ -1067,13 +1101,13 @@ export default function RescueRequests() {
                         </div>
                         <div>
                           <p className="text-sm text-slate-500">Ưu tiên</p>
-                          <Badge
-                            className={`mt-2 ${getPriorityClassName(selectedOrderDetail.rescueRequest.priority)}`}
+                          <div
+                            className={`mt-2 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getPriorityClassName(selectedOrderDetail.rescueRequest.priority)}`}
                           >
                             {getPriorityLabel(
                               selectedOrderDetail.rescueRequest.priority,
                             )}
-                          </Badge>
+                          </div>
                         </div>
                         <div>
                           <p className="text-sm text-slate-500">
@@ -1343,17 +1377,17 @@ export default function RescueRequests() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4">
-                        <Badge
-                          className={
+                        <div
+                          className={`${
                             selectedOrderDetail.stockCheck.allSufficient
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-amber-100 text-amber-800"
-                          }
+                          } inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                         >
                           {selectedOrderDetail.stockCheck.allSufficient
                             ? "Kho hiện đủ hàng"
                             : "Kho còn thiếu hàng"}
-                        </Badge>
+                        </div>
                       </div>
                       <div className="grid gap-3">
                         {selectedOrderDetail.stockCheck.items.map((item) => (
@@ -1371,15 +1405,15 @@ export default function RescueRequests() {
                                     item.itemType}
                                 </p>
                               </div>
-                              <Badge
-                                className={
+                              <div
+                                className={`${
                                   item.isEnough
                                     ? "bg-emerald-100 text-emerald-700"
                                     : "bg-amber-100 text-amber-800"
-                                }
+                                } inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                               >
                                 {item.isEnough ? "Đủ hàng" : "Thiếu hàng"}
-                              </Badge>
+                              </div>
                             </div>
                             <div className="mt-3 grid gap-3 text-sm text-slate-600 md:grid-cols-4">
                               <p>Cần thêm: {item.requiredQuantity}</p>
@@ -1419,13 +1453,11 @@ export default function RescueRequests() {
                                     {formatDateTime(request.createdAt)}
                                   </p>
                                 </div>
-                                <Badge
-                                  className={getReplenishmentStatusClassName(
-                                    request.status,
-                                  )}
+                                <div
+                                  className={`${getReplenishmentStatusClassName(request.status)} inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold`}
                                 >
                                   {request.status}
-                                </Badge>
+                                </div>
                               </div>
                               <p className="mt-3 text-sm text-slate-700">
                                 {request.note}
