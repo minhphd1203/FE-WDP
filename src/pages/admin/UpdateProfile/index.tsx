@@ -261,7 +261,7 @@ export default function UpdateProfile() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 rounded-xl border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                        className="h-11 rounded-xl border-red-200 text-red-700  hover:text-white"
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <Upload className="mr-2 h-4 w-4" />

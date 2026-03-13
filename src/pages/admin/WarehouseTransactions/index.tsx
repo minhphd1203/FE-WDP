@@ -152,7 +152,7 @@ export default function WarehouseTransactions() {
         <Button
           onClick={() => void fetchTransactions(page)}
           variant="outline"
-          className="rounded-xl border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+          className="rounded-xl border-red-200 text-red-700  hover:text-white"
         >
           <RefreshCw className="h-4 w-4" />
           Làm mới

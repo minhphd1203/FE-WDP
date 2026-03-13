@@ -163,11 +163,15 @@ export default function VolunteerList() {
                   <TableHead className="text-slate-600">
                     Tình nguyện viên
                   </TableHead>
-                  <TableHead className="text-slate-600">
+                  <TableHead className="text-slate-600 text-center">
                     Thông tin liên hệ
                   </TableHead>
-                  <TableHead className="text-slate-600">Địa chỉ</TableHead>
-                  <TableHead className="text-slate-600">Ngày đăng ký</TableHead>
+                  <TableHead className="text-slate-600 text-center">
+                    Địa chỉ
+                  </TableHead>
+                  <TableHead className="text-slate-600 text-center">
+                    Ngày đăng ký
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -211,9 +215,6 @@ export default function VolunteerList() {
                             <p className="font-semibold text-slate-900">
                               {volunteer.account?.profile?.fullName ||
                                 "Chưa cập nhật"}
-                            </p>
-                            <p className="text-sm text-slate-500">
-                              ID: {volunteer.id.substring(0, 8)}...
                             </p>
                           </div>
                         </div>
@@ -266,7 +267,7 @@ export default function VolunteerList() {
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             variant="outline"
-            className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+            className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
           >
             Trước
           </Button>
@@ -277,7 +278,7 @@ export default function VolunteerList() {
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
             variant="outline"
-            className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+            className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
           >
             Sau
           </Button>

@@ -343,7 +343,7 @@ export default function TeamWarehouse() {
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
                 variant="outline"
-                className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
               >
                 Trước
               </Button>
@@ -354,7 +354,7 @@ export default function TeamWarehouse() {
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
                 variant="outline"
-                className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                className="rounded-lg border-red-200 text-red-700  hover:text-red-700"
               >
                 Sau
               </Button>

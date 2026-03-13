@@ -15,7 +15,7 @@ interface RescueTeamCardProps {
   team: RescueTeam;
   onViewDetail: (team: RescueTeam) => void;
   onEdit: (team: RescueTeam) => void;
-  onToggleStatus: (teamId: string, currentStatus: boolean) => void;
+  onToggleStatus: (accountId: string, currentStatus: boolean) => void;
 }
 
 export default function RescueTeamCard({
@@ -114,11 +114,17 @@ export default function RescueTeamCard({
         </div>
 
         <div
-          onClick={() => onToggleStatus(team.teamId || team.id, team.isActive)}
-          className="rounded-lg hover:bg-red-50 hover:border-red-100 p-3 border border-slate-200 text-slate-600 cursor-pointer"
+          onClick={() =>
+            onToggleStatus(team.accountId || team.id, team.isActive)
+          }
+          className={`rounded-lg p-3 border border-slate-200 text-slate-600 cursor-pointer ${
+            team.isActive
+              ? "hover:border-red-100 hover:bg-red-50"
+              : "hover:border-emerald-100 hover:bg-emerald-50"
+          }`}
         >
           {team.isActive ? (
-            <Ban className="h-4 w-4 text-red-600" />
+            <Ban className="h-4 w-4 text-red-600 " />
           ) : (
             <CheckCircle className="h-4 w-4 text-emerald-600" />
           )}

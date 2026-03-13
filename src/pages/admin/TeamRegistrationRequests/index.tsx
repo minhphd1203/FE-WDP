@@ -251,7 +251,7 @@ export default function TeamRegistrationRequests() {
         <Button
           onClick={() => void fetchRequests()}
           variant="outline"
-          className="rounded-xl border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+          className="rounded-xl border-red-200 text-red-700  hover:text-white"
         >
           <RefreshCw className="h-4 w-4" />
           Làm mới
@@ -302,7 +302,7 @@ export default function TeamRegistrationRequests() {
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
-                className="pl-9"
+                className="pl-9 border-slate-200 focus-visible:border-red-300 focus-visible:ring-red-200"
                 placeholder="Tìm theo tên đội, khu vực, người đăng ký..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}

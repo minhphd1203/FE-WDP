@@ -130,10 +130,14 @@ export default function UserTable({
                       variant="outline"
                       size="sm"
                       onClick={() => onToggleStatus(user.id, user.isActive)}
-                      className="rounded-lg hover:bg-red-50"
+                      className={`rounded-lg ${
+                        user.isActive
+                          ? "hover:bg-red-50 hover:text-red-700"
+                          : "hover:bg-emerald-50 hover:text-emerald-700"
+                      }`}
                     >
                       {user.isActive ? (
-                        <Ban className="h-4 w-4 text-red-600" />
+                        <Ban className="h-4 w-4 text-red-600 " />
                       ) : (
                         <CheckCircle className="h-4 w-4 text-emerald-600" />
                       )}

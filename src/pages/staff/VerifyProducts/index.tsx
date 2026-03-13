@@ -276,7 +276,7 @@ export default function VerifyProducts() {
                               setSelectedProduct(product);
                               setIsDetailDialogOpen(true);
                             }}
-                            className="hover:bg-red-50 hover:text-red-700"
+                            className=" hover:text-red-700"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
