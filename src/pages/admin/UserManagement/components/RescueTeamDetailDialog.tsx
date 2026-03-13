@@ -361,7 +361,7 @@ export default function RescueTeamDetailDialog({
           <Button
             type="button"
             variant="outline"
-            className="h-10 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100"
+            className="h-10 rounded-xl border-slate-300 text-slate-700 "
             onClick={onClose}
           >
             Đóng
