@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, FileText, Eye, RefreshCw } from "lucide-react";
+import { Package, FileText, Eye, RefreshCw, Plus, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,8 +22,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../components/ui/dialog";
-import { warehouseApi } from "../../../service/warehouse/api";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Textarea } from "../../../components/ui/textarea";
+import { categoryApi } from "../../../apis/categoryApi";
+import {
+  warehouseApi,
+  CreateManualStockEntryRequest,
+} from "../../../service/warehouse/api";
 import { formatDate } from "../../../lib/utils";
+import { Category } from "../../../types";
 import { toast } from "sonner";
 
 type Tab = "stocks" | "receipts";
@@ -68,20 +76,55 @@ export default function Warehouse() {
   const [activeTab, setActiveTab] = useState<Tab>("stocks");
   const [stocks, setStocks] = useState<any[]>([]);
   const [receipts, setReceipts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingStocks, setIsLoadingStocks] = useState(false);
   const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
 
   // Dialog states
   const [selectedStock, setSelectedStock] = useState<any>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isSubmittingManual, setIsSubmittingManual] = useState(false);
+  const [manualForm, setManualForm] = useState<CreateManualStockEntryRequest>({
+    referenceCode: "",
+    note: "",
+    items: [
+      {
+        categoryId: "",
+        condition: "GOOD",
+        quantity: 1,
+      },
+    ],
+  });
 
   useEffect(() => {
     fetchStocks();
     fetchReceipts();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryApi.getCategories({ page: 1, limit: 100 });
+      if (response.success && response.data) {
+        const payload = response.data as any;
+        const categoryList = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.data)
+            ? payload.data
+            : Array.isArray(payload.items)
+              ? payload.items
+              : [];
+
+        setCategories(categoryList);
+      }
+    } catch {
+      toast.error("Không thể tải danh mục vật phẩm");
+    }
+  };
 
   const fetchStocks = async () => {
     setIsLoadingStocks(true);
@@ -132,6 +175,101 @@ export default function Warehouse() {
       toast.error("Không thể tải chi tiết biên lai");
     } finally {
       setIsLoadingDetail(false);
+    }
+  };
+
+  const handleManualItemChange = (
+    index: number,
+    field: "categoryId" | "condition" | "quantity",
+    value: string | number,
+  ) => {
+    setManualForm((current) => {
+      const nextItems = [...current.items];
+      nextItems[index] = {
+        ...nextItems[index],
+        [field]: field === "quantity" ? Number(value) : value,
+      } as CreateManualStockEntryRequest["items"][number];
+
+      return {
+        ...current,
+        items: nextItems,
+      };
+    });
+  };
+
+  const handleAddManualItem = () => {
+    setManualForm((current) => ({
+      ...current,
+      items: [
+        ...current.items,
+        {
+          categoryId: "",
+          condition: "GOOD",
+          quantity: 1,
+        },
+      ],
+    }));
+  };
+
+  const handleRemoveManualItem = (index: number) => {
+    setManualForm((current) => {
+      if (current.items.length === 1) return current;
+      return {
+        ...current,
+        items: current.items.filter((_, itemIndex) => itemIndex !== index),
+      };
+    });
+  };
+
+  const resetManualForm = () => {
+    setManualForm({
+      referenceCode: "",
+      note: "",
+      items: [
+        {
+          categoryId: "",
+          condition: "GOOD",
+          quantity: 1,
+        },
+      ],
+    });
+  };
+
+  const handleCreateManualStockEntry = async () => {
+    const hasInvalidItem = manualForm.items.some(
+      (item) => !item.categoryId || Number(item.quantity) <= 0,
+    );
+
+    if (hasInvalidItem) {
+      toast.error(
+        "Vui lòng chọn danh mục và nhập số lượng hợp lệ cho tất cả dòng",
+      );
+      return;
+    }
+
+    setIsSubmittingManual(true);
+
+    try {
+      const payload: CreateManualStockEntryRequest = {
+        referenceCode: manualForm.referenceCode?.trim() || undefined,
+        note: manualForm.note?.trim() || undefined,
+        items: manualForm.items.map((item) => ({
+          categoryId: item.categoryId,
+          condition: item.condition,
+          quantity: Number(item.quantity),
+        })),
+      };
+
+      await warehouseApi.createManualStockEntry(payload);
+      toast.success("Nhập tay tồn kho thành công");
+      setIsManualDialogOpen(false);
+      resetManualForm();
+      fetchStocks();
+      fetchReceipts();
+    } catch {
+      toast.error("Nhập tay tồn kho thất bại");
+    } finally {
+      setIsSubmittingManual(false);
     }
   };
 
@@ -203,15 +341,25 @@ export default function Warehouse() {
             <CardTitle className="text-lg font-bold text-slate-900">
               Tồn kho ({stocks?.length || 0})
             </CardTitle>
-            <Button
-              onClick={fetchStocks}
-              variant="outline"
-              size="sm"
-              className="h-9 rounded-lg border-red-300 text-red-700 "
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Làm mới
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsManualDialogOpen(true)}
+                size="sm"
+                className="h-9 rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nhập tay
+              </Button>
+              <Button
+                onClick={fetchStocks}
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-lg border-red-300 text-red-700 "
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Làm mới
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="pt-4">
             {isLoadingStocks ? (
@@ -343,6 +491,176 @@ export default function Warehouse() {
           </CardContent>
         </Card>
       )}
+
+      {/* Manual Stock Entry Dialog */}
+      <Dialog
+        open={isManualDialogOpen}
+        onOpenChange={(open) => {
+          setIsManualDialogOpen(open);
+          if (!open) {
+            resetManualForm();
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto rounded-3xl border-2 border-red-100 bg-gradient-to-br from-white to-red-50/30">
+          <DialogHeader className="border-b border-red-100 pb-4">
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Nhập tay tồn kho
+            </DialogTitle>
+            <DialogDescription>
+              Admin nhập hàng trực tiếp vào kho theo chứng từ nội bộ.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="manual-reference-code">Mã tham chiếu</Label>
+                <Input
+                  id="manual-reference-code"
+                  placeholder="VD: PO-2026-0001"
+                  value={manualForm.referenceCode || ""}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      referenceCode: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="manual-note">Ghi chú</Label>
+                <Textarea
+                  id="manual-note"
+                  rows={2}
+                  placeholder="Nhập tay hàng mua ngoài để bổ sung kho trung tâm"
+                  value={manualForm.note || ""}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      note: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-900">
+                  Danh sách vật phẩm
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddManualItem}
+                  className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Thêm dòng
+                </Button>
+              </div>
+
+              {manualForm.items.map((item, index) => (
+                <div
+                  key={`manual-item-${index}`}
+                  className="grid grid-cols-1 gap-3 rounded-xl border border-red-100 bg-red-50/40 p-3 md:grid-cols-[1.6fr_1fr_0.8fr_auto]"
+                >
+                  <div>
+                    <Label>Danh mục</Label>
+                    <select
+                      className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={item.categoryId}
+                      onChange={(event) =>
+                        handleManualItemChange(
+                          index,
+                          "categoryId",
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="">Chọn danh mục</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Tình trạng</Label>
+                    <select
+                      className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={item.condition}
+                      onChange={(event) =>
+                        handleManualItemChange(
+                          index,
+                          "condition",
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="EXCELLENT">Xuất sắc</option>
+                      <option value="GOOD">Tốt</option>
+                      <option value="FAIR">Khá</option>
+                      <option value="POOR">Kém</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label>Số lượng</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(event) =>
+                        handleManualItemChange(
+                          index,
+                          "quantity",
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      disabled={manualForm.items.length === 1}
+                      onClick={() => handleRemoveManualItem(index)}
+                      className="h-10 w-10 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-red-100 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsManualDialogOpen(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                onClick={handleCreateManualStockEntry}
+                disabled={isSubmittingManual}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                {isSubmittingManual ? "Đang nhập..." : "Xác nhận nhập kho"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Stock Detail Dialog */}
       <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
