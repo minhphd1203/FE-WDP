@@ -32,8 +32,8 @@ import {
 } from "../../../components/ui/select";
 import { Textarea } from "../../../components/ui/textarea";
 import {
-  useAssignTeams,
   useCancelRequest,
+  useReplaceAssignments,
   useReviewRequest,
   useRescueRequest,
 } from "../../../hooks/useRescueRequest";
@@ -182,9 +182,10 @@ export const RequestDetailModal = ({
   const detail: ReliefRequest = (detailData as any) ?? request;
   const assignedTeams = useMemo(() => normalizeAssignedTeams(detail), [detail]);
 
-  const assignTeamsMutation = useAssignTeams();
+  const replaceAssignmentsMutation = useReplaceAssignments();
   const reviewRequestMutation = useReviewRequest();
   const cancelRequestMutation = useCancelRequest();
+  const [removingTeamId, setRemovingTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     const src = detailData ?? request;
@@ -252,6 +253,20 @@ export const RequestDetailModal = ({
     [detail, assignedTeams],
   );
 
+  const assignedTeamIds = useMemo(
+    () => assignedTeams.map((team) => team.teamId),
+    [assignedTeams],
+  );
+
+  const hasAssignmentChanges = useMemo(() => {
+    if (assignedTeamIds.length !== selectedTeamIds.length) {
+      return true;
+    }
+
+    const selectedSet = new Set(selectedTeamIds);
+    return assignedTeamIds.some((teamId) => !selectedSet.has(teamId));
+  }, [assignedTeamIds, selectedTeamIds]);
+
   const hasAssignedTeams =
     (detail?.isAssigned ?? false) || assignedTeams.length > 0;
 
@@ -268,6 +283,32 @@ export const RequestDetailModal = ({
         ? current.filter((id) => id !== teamId)
         : [...current, teamId],
     );
+  };
+
+  const handleRemoveAssignedTeam = async (teamId: string) => {
+    const nextTeamIds = assignedTeamIds.filter((id) => id !== teamId);
+    const removedTeam = assignedTeams.find((team) => team.teamId === teamId);
+
+    setRemovingTeamId(teamId);
+
+    try {
+      await replaceAssignmentsMutation.mutateAsync({
+        id: request.id,
+        data: { teamIds: nextTeamIds },
+      });
+
+      setSelectedTeamIds(nextTeamIds);
+      toast.success(
+        removedTeam
+          ? `Đã gỡ đội ${removedTeam.teamName}`
+          : "Đã gỡ đội khỏi yêu cầu",
+      );
+      onUpdated?.();
+    } catch {
+      // Error toast handled in hook
+    } finally {
+      setRemovingTeamId(null);
+    }
   };
 
   const handleEvaluate = async () => {
@@ -295,17 +336,39 @@ export const RequestDetailModal = ({
   };
 
   const handleAssign = async () => {
-    if (selectedTeamIds.length === 0) {
-      toast.error("Vui lòng chọn ít nhất một đội");
+    if (!hasAssignmentChanges) {
+      toast.info("Chưa có thay đổi trong danh sách đội được gán");
       return;
     }
 
+    if (selectedTeamIds.length === 0) {
+      toast.error("Cần giữ ít nhất một đội được gán cho yêu cầu này");
+      return;
+    }
+
+    const removedCount = assignedTeamIds.filter(
+      (teamId) => !selectedTeamIds.includes(teamId),
+    ).length;
+    const addedCount = selectedTeamIds.filter(
+      (teamId) => !assignedTeamIds.includes(teamId),
+    ).length;
+
     try {
-      await assignTeamsMutation.mutateAsync({
+      await replaceAssignmentsMutation.mutateAsync({
         id: request.id,
         data: { teamIds: selectedTeamIds },
       });
-      toast.success("Phân công đội thành công");
+      if (removedCount > 0 && addedCount > 0) {
+        toast.success(
+          `Đã cập nhật phân công: thêm ${addedCount}, gỡ ${removedCount} đội`,
+        );
+      } else if (removedCount > 0) {
+        toast.success(`Đã gỡ ${removedCount} đội khỏi yêu cầu`);
+      } else if (addedCount > 0) {
+        toast.success(`Đã phân công thêm ${addedCount} đội`);
+      } else {
+        toast.success("Đã cập nhật phân công đội");
+      }
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ["rescue-requests"] });
       queryClient.invalidateQueries({
@@ -714,8 +777,27 @@ export const RequestDetailModal = ({
                                       : "Chưa phản hồi"}
                                   </p>
                                 </div>
-                                <div className="border bg-muted text-muted-foreground rounded-full px-2 py-1 text-xs font-semibold">
-                                  {team.status}
+                                <div className="flex items-center gap-2">
+                                  <div className="border bg-muted text-muted-foreground rounded-full px-2 py-1 text-xs font-semibold">
+                                    {team.status}
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      handleRemoveAssignedTeam(team.teamId)
+                                    }
+                                    disabled={
+                                      removingTeamId === team.teamId ||
+                                      replaceAssignmentsMutation.isPending
+                                    }
+                                    className="h-7 border-red-200 px-2 text-xs text-red-700 hover:bg-red-50 hover:text-red-700"
+                                  >
+                                    {removingTeamId === team.teamId
+                                      ? "Đang gỡ..."
+                                      : "Gỡ"}
+                                  </Button>
                                 </div>
                               </div>
                             ))}
@@ -760,15 +842,13 @@ export const RequestDetailModal = ({
                           )}
 
                         {(detail.status === RescueRequestStatus.ASSIGNED ||
-                          detail.status === RescueRequestStatus.ACCEPTED ||
-                          detail.status === RescueRequestStatus.IN_PROGRESS ||
-                          detail.status === RescueRequestStatus.DONE) && (
+                          detail.status === RescueRequestStatus.ACCEPTED) && (
                           <Button
                             type="button"
                             className={redPrimaryButtonClass}
                             onClick={() => setActiveMode("assign")}
                           >
-                            Phân công thêm
+                            Cập nhật phân công
                           </Button>
                         )}
 
@@ -958,8 +1038,8 @@ export const RequestDetailModal = ({
                           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                             <div className="flex items-center justify-between">
                               <p className="text-xs text-muted-foreground">
-                                Chọn đội cần gán. Bạn vẫn giữ nguyên phần chi
-                                tiết bên trái để đối chiếu.
+                                Chọn đội cần giữ lại hoặc thêm mới. Bỏ chọn để
+                                gỡ đội đã gán.
                               </p>
                               <button
                                 type="button"
@@ -1012,12 +1092,17 @@ export const RequestDetailModal = ({
                             <Button
                               type="button"
                               onClick={handleAssign}
-                              disabled={assignTeamsMutation.isPending}
+                              disabled={
+                                replaceAssignmentsMutation.isPending ||
+                                !hasAssignmentChanges
+                              }
                               className={redPrimaryButtonClass}
                             >
-                              {assignTeamsMutation.isPending
-                                ? "Đang phân công..."
-                                : `Phân công (${selectedTeamIds.length}) đội`}
+                              {replaceAssignmentsMutation.isPending
+                                ? "Đang cập nhật..."
+                                : hasAssignmentChanges
+                                  ? `Lưu phân công (${selectedTeamIds.length}) đội`
+                                  : "Chưa có thay đổi"}
                             </Button>
                           </div>
                         )}

@@ -116,9 +116,6 @@ export default function TeamRegistrationRequests() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);
-  const [reviewStatus, setReviewStatus] = useState<"approved" | "rejected">(
-    "approved",
-  );
   const [reviewNote, setReviewNote] = useState("");
 
   const fetchRequests = async () => {
@@ -183,7 +180,6 @@ export default function TeamRegistrationRequests() {
     setIsDetailOpen(true);
     setIsDetailLoading(true);
     setSelectedRequest(null);
-    setReviewStatus("approved");
     setReviewNote("");
 
     try {
@@ -206,7 +202,7 @@ export default function TeamRegistrationRequests() {
     }
   };
 
-  const handleReview = async () => {
+  const handleReview = async (status: "approved" | "rejected") => {
     if (!selectedRequest) return;
 
     setIsReviewing(true);
@@ -216,14 +212,14 @@ export default function TeamRegistrationRequests() {
         await teamRegistrationRequestApi.reviewAdminTeamRegistrationRequest(
           selectedRequest.id,
           {
-            status: reviewStatus,
+            status,
             reviewNote: reviewNote.trim() || undefined,
           },
         );
 
       if (response.success) {
         toast.success(
-          reviewStatus === "approved"
+          status === "approved"
             ? "Đã duyệt yêu cầu đăng ký đội cứu hộ"
             : "Đã từ chối yêu cầu đăng ký đội cứu hộ",
         );
@@ -551,22 +547,6 @@ export default function TeamRegistrationRequests() {
 
               {selectedRequest.status === "pending" && (
                 <div className="space-y-3 rounded-xl border border-red-100 bg-red-50/40 p-4">
-                  <Label htmlFor="review-status">Hành động duyệt</Label>
-                  <Select
-                    value={reviewStatus}
-                    onValueChange={(value) =>
-                      setReviewStatus(value as "approved" | "rejected")
-                    }
-                  >
-                    <SelectTrigger id="review-status">
-                      <SelectValue placeholder="Chọn quyết định" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="approved">Duyệt yêu cầu</SelectItem>
-                      <SelectItem value="rejected">Từ chối yêu cầu</SelectItem>
-                    </SelectContent>
-                  </Select>
-
                   <div className="space-y-1.5">
                     <Label htmlFor="review-note">Ghi chú phản hồi</Label>
                     <Textarea
@@ -592,27 +572,27 @@ export default function TeamRegistrationRequests() {
               Đóng
             </Button>
             {selectedRequest?.status === "pending" && (
-              <Button
-                type="button"
-                disabled={isReviewing || isDetailLoading}
-                onClick={() => void handleReview()}
-                className={
-                  reviewStatus === "approved"
-                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                    : "bg-red-600 text-white hover:bg-red-700"
-                }
-              >
-                {reviewStatus === "approved" ? (
-                  <Check className="h-4 w-4" />
-                ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isReviewing || isDetailLoading}
+                  onClick={() => void handleReview("rejected")}
+                  className="border-red-300 text-red-700 hover:bg-red-50 hover:text-red-700"
+                >
                   <X className="h-4 w-4" />
-                )}
-                {isReviewing
-                  ? "Đang xử lý..."
-                  : reviewStatus === "approved"
-                    ? "Duyệt hồ sơ"
-                    : "Từ chối hồ sơ"}
-              </Button>
+                  {isReviewing ? "Đang xử lý..." : "Từ chối hồ sơ"}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isReviewing || isDetailLoading}
+                  onClick={() => void handleReview("approved")}
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  <Check className="h-4 w-4" />
+                  {isReviewing ? "Đang xử lý..." : "Duyệt hồ sơ"}
+                </Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>

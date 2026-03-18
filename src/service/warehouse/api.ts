@@ -14,6 +14,18 @@ import {
   StockListResponse,
 } from "../../types/warehouse";
 
+export interface CreateManualStockEntryItem {
+  categoryId: string;
+  condition: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+  quantity: number;
+}
+
+export interface CreateManualStockEntryRequest {
+  referenceCode?: string;
+  note?: string;
+  items: CreateManualStockEntryItem[];
+}
+
 export const warehouseApi = {
   // Get all warehouse items with pagination and filters
   getWarehouseItems: async (
@@ -55,6 +67,13 @@ export const warehouseApi = {
   // Get stocks list
   getStocks: async (page = 1, limit = 10): Promise<StockListResponse> => {
     return httpClient.get(`/warehouse/stocks?page=${page}&limit=${limit}`);
+  },
+
+  // Create manual stock entry (admin only)
+  createManualStockEntry: async (
+    data: CreateManualStockEntryRequest,
+  ): Promise<CreateReceiptResponse> => {
+    return httpClient.post("/warehouse/stocks/manual", data);
   },
 
   // Get receipt by ID

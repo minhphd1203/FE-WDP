@@ -1,5 +1,5 @@
-import { API_ENDPOINTS } from '../constants';
-import httpClient from '../lib/http';
+import { API_ENDPOINTS } from "../constants";
+import httpClient from "../lib/http";
 import {
   ApiResponse,
   ReliefRequest,
@@ -9,7 +9,7 @@ import {
   AssignTeamsDto,
   ReviewRescueRequestDto,
   CancelRescueRequestDto,
-} from '../types';
+} from "../types";
 
 export interface RescueRequestFilters {
   status?: RescueRequestStatus;
@@ -25,7 +25,7 @@ export interface RescueRequestFilters {
 export const rescueRequestApi = {
   // Get all rescue requests with filters
   getRescueRequests: async (
-    filters?: RescueRequestFilters
+    filters?: RescueRequestFilters,
   ): Promise<ApiResponse<PaginatedResponse<ReliefRequest>>> => {
     return httpClient.get(API_ENDPOINTS.RESCUE_REQUESTS, { params: filters });
   },
@@ -38,9 +38,17 @@ export const rescueRequestApi = {
   // Assign teams to rescue request (Admin only)
   assignTeams: async (
     id: string,
-    data: AssignTeamsDto
+    data: AssignTeamsDto,
   ): Promise<ApiResponse<ReliefRequest>> => {
     return httpClient.post(API_ENDPOINTS.RESCUE_REQUEST_ASSIGN(id), data);
+  },
+
+  // Replace assigned teams (Admin only)
+  replaceAssignments: async (
+    id: string,
+    data: AssignTeamsDto,
+  ): Promise<ApiResponse<ReliefRequest>> => {
+    return httpClient.put(API_ENDPOINTS.RESCUE_REQUEST_ASSIGN(id), data);
   },
 
   // Get assignments for a rescue request (Admin only)
@@ -51,7 +59,7 @@ export const rescueRequestApi = {
   // Review rescue request (Admin only)
   reviewRequest: async (
     id: string,
-    data: ReviewRescueRequestDto
+    data: ReviewRescueRequestDto,
   ): Promise<ApiResponse<ReliefRequest>> => {
     return httpClient.patch(API_ENDPOINTS.RESCUE_REQUEST_REVIEW(id), data);
   },
@@ -59,7 +67,7 @@ export const rescueRequestApi = {
   // Cancel rescue request
   cancelRequest: async (
     id: string,
-    data?: CancelRescueRequestDto
+    data?: CancelRescueRequestDto,
   ): Promise<ApiResponse<ReliefRequest>> => {
     return httpClient.patch(API_ENDPOINTS.RESCUE_REQUEST_CANCEL(id), data);
   },

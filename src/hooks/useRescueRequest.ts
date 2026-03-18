@@ -1,17 +1,21 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   rescueRequestApi,
   RescueRequestFilters,
-} from '../apis/rescueRequestApi';
-import { AssignTeamsDto, ReviewRescueRequestDto, CancelRescueRequestDto } from '../types';
+} from "../apis/rescueRequestApi";
+import {
+  AssignTeamsDto,
+  ReviewRescueRequestDto,
+  CancelRescueRequestDto,
+} from "../types";
 
 const RESCUE_REQUEST_KEYS = {
-  all: ['rescue-requests'] as const,
-  lists: () => [...RESCUE_REQUEST_KEYS.all, 'list'] as const,
+  all: ["rescue-requests"] as const,
+  lists: () => [...RESCUE_REQUEST_KEYS.all, "list"] as const,
   list: (filters?: RescueRequestFilters) =>
     [...RESCUE_REQUEST_KEYS.lists(), filters] as const,
-  details: () => [...RESCUE_REQUEST_KEYS.all, 'detail'] as const,
+  details: () => [...RESCUE_REQUEST_KEYS.all, "detail"] as const,
   detail: (id: string) => [...RESCUE_REQUEST_KEYS.details(), id] as const,
 };
 
@@ -22,8 +26,8 @@ export const useRescueRequests = (filters?: RescueRequestFilters) => {
     queryFn: async () => {
       try {
         const response = await rescueRequestApi.getRescueRequests(filters);
-        console.log('Rescue requests response:', response);
-        
+        console.log("Rescue requests response:", response);
+
         if (response.success && response.data) {
           // Check if response.data is already the paginated structure
           if (response.data.data && Array.isArray(response.data.data)) {
@@ -50,8 +54,8 @@ export const useRescueRequests = (filters?: RescueRequestFilters) => {
         }
         return { items: [], total: 0, page: 1, limit: 10, totalPages: 0 };
       } catch (error) {
-        console.error('Error fetching rescue requests:', error);
-        toast.error('Không thể tải danh sách đơn cứu trợ');
+        console.error("Error fetching rescue requests:", error);
+        toast.error("Không thể tải danh sách đơn cứu trợ");
         return { items: [], total: 0, page: 1, limit: 10, totalPages: 0 };
       }
     },
@@ -73,12 +77,13 @@ export const useRescueRequest = (id: string) => {
 // Get evidence images for a rescue request
 export const useRescueRequestEvidenceImages = (id: string | null) => {
   return useQuery({
-    queryKey: [...RESCUE_REQUEST_KEYS.detail(id || ''), 'evidence-images'],
+    queryKey: [...RESCUE_REQUEST_KEYS.detail(id || ""), "evidence-images"],
     queryFn: async () => {
       if (!id) return [];
       const response = await rescueRequestApi.getEvidenceImages(id);
       if (Array.isArray(response.data)) return response.data;
-      if (Array.isArray((response as any)?.data?.data)) return (response as any).data.data;
+      if (Array.isArray((response as any)?.data?.data))
+        return (response as any).data.data;
       return [];
     },
     enabled: !!id,
@@ -88,7 +93,7 @@ export const useRescueRequestEvidenceImages = (id: string | null) => {
 // Get assignments for a rescue request
 export const useRescueRequestAssignments = (id: string | null) => {
   return useQuery({
-    queryKey: [...RESCUE_REQUEST_KEYS.detail(id || ''), 'assignments'],
+    queryKey: [...RESCUE_REQUEST_KEYS.detail(id || ""), "assignments"],
     queryFn: async () => {
       if (!id) return null;
       const response = await rescueRequestApi.getAssignments(id);
@@ -110,11 +115,33 @@ export const useAssignTeams = () => {
       queryClient.invalidateQueries({
         queryKey: RESCUE_REQUEST_KEYS.detail(variables.id),
       });
-      toast.success('Phân công đội cứu trợ thành công');
+      toast.success("Phân công đội cứu trợ thành công");
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.message || 'Phân công đội cứu trợ thất bại'
+        error?.response?.data?.message || "Phân công đội cứu trợ thất bại",
+      );
+    },
+  });
+};
+
+// Replace assignments for rescue request
+export const useReplaceAssignments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AssignTeamsDto }) =>
+      rescueRequestApi.replaceAssignments(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: RESCUE_REQUEST_KEYS.lists() });
+      queryClient.invalidateQueries({
+        queryKey: RESCUE_REQUEST_KEYS.detail(variables.id),
+      });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          "Cập nhật phân công đội cứu trợ thất bại",
       );
     },
   });
@@ -132,11 +159,11 @@ export const useReviewRequest = () => {
       queryClient.invalidateQueries({
         queryKey: RESCUE_REQUEST_KEYS.detail(variables.id),
       });
-      toast.success('Cập nhật trạng thái thành công');
+      toast.success("Cập nhật trạng thái thành công");
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.message || 'Cập nhật trạng thái thất bại'
+        error?.response?.data?.message || "Cập nhật trạng thái thất bại",
       );
     },
   });
@@ -154,12 +181,10 @@ export const useCancelRequest = () => {
       queryClient.invalidateQueries({
         queryKey: RESCUE_REQUEST_KEYS.detail(variables.id),
       });
-      toast.success('Hủy đơn cứu trợ thành công');
+      toast.success("Hủy đơn cứu trợ thành công");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Hủy đơn cứu trợ thất bại'
-      );
+      toast.error(error?.response?.data?.message || "Hủy đơn cứu trợ thất bại");
     },
   });
 };
