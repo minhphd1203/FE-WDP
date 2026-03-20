@@ -1,43 +1,91 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, CheckCircle, Send } from "lucide-react";
+import { Package, CheckCircle, Send, Users, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card";
-import { mockProducts, mockWarehouseStats } from "../../../mocks/data";
 import { ROUTES } from "../../../constants";
+import {
+  staffDashboardApi,
+  StaffDashboardStats,
+} from "../../../apis/staffDashboardApi";
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
+  const [statsData, setStatsData] = useState<StaffDashboardStats | null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
 
-  // Use mock data
-  const pendingProductsData = {
-    data: mockProducts.filter((p) => p.status === "pending"),
+  useEffect(() => {
+    const fetchStats = async () => {
+      setIsStatsLoading(true);
+      try {
+        const response = await staffDashboardApi.getStats();
+        if (response.success) {
+          setStatsData(response.data);
+        } else {
+          setStatsData(null);
+          toast.error("Không thể tải thống kê dashboard staff");
+        }
+      } catch (error) {
+        setStatsData(null);
+        toast.error("Không thể tải thống kê dashboard staff");
+      } finally {
+        setIsStatsLoading(false);
+      }
+    };
+
+    void fetchStats();
+  }, []);
+
+  const displayValue = (value?: number) => {
+    if (isStatsLoading) return "...";
+    return value !== undefined && value !== null ? value.toLocaleString() : "-";
   };
-  const warehouseStats = { data: mockWarehouseStats };
 
-  const stats = [
-    {
-      title: "Sản phẩm chờ xác minh",
-      value: pendingProductsData?.data?.length || 0,
-      icon: Package,
-      color: "text-red-600",
-      bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
-      borderColor: "border-red-100",
-      badgeColor: "bg-red-100 text-red-700",
-    },
-    {
-      title: "Tổng mặt hàng trong kho",
-      value: warehouseStats?.data?.totalItems || 0,
-      icon: Package,
-      color: "text-emerald-600",
-      bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
-      borderColor: "border-emerald-100",
-      badgeColor: "bg-emerald-100 text-emerald-700",
-    },
-  ];
+  const stats = useMemo(
+    () => [
+      {
+        title: "Sản phẩm chờ xác minh",
+        value: displayValue(statsData?.pendingProducts),
+        icon: Package,
+        color: "text-red-600",
+        bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
+      },
+      {
+        title: "ĐK tình nguyện chờ duyệt",
+        value: displayValue(statsData?.pendingVolunteerRegistrations),
+        icon: Users,
+        color: "text-blue-600",
+        bgColor: "bg-gradient-to-br from-blue-50 to-sky-50",
+      },
+      {
+        title: "Yêu cầu cứu hộ chờ",
+        value: displayValue(statsData?.pendingRescueRequests),
+        icon: AlertCircle,
+        color: "text-amber-600",
+        bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
+      },
+      {
+        title: "Yêu cầu bổ sung chờ",
+        value: displayValue(statsData?.pendingReplenishmentRequests),
+        icon: Send,
+        color: "text-fuchsia-600",
+        bgColor: "bg-gradient-to-br from-fuchsia-50 to-pink-50",
+      },
+      {
+        title: "Tổng mặt hàng trong kho",
+        value: displayValue(statsData?.totalStockItems),
+        icon: Package,
+        color: "text-emerald-600",
+        bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
+      },
+    ],
+    [isStatsLoading, statsData],
+  );
 
   return (
     <div className="space-y-6 bg-gradient-to-b from-slate-50 to-red-50/30 p-4 sm:p-6">
@@ -53,7 +101,7 @@ export default function StaffDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
         {stats.map((stat, index) => (
           <Card
             key={index}

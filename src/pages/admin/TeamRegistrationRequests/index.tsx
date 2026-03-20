@@ -152,8 +152,8 @@ export default function TeamRegistrationRequests() {
         !search ||
         request.name.toLowerCase().includes(search) ||
         request.area.toLowerCase().includes(search) ||
-        request.requestedBy.fullName.toLowerCase().includes(search) ||
-        request.requestedBy.email.toLowerCase().includes(search);
+        request.requestedBy?.fullName?.toLowerCase().includes(search) ||
+        request.requestedBy?.email?.toLowerCase().includes(search);
 
       return matchStatus && matchSearch;
     });
@@ -372,10 +372,10 @@ export default function TeamRegistrationRequests() {
                       </TableCell>
                       <TableCell className="min-w-[220px] text-slate-700">
                         <p className="font-medium text-slate-900">
-                          {request.requestedBy.fullName}
+                          {request.requestedBy?.fullName || "Không xác định"}
                         </p>
                         <p className="text-sm text-slate-500">
-                          {request.requestedBy.email}
+                          {request.requestedBy?.email || "(Không có email)"}
                         </p>
                       </TableCell>
                       <TableCell>
@@ -523,13 +523,14 @@ export default function TeamRegistrationRequests() {
                     Người đăng ký
                   </p>
                   <p className="mt-1 font-medium text-slate-900">
-                    {selectedRequest.requestedBy.fullName}
+                    {selectedRequest.requestedBy?.fullName || "Không xác định"}
                   </p>
                   <p className="text-sm text-slate-600">
-                    {selectedRequest.requestedBy.email}
+                    {selectedRequest.requestedBy?.email || "(Không có email)"}
                   </p>
                   <p className="text-sm text-slate-600">
-                    {selectedRequest.requestedBy.phone}
+                    {selectedRequest.requestedBy?.phone ||
+                      "(Không có số điện thoại)"}
                   </p>
                 </div>
                 <div>

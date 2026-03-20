@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -8,6 +9,7 @@ import {
   UserCog,
   ShieldCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -15,42 +17,76 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { ROUTES } from "../../../constants";
+import {
+  adminDashboardApi,
+  AdminDashboardStats,
+} from "../../../apis/adminDashboardApi";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [statsData, setStatsData] = useState<AdminDashboardStats | null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
 
-  // Static stats - using placeholder values
-  // In production, replace with actual API calls
-  const stats = [
-    {
-      title: "Sự kiện đang mở",
-      value: "-",
-      icon: Calendar,
-      color: "text-red-700",
-      bgColor: "bg-red-100",
-    },
-    {
-      title: "Yêu cầu chờ xử lý",
-      value: "-",
-      icon: AlertCircle,
-      color: "text-rose-700",
-      bgColor: "bg-rose-100",
-    },
-    {
-      title: "Tổng tồn kho",
-      value: "-",
-      icon: Package,
-      color: "text-emerald-700",
-      bgColor: "bg-emerald-100",
-    },
-    {
-      title: "Tổng tài khoản",
-      value: "-",
-      icon: Users,
-      color: "text-slate-700",
-      bgColor: "bg-slate-100",
-    },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      setIsStatsLoading(true);
+      try {
+        const response = await adminDashboardApi.getStats();
+        if (response.success) {
+          setStatsData(response.data);
+        } else {
+          setStatsData(null);
+          toast.error("Không thể tải thống kê tổng quan");
+        }
+      } catch (error) {
+        setStatsData(null);
+        toast.error("Không thể tải thống kê tổng quan");
+      } finally {
+        setIsStatsLoading(false);
+      }
+    };
+
+    void fetchStats();
+  }, []);
+
+  const displayValue = (value?: number) => {
+    if (isStatsLoading) return "...";
+    return value !== undefined && value !== null ? value.toLocaleString() : "-";
+  };
+
+  const stats = useMemo(
+    () => [
+      {
+        title: "Sự kiện đang mở",
+        value: displayValue(statsData?.openEvents),
+        icon: Calendar,
+        color: "text-red-700",
+        bgColor: "bg-red-100",
+      },
+      {
+        title: "Yêu cầu chờ xử lý",
+        value: displayValue(statsData?.pendingRequests),
+        icon: AlertCircle,
+        color: "text-rose-700",
+        bgColor: "bg-rose-100",
+      },
+      {
+        title: "Tổng tồn kho",
+        value: displayValue(statsData?.totalStock),
+        icon: Package,
+        color: "text-emerald-700",
+        bgColor: "bg-emerald-100",
+      },
+      {
+        title: "Tổng tài khoản",
+        value: displayValue(statsData?.totalAccounts),
+        icon: Users,
+        color: "text-slate-700",
+        bgColor: "bg-slate-100",
+      },
+    ],
+    [isStatsLoading, statsData],
+  );
 
   const quickActions = [
     {

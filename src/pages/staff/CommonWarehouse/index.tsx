@@ -37,6 +37,14 @@ const conditionClassMap: Record<string, string> = {
   POOR: "bg-red-100 text-red-800",
 };
 
+const truncateText = (
+  value: string | null | undefined,
+  length: number,
+): string => {
+  if (!value) return "N/A";
+  return value.length > length ? `${value.slice(0, length)}...` : value;
+};
+
 export default function CommonWarehouse() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [stocks, setStocks] = useState<StockItem[]>([]);
@@ -349,10 +357,10 @@ export default function CommonWarehouse() {
                         className="transition-all duration-200 hover:bg-slate-50/80"
                       >
                         <TableCell className="font-semibold text-slate-900">
-                          {receipt.id.substring(0, 8)}...
+                          {truncateText(receipt.id, 8)}
                         </TableCell>
                         <TableCell className="text-slate-600">
-                          {receipt.donationId.substring(0, 12)}...
+                          {truncateText(receipt.donationId, 12)}
                         </TableCell>
                         <TableCell className="text-slate-600">
                           {new Date(receipt.createdAt).toLocaleDateString(
@@ -437,8 +445,8 @@ export default function CommonWarehouse() {
           <CardHeader className="border-b border-slate-100">
             <CardTitle className="text-slate-900">Phân phối sản phẩm</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Mã phiếu: {selectedReceipt.id.substring(0, 12)}... • Donation ID:{" "}
-              {selectedReceipt.donationId.substring(0, 12)}...
+              Mã phiếu: {truncateText(selectedReceipt.id, 12)} • Donation ID:{" "}
+              {truncateText(selectedReceipt.donationId, 12)}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -533,13 +541,13 @@ export default function CommonWarehouse() {
                     <div>
                       <p className="text-sm text-gray-600">Mã phiếu</p>
                       <p className="font-mono text-sm font-semibold text-gray-900 mt-1">
-                        {selectedReceiptDetail.id.substring(0, 12)}...
+                        {truncateText(selectedReceiptDetail.id, 12)}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Donation ID</p>
                       <p className="font-mono text-sm font-semibold text-gray-900 mt-1">
-                        {selectedReceiptDetail.donationId.substring(0, 12)}...
+                        {truncateText(selectedReceiptDetail.donationId, 12)}
                       </p>
                     </div>
                     <div>

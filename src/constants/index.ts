@@ -171,6 +171,12 @@ export const API_ENDPOINTS = {
   TEAM_REGISTRATION_REQUEST_REVIEW_ADMIN: (id: string) =>
     `/team-registration-requests/admin/${id}/review`,
 
+  // Admin Dashboard
+  ADMIN_DASHBOARD_STATS: "/admin/dashboard/stats",
+
+  // Staff Dashboard
+  STAFF_DASHBOARD_STATS: "/staff/dashboard/stats",
+
   // Categories
   CATEGORIES: "/categories",
   CATEGORY_BY_ID: (id: string) => `/categories/${id}`,
