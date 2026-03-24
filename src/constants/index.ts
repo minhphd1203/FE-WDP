@@ -176,6 +176,9 @@ export const API_ENDPOINTS = {
 
   // Staff Dashboard
   STAFF_DASHBOARD_STATS: "/staff/dashboard/stats",
+  STAFF_NOTIFICATIONS_UNREAD_SUMMARY:
+    "/staff/dashboard/notifications/unread-summary",
+  STAFF_NOTIFICATIONS_MARK_READ: "/staff/dashboard/notifications/mark-read",
 
   // Categories
   CATEGORIES: "/categories",

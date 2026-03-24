@@ -86,7 +86,7 @@ export default function OSMLocationPicker({
   const [position, setPosition] = useState<[number, number]>([
     10.0335, 105.7897,
   ]); // Can Tho default
-  const searchTimeoutRef = useRef<number>();
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setSearchQuery(value);

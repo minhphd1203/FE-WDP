@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCircle,
@@ -12,12 +12,19 @@ import {
   ChevronDown,
   FileText,
 } from "lucide-react";
+import { io, Socket } from "socket.io-client";
+import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../constants";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/utils";
 import { authService } from "../service/auth/api";
 import { CurrentUserData } from "../types/auth";
+import {
+  StaffNotificationCategory,
+  StaffRealtimeNotification,
+} from "../types";
+import { staffNotificationApi } from "../apis/staffNotificationApi";
 
 interface NavigationItem {
   name: string;
@@ -67,6 +74,16 @@ export default function StaffLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUserData | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [productsUnreadCount, setProductsUnreadCount] = useState(0);
+  const [rescueUnreadCount, setRescueUnreadCount] = useState(0);
+  const socketRef = useRef<Socket | null>(null);
+  const productsUnreadCountRef = useRef(0);
+  const rescueUnreadCountRef = useRef(0);
+  const hasShownInitialProductsToastRef = useRef(false);
+  const hasShownInitialRescueToastRef = useRef(false);
+
+  productsUnreadCountRef.current = productsUnreadCount;
+  rescueUnreadCountRef.current = rescueUnreadCount;
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -81,6 +98,93 @@ export default function StaffLayout() {
     };
 
     fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    void syncUnreadSummary();
+
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+    const socket = io(`${apiBaseUrl}/realtime`, {
+      path: "/socket.io",
+      auth: {
+        token,
+      },
+      transports: ["websocket", "polling"],
+    });
+
+    socketRef.current = socket;
+
+    socket.on("staff.notification", (payload: StaffRealtimeNotification) => {
+      if (
+        payload.type !== "RESCUE_ASSIGNMENT_ACCEPTED" &&
+        payload.type !== "PENDING_DONATION_CREATED"
+      ) {
+        return;
+      }
+
+      showRealtimeToast(payload);
+
+      if (payload.type === "PENDING_DONATION_CREATED") {
+        setProductsUnreadCount((current) => current + 1);
+        return;
+      }
+
+      setRescueUnreadCount((current) => current + 1);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Staff realtime socket connection failed:", error);
+    });
+
+    return () => {
+      socket.off("staff.notification");
+      socket.off("connect_error");
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    void syncUnreadSummary();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    const handleWindowFocus = () => {
+      void syncUnreadSummary();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void syncUnreadSummary();
+      }
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const displayUser = currentUser || user;
@@ -104,6 +208,178 @@ export default function StaffLayout() {
 
   const handleLogout = () => {
     logout();
+  };
+
+  const syncUnreadSummary = async () => {
+    try {
+      const response = await staffNotificationApi.getUnreadSummary();
+
+      if (response.success) {
+        const nextProductsUnreadCount = response.data.productsUnread || 0;
+        const nextUnreadCount = response.data.rescueRequestsUnread || 0;
+        const previousProductsUnreadCount = productsUnreadCountRef.current;
+        const previousUnreadCount = rescueUnreadCountRef.current;
+
+        setProductsUnreadCount(nextProductsUnreadCount);
+        setRescueUnreadCount(nextUnreadCount);
+
+        if (
+          nextProductsUnreadCount > 0 &&
+          !hasShownInitialProductsToastRef.current &&
+          previousProductsUnreadCount === 0
+        ) {
+          hasShownInitialProductsToastRef.current = true;
+          toast.info("Có sản phẩm chờ duyệt chưa đọc", {
+            description: `Bạn đang có ${nextProductsUnreadCount} thông báo sản phẩm chưa đọc.`,
+          });
+        }
+
+        if (
+          nextProductsUnreadCount > previousProductsUnreadCount &&
+          previousProductsUnreadCount > 0
+        ) {
+          toast.info("Có thêm sản phẩm chờ duyệt", {
+            description: `Số thông báo sản phẩm chưa đọc tăng lên ${nextProductsUnreadCount}.`,
+          });
+        }
+
+        if (
+          nextUnreadCount > 0 &&
+          !hasShownInitialRescueToastRef.current &&
+          previousUnreadCount === 0
+        ) {
+          hasShownInitialRescueToastRef.current = true;
+          toast.info("Có đơn cứu hộ chưa đọc", {
+            description: `Bạn đang có ${nextUnreadCount} đơn cứu hộ chưa đọc.`,
+          });
+          return;
+        }
+
+        if (nextUnreadCount > previousUnreadCount && previousUnreadCount > 0) {
+          toast.info("Có thêm cập nhật đơn cứu hộ", {
+            description: `Số đơn cứu hộ chưa đọc tăng lên ${nextUnreadCount}.`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load unread rescue notifications:", error);
+    }
+  };
+
+  const markRescueNotificationsAsRead = async (force = false) => {
+    if (!force && rescueUnreadCountRef.current === 0) {
+      return;
+    }
+
+    try {
+      const response = await staffNotificationApi.markAsRead(
+        StaffNotificationCategory.RESCUE_REQUESTS,
+      );
+
+      if (response.success) {
+        setRescueUnreadCount(response.data.unreadSummary.rescueRequestsUnread);
+        hasShownInitialRescueToastRef.current =
+          response.data.unreadSummary.rescueRequestsUnread > 0;
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to mark rescue notifications as read:", error);
+    }
+
+    setRescueUnreadCount(0);
+  };
+
+  const markProductNotificationsAsRead = async (force = false) => {
+    if (!force && productsUnreadCountRef.current === 0) {
+      return;
+    }
+
+    try {
+      const response = await staffNotificationApi.markAsRead(
+        StaffNotificationCategory.PRODUCTS,
+      );
+
+      if (response.success) {
+        setProductsUnreadCount(response.data.unreadSummary.productsUnread);
+        hasShownInitialProductsToastRef.current =
+          response.data.unreadSummary.productsUnread > 0;
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to mark product notifications as read:", error);
+    }
+
+    setProductsUnreadCount(0);
+  };
+
+  const showRealtimeToast = (payload: StaffRealtimeNotification) => {
+    if (payload.severity === "critical") {
+      toast.error(payload.title, {
+        description: payload.message,
+      });
+      return;
+    }
+
+    if (payload.severity === "warning") {
+      toast.warning(payload.title, {
+        description: payload.message,
+      });
+      return;
+    }
+
+    toast.info(payload.title, {
+      description: payload.message,
+    });
+  };
+
+  const getNavigationBadge = (itemHref?: string, isActive?: boolean) => {
+    const unreadCount =
+      itemHref === ROUTES.STAFF_PRODUCTS
+        ? productsUnreadCount
+        : itemHref === ROUTES.STAFF_RESCUE_REQUESTS
+          ? rescueUnreadCount
+          : 0;
+
+    if (unreadCount <= 0) {
+      return null;
+    }
+
+    return (
+      <span
+        className={cn(
+          "ml-auto inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold",
+          isActive ? "bg-white text-red-700" : "bg-red-100 text-red-700",
+        )}
+      >
+        {unreadCount > 99 ? "99+" : unreadCount}
+      </span>
+    );
+  };
+
+  const renderNavigationLabel = (item: NavigationItem, isActive: boolean) => {
+    return (
+      <>
+        <div className="flex min-w-0 items-center gap-3">
+          <item.icon className="h-5 w-5 shrink-0" />
+          <span className="truncate">{item.name}</span>
+        </div>
+        {getNavigationBadge(item.href, isActive)}
+      </>
+    );
+  };
+
+  const handleNavigationClick = (href?: string) => {
+    if (href === ROUTES.STAFF_PRODUCTS) {
+      setProductsUnreadCount(0);
+      void markProductNotificationsAsRead(true);
+    }
+
+    if (href === ROUTES.STAFF_RESCUE_REQUESTS) {
+      setRescueUnreadCount(0);
+      void markRescueNotificationsAsRead(true);
+    }
+
+    setSidebarOpen(false);
   };
 
   const toggleMenu = (name: string) => {
@@ -210,16 +486,15 @@ export default function StaffLayout() {
                   <Link
                     key={item.name}
                     to={item.href || "#"}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => handleNavigationClick(item.href)}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      "flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                       isActive
                         ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
                         : "text-slate-700 hover:bg-red-50  hover:text-red-700",
                     )}
                   >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
+                    {renderNavigationLabel(item, isActive)}
                   </Link>
                 );
               })}
@@ -339,15 +614,15 @@ export default function StaffLayout() {
                 <Link
                   key={item.name}
                   to={item.href || "#"}
+                  onClick={() => handleNavigationClick(item.href)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    "flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-gradient-to-r from-red-500 via-red-600 to-rose-700 text-white shadow-md"
                       : "text-slate-700 hover:bg-red-50 hover:text-red-700",
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
+                  {renderNavigationLabel(item, isActive)}
                 </Link>
               );
             })}

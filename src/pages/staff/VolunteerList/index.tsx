@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Download } from "lucide-react";
 import { volunteerApi } from "../../../apis/volunteerApi";
 import { eventService } from "../../../service/event/api";
 import { VolunteerRegistration } from "../../../types/volunteer";
@@ -31,6 +31,7 @@ export default function VolunteerList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -94,10 +95,39 @@ export default function VolunteerList() {
     );
   });
 
+  const handleExportExcel = async () => {
+    if (!selectedEvent) {
+      toast.error("Vui lòng chọn sự kiện trước khi xuất Excel");
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      const { blob, fileName } =
+        await volunteerApi.exportEventVolunteersExcel(selectedEvent.id);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+
+      anchor.href = downloadUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success("Xuất file Excel thành công");
+    } catch (error) {
+      toast.error("Không thể xuất file Excel tình nguyện viên");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 bg-gradient-to-b from-slate-50 to-red-50/30 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Danh sách tình nguyện viên
@@ -106,6 +136,14 @@ export default function VolunteerList() {
             Quản lý người đăng ký tham gia hoạt động cứu trợ
           </p>
         </div>
+        <Button
+          onClick={() => void handleExportExcel()}
+          disabled={!selectedEvent || isExporting}
+          className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+        >
+          <Download className="h-4 w-4" />
+          {isExporting ? "Đang xuất Excel..." : "Export Excel"}
+        </Button>
       </div>
 
       {/* Event Selector */}

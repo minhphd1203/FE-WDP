@@ -236,6 +236,44 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export enum StaffNotificationCategory {
+  PRODUCTS = "PRODUCTS",
+  VOLUNTEERS = "VOLUNTEERS",
+  RESCUE_REQUESTS = "RESCUE_REQUESTS",
+  REPLENISHMENT_REQUESTS = "REPLENISHMENT_REQUESTS",
+  TEAM_REGISTRATION_REQUESTS = "TEAM_REGISTRATION_REQUESTS",
+}
+
+export type StaffRealtimeNotificationType =
+  | "PENDING_DONATION_CREATED"
+  | "VOLUNTEER_REGISTRATION_CREATED"
+  | "RESCUE_REQUEST_CREATED"
+  | "REPLENISHMENT_REQUEST_CREATED"
+  | "RESCUE_ASSIGNMENT_ACCEPTED"
+  | "TEAM_REGISTRATION_REQUEST_CREATED";
+
+export type StaffRealtimeNotificationSeverity =
+  | "info"
+  | "warning"
+  | "critical";
+
+export interface StaffRealtimeNotification {
+  type: StaffRealtimeNotificationType;
+  title: string;
+  message: string;
+  severity: StaffRealtimeNotificationSeverity;
+  createdAt: string;
+  data: Record<string, unknown>;
+}
+
+export interface StaffNotificationUnreadSummary {
+  totalUnread: number;
+  productsUnread: number;
+  rescueRequestsUnread: number;
+  replenishmentRequestsUnread: number;
+  teamRegistrationRequestsUnread: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
