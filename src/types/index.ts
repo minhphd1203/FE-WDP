@@ -250,6 +250,7 @@ export type StaffRealtimeNotificationType =
   | "RESCUE_REQUEST_CREATED"
   | "REPLENISHMENT_REQUEST_CREATED"
   | "RESCUE_ASSIGNMENT_ACCEPTED"
+  | "RESCUE_ASSIGNMENT_INCIDENT_REPORTED"
   | "TEAM_REGISTRATION_REQUEST_CREATED";
 
 export type StaffRealtimeNotificationSeverity =

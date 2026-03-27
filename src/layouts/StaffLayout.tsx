@@ -124,6 +124,7 @@ export default function StaffLayout() {
     socket.on("staff.notification", (payload: StaffRealtimeNotification) => {
       if (
         payload.type !== "RESCUE_ASSIGNMENT_ACCEPTED" &&
+        payload.type !== "RESCUE_ASSIGNMENT_INCIDENT_REPORTED" &&
         payload.type !== "PENDING_DONATION_CREATED"
       ) {
         return;

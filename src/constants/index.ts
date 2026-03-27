@@ -156,6 +156,8 @@ export const API_ENDPOINTS = {
     `/warehouse/rescue-orders/${id}/dispatch`,
   WAREHOUSE_RESCUE_ORDER_REPLENISHMENT_REQUESTS: (id: string) =>
     `/warehouse/rescue-orders/${id}/replenishment-requests`,
+  WAREHOUSE_RESCUE_ORDER_TEAM_HANDOFFS: (id: string) =>
+    `/warehouse/rescue-orders/${id}/team-handoffs`,
   WAREHOUSE_REPLENISHMENT_REQUEST_REVIEW: (id: string) =>
     `/warehouse/replenishment-requests/${id}/review`,
   WAREHOUSE_RESCUE_ORDER_COMPLETE: (id: string) =>

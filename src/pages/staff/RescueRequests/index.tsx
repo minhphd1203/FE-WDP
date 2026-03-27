@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { rescueRequestApi } from "../../../apis/rescueRequestApi";
 import {
   CreateReplenishmentRequestDto,
+  CreateTeamHandoffDto,
   CompleteRescueOrderItemDto,
   rescueOrderApi,
   RescueOrderDetail,
@@ -121,6 +122,104 @@ const getEstimatedPeopleFromTeams = (request: ReliefRequest) => {
   return request.estimatedPeople || 1;
 };
 
+type TeamHandoffAssignmentOption = {
+  assignmentId: string;
+  teamName: string;
+  status: string;
+  teamSize?: number;
+};
+
+type TeamHandoffSummary = {
+  totalAssignments: number;
+  receivedAssignments: number;
+  pendingAssignments: number;
+  canceledAssignments: number;
+};
+
+type TeamHandoffComputedState = {
+  summary: TeamHandoffSummary;
+  lockedAssignmentIds: string[];
+};
+
+const computeHandoffStateFromList = (
+  handoffs: Array<{ assignmentId: string; status: string }>,
+): TeamHandoffComputedState => {
+  const statusByAssignmentId = handoffs.reduce<Record<string, string>>(
+    (accumulator, handoff) => {
+      const currentStatus = accumulator[handoff.assignmentId];
+
+      // Priority: RECEIVED > PENDING_RECEIPT > CANCELED
+      if (handoff.status === "RECEIVED") {
+        accumulator[handoff.assignmentId] = "RECEIVED";
+        return accumulator;
+      }
+
+      if (
+        handoff.status === "PENDING_RECEIPT" &&
+        currentStatus !== "RECEIVED"
+      ) {
+        accumulator[handoff.assignmentId] = "PENDING_RECEIPT";
+        return accumulator;
+      }
+
+      if (!currentStatus) {
+        accumulator[handoff.assignmentId] = handoff.status;
+      }
+
+      return accumulator;
+    },
+    {},
+  );
+
+  const statusEntries = Object.entries(statusByAssignmentId);
+  const statusList = statusEntries.map(([, status]) => status);
+
+  return {
+    summary: {
+      totalAssignments: statusList.length,
+      receivedAssignments: statusList.filter((status) => status === "RECEIVED")
+        .length,
+      pendingAssignments: statusList.filter(
+        (status) => status === "PENDING_RECEIPT",
+      ).length,
+      canceledAssignments: statusList.filter((status) => status === "CANCELED")
+        .length,
+    },
+    // Assignments already in handoff flow should not be handoff again.
+    lockedAssignmentIds: statusEntries
+      .filter(([, status]) => status === "PENDING_RECEIPT" || status === "RECEIVED")
+      .map(([assignmentId]) => assignmentId),
+  };
+};
+
+const getHandoffAssignmentsFromOrder = (
+  order: RescueOrderDetail | null,
+): TeamHandoffAssignmentOption[] => {
+  if (!order) {
+    return [];
+  }
+
+  const assignmentFromRequest = (order.rescueRequest?.assignments || []).map(
+    (assignment) => ({
+      assignmentId: assignment.id,
+      teamName: assignment.team?.name || assignment.teamId,
+      status: assignment.status,
+      teamSize: assignment.team?.teamSize,
+    }),
+  );
+
+  if (assignmentFromRequest.length > 0) {
+    return assignmentFromRequest;
+  }
+
+  return (order.teams || []).map((team) => ({
+    assignmentId: team.assignmentId,
+    teamName: team.teamName,
+    status: team.status,
+    teamSize: team.teamSize,
+  }));
+};
+
 export default function RescueRequests() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<RescueRequestStatus>(
@@ -135,6 +234,11 @@ export default function RescueRequests() {
   const [ordersByRequestId, setOrdersByRequestId] = useState<
     Record<string, RescueOrderListItem>
   >({});
+  const [handoffSummaryByOrderId, setHandoffSummaryByOrderId] = useState<
+    Record<string, TeamHandoffSummary>
+  >({});
+  const [handoffLockedAssignmentIdsByOrderId, setHandoffLockedAssignmentIdsByOrderId] =
+    useState<Record<string, string[]>>({});
   const [selectedRequest, setSelectedRequest] = useState<ReliefRequest | null>(
     null,
   );
@@ -145,11 +249,13 @@ export default function RescueRequests() {
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isReplenishmentDialogOpen, setIsReplenishmentDialogOpen] =
     useState(false);
+  const [isHandoffDialogOpen, setIsHandoffDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isCheckingStock, setIsCheckingStock] = useState(false);
   const [isDispatching, setIsDispatching] = useState(false);
   const [isCreatingReplenishment, setIsCreatingReplenishment] = useState(false);
+  const [isCreatingHandoff, setIsCreatingHandoff] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [formData, setFormData] = useState({
     estimatedPeople: 1,
@@ -157,6 +263,11 @@ export default function RescueRequests() {
   });
   const [completeNote, setCompleteNote] = useState("");
   const [replenishmentNote, setReplenishmentNote] = useState("");
+  const [handoffAssignmentId, setHandoffAssignmentId] = useState("");
+  const [handoffNote, setHandoffNote] = useState("");
+  const [handoffItems, setHandoffItems] = useState<
+    Array<{ orderItemId: string; quantity: number }>
+  >([]);
   const [completeItems, setCompleteItems] = useState<
     CompleteRescueOrderItemDto[]
   >([]);
@@ -197,6 +308,8 @@ export default function RescueRequests() {
   const fetchExistingOrders = async (requestList: ReliefRequest[]) => {
     if (requestList.length === 0) {
       setOrdersByRequestId({});
+      setHandoffSummaryByOrderId({});
+      setHandoffLockedAssignmentIdsByOrderId({});
       return;
     }
 
@@ -228,8 +341,86 @@ export default function RescueRequests() {
       );
 
       setOrdersByRequestId(nextOrders);
+
+      const ordersNeedHandoffSummary = Object.values(nextOrders).filter(
+        (order) =>
+          order.status === "DISPATCHED" || order.status === "COMPLETED",
+      );
+
+      if (ordersNeedHandoffSummary.length === 0) {
+        setHandoffSummaryByOrderId({});
+        setHandoffLockedAssignmentIdsByOrderId({});
+        return;
+      }
+
+      const handoffSummaries = await Promise.all(
+        ordersNeedHandoffSummary.map(async (order) => {
+          try {
+            const response = await rescueOrderApi.listTeamHandoffs(order.id);
+            const handoffs = response.data?.data || [];
+            const computedState = computeHandoffStateFromList(handoffs);
+            return [
+              order.id,
+              computedState,
+            ] as const;
+          } catch (error) {
+            return [
+              order.id,
+              {
+                summary: {
+                  totalAssignments: 0,
+                  receivedAssignments: 0,
+                  pendingAssignments: 0,
+                  canceledAssignments: 0,
+                },
+                lockedAssignmentIds: [],
+              } satisfies TeamHandoffComputedState,
+            ] as const;
+          }
+        }),
+      );
+
+      setHandoffSummaryByOrderId(
+        handoffSummaries.reduce<Record<string, TeamHandoffSummary>>(
+          (accumulator, [orderId, computedState]) => {
+            accumulator[orderId] = computedState.summary;
+            return accumulator;
+          },
+          {},
+        ),
+      );
+
+      setHandoffLockedAssignmentIdsByOrderId(
+        handoffSummaries.reduce<Record<string, string[]>>(
+          (accumulator, [orderId, computedState]) => {
+            accumulator[orderId] = computedState.lockedAssignmentIds;
+            return accumulator;
+          },
+          {},
+        ),
+      );
     } finally {
       setIsOrdersLoading(false);
+    }
+  };
+
+  const refreshHandoffSummary = async (orderId: string) => {
+    try {
+      const response = await rescueOrderApi.listTeamHandoffs(orderId);
+      const handoffs = response.data?.data || [];
+      const computedState = computeHandoffStateFromList(handoffs);
+
+      setHandoffSummaryByOrderId((current) => ({
+        ...current,
+        [orderId]: computedState.summary,
+      }));
+
+      setHandoffLockedAssignmentIdsByOrderId((current) => ({
+        ...current,
+        [orderId]: computedState.lockedAssignmentIds,
+      }));
+    } catch {
+      // Keep current badge state when handoff summary cannot be refreshed.
     }
   };
 
@@ -375,6 +566,119 @@ export default function RescueRequests() {
         : "Đề nghị bổ sung hàng cho phiếu cứu trợ này.",
     );
     setIsReplenishmentDialogOpen(true);
+  };
+
+  const handleOpenHandoffDialog = () => {
+    if (!selectedOrderDetail) {
+      return;
+    }
+
+    const assignmentOptions = getHandoffAssignmentsFromOrder(
+      selectedOrderDetail,
+    ).filter(
+      (assignment) =>
+        assignment.status !== "CANCELED" && assignment.status !== "REJECTED",
+    );
+
+    if (assignmentOptions.length === 0) {
+      toast.error("Không có đội hợp lệ để bàn giao");
+      return;
+    }
+
+    const initialItems = selectedOrderDetail.items
+      .map((item) => ({
+        orderItemId: item.id,
+        quantity: Math.max(0, item.dispatchedQuantity - item.returnedQuantity),
+      }))
+      .filter((item) => item.quantity > 0);
+
+    if (initialItems.length === 0) {
+      toast.error("Không có vật phẩm khả dụng để bàn giao");
+      return;
+    }
+
+    const defaultAssignment = assignmentOptions[0];
+    setHandoffAssignmentId(defaultAssignment.assignmentId);
+    setHandoffNote(`Bàn giao vật phẩm cho đội ${defaultAssignment.teamName}`);
+    setHandoffItems(initialItems);
+    setIsHandoffDialogOpen(true);
+  };
+
+  const handleChangeHandoffItemQuantity = (
+    orderItemId: string,
+    quantity: number,
+  ) => {
+    setHandoffItems((current) =>
+      current.map((item) =>
+        item.orderItemId === orderItemId
+          ? { ...item, quantity: Number.isNaN(quantity) ? 0 : quantity }
+          : item,
+      ),
+    );
+  };
+
+  const handleCreateTeamHandoff = async () => {
+    if (!selectedOrderDetail) {
+      return;
+    }
+
+    if (!handoffAssignmentId) {
+      toast.error("Vui lòng chọn đội nhận bàn giao");
+      return;
+    }
+
+    const validItems = handoffItems
+      .filter((item) => item.quantity > 0)
+      .map((item) => {
+        const detailItem = selectedOrderDetail.items.find(
+          (sourceItem) => sourceItem.id === item.orderItemId,
+        );
+        const maxHandoff =
+          (detailItem?.dispatchedQuantity || 0) -
+          (detailItem?.returnedQuantity || 0);
+        return {
+          orderItemId: item.orderItemId,
+          quantity: Math.min(item.quantity, Math.max(0, maxHandoff)),
+        };
+      })
+      .filter((item) => item.quantity > 0);
+
+    if (validItems.length === 0) {
+      toast.error("Vui lòng nhập ít nhất một vật phẩm để bàn giao");
+      return;
+    }
+
+    const payload: CreateTeamHandoffDto = {
+      assignmentId: handoffAssignmentId,
+      note: handoffNote.trim() || undefined,
+      items: validItems,
+    };
+
+    setIsCreatingHandoff(true);
+    try {
+      const response = await rescueOrderApi.createTeamHandoff(
+        selectedOrderDetail.id,
+        payload,
+      );
+
+      if (response.success) {
+        const refreshedDetail = await rescueOrderApi.getRescueOrder(
+          selectedOrderDetail.id,
+        );
+        if (refreshedDetail.success) {
+          syncOrderInState(refreshedDetail.data);
+        }
+
+        await refreshHandoffSummary(selectedOrderDetail.id);
+
+        setIsHandoffDialogOpen(false);
+        toast.success("Bàn giao cho đội thành công");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Không thể bàn giao cho đội");
+    } finally {
+      setIsCreatingHandoff(false);
+    }
   };
 
   const handleChangeCompleteItemQuantity = (
@@ -562,6 +866,27 @@ export default function RescueRequests() {
   const canRequestReplenishment =
     selectedOrderDetail?.status === "INSUFFICIENT" || hasStockShortage;
 
+  const availableHandoffAssignments = getHandoffAssignmentsFromOrder(
+    selectedOrderDetail,
+  ).filter(
+    (assignment) =>
+      assignment.status !== "CANCELED" &&
+      assignment.status !== "REJECTED" &&
+      !(
+        selectedOrderDetail &&
+        (handoffLockedAssignmentIdsByOrderId[selectedOrderDetail.id] || []).includes(
+          assignment.assignmentId,
+        )
+      ),
+  );
+
+  const canCreateHandoff =
+    selectedOrderDetail?.status === "DISPATCHED" &&
+    availableHandoffAssignments.length > 0 &&
+    selectedOrderDetail.items.some(
+      (item) => item.dispatchedQuantity - item.returnedQuantity > 0,
+    );
+
   const rescueLatitude = Number(selectedOrderDetail?.rescueRequest?.latitude);
   const rescueLongitude = Number(selectedOrderDetail?.rescueRequest?.longitude);
   const hasValidRescueCoordinates =
@@ -734,6 +1059,9 @@ export default function RescueRequests() {
                 ) : (
                   requests.map((request) => {
                     const existingOrder = ordersByRequestId[request.id];
+                    const handoffSummary = existingOrder
+                      ? handoffSummaryByOrderId[existingOrder.id]
+                      : null;
                     const activeTeams = getActiveAssignedTeams(request);
                     const visibleTeams = activeTeams.slice(
                       0,
@@ -843,6 +1171,26 @@ export default function RescueRequests() {
                               >
                                 {getOrderStatusLabel(existingOrder.status)}
                               </div>
+                              {(existingOrder.status === "DISPATCHED" ||
+                                existingOrder.status === "COMPLETED") && (
+                                <div
+                                  className={`inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                    !handoffSummary ||
+                                    handoffSummary.totalAssignments === 0
+                                      ? "bg-slate-100 text-slate-700"
+                                      : handoffSummary.pendingAssignments > 0
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-emerald-100 text-emerald-700"
+                                  }`}
+                                >
+                                  {!handoffSummary ||
+                                  handoffSummary.totalAssignments === 0
+                                    ? "Chưa bàn giao"
+                                    : handoffSummary.pendingAssignments > 0
+                                      ? `Đang chờ nhận (${handoffSummary.pendingAssignments}/${handoffSummary.totalAssignments})`
+                                      : `Đã bàn giao (${handoffSummary.receivedAssignments}/${handoffSummary.totalAssignments})`}
+                                </div>
+                              )}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1578,6 +1926,16 @@ export default function RescueRequests() {
                 </Button>
               )}
 
+            {selectedOrderDetail && canCreateHandoff && (
+              <Button
+                onClick={handleOpenHandoffDialog}
+                variant="outline"
+                className="rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700"
+              >
+                Bàn giao cho đội
+              </Button>
+            )}
+
             {selectedOrderDetail && canDispatch && (
               <Button
                 onClick={() => void handleDispatchOrder()}
@@ -1738,6 +2096,141 @@ export default function RescueRequests() {
               className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
             >
               {isCompleting ? "Đang hoàn tất..." : "Xác nhận hoàn tất"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isHandoffDialogOpen} onOpenChange={setIsHandoffDialogOpen}>
+        <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col overflow-hidden rounded-2xl border-red-100 p-0">
+          <DialogHeader className="border-b border-slate-100 bg-gray-50 px-6 py-4">
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Bàn giao cho đội
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+            <div className="rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 p-4 text-sm text-slate-700">
+              Chọn đội nhận vật phẩm và nhập số lượng bàn giao cho từng loại.
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="handoff-assignment">Đội nhận bàn giao</Label>
+              <select
+                id="handoff-assignment"
+                value={handoffAssignmentId}
+                onChange={(event) => {
+                  const nextAssignmentId = event.target.value;
+                  setHandoffAssignmentId(nextAssignmentId);
+                  const selectedAssignment = availableHandoffAssignments.find(
+                    (assignment) => assignment.assignmentId === nextAssignmentId,
+                  );
+                  if (selectedAssignment) {
+                    setHandoffNote(
+                      `Bàn giao vật phẩm cho đội ${selectedAssignment.teamName}`,
+                    );
+                  }
+                }}
+                className="h-10 w-full rounded-lg border border-red-300 bg-white px-3 text-sm text-slate-700 focus:border-red-500 focus:outline-none"
+              >
+                <option value="">Chọn đội</option>
+                {availableHandoffAssignments.map((assignment) => (
+                  <option
+                    key={assignment.assignmentId}
+                    value={assignment.assignmentId}
+                  >
+                    {assignment.teamName}
+                    {assignment.teamSize ? ` (${assignment.teamSize} người)` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="handoff-note">Ghi chú bàn giao</Label>
+              <Textarea
+                id="handoff-note"
+                rows={3}
+                value={handoffNote}
+                onChange={(event) => setHandoffNote(event.target.value)}
+                className="rounded-xl border-red-300 focus-visible:border-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-0"
+              />
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-100">
+              <Table>
+                <TableHeader className="bg-slate-50/80">
+                  <TableRow className="hover:bg-slate-50/80">
+                    <TableHead>Vật phẩm</TableHead>
+                    <TableHead>Đã cấp phát</TableHead>
+                    <TableHead>Đã hoàn</TableHead>
+                    <TableHead>Tối đa bàn giao</TableHead>
+                    <TableHead>Số lượng bàn giao</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedOrderDetail?.items.map((item) => {
+                    const rowData = handoffItems.find(
+                      (sourceItem) => sourceItem.orderItemId === item.id,
+                    );
+                    const maxHandoff =
+                      item.dispatchedQuantity - item.returnedQuantity;
+
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-semibold text-slate-900">
+                          {itemTypeLabelMap[item.itemType] || item.itemType}
+                          <p className="mt-1 text-xs text-slate-500">
+                            {item.category?.name || item.categoryId}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-slate-700">
+                          {item.dispatchedQuantity}
+                        </TableCell>
+                        <TableCell className="text-slate-700">
+                          {item.returnedQuantity}
+                        </TableCell>
+                        <TableCell className="text-slate-700">
+                          {Math.max(0, maxHandoff)}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={Math.max(0, maxHandoff)}
+                            disabled={maxHandoff <= 0}
+                            value={rowData?.quantity ?? 0}
+                            onChange={(event) =>
+                              handleChangeHandoffItemQuantity(
+                                item.id,
+                                Number(event.target.value),
+                              )
+                            }
+                            className="w-28 rounded-lg border-red-200 focus-visible:border-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-0"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t border-slate-100 bg-gray-50 px-6 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsHandoffDialogOpen(false)}
+              className="rounded-lg border-red-200 text-red-700 hover:text-red-700"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={() => void handleCreateTeamHandoff()}
+              disabled={isCreatingHandoff}
+              className="rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white hover:from-red-600 hover:via-red-700 hover:to-red-800"
+            >
+              {isCreatingHandoff ? "Đang bàn giao..." : "Xác nhận bàn giao"}
             </Button>
           </DialogFooter>
         </DialogContent>

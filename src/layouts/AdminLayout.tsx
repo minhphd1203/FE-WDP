@@ -128,6 +128,7 @@ export default function AdminLayout() {
     socket.on("staff.notification", (payload: StaffRealtimeNotification) => {
       if (
         payload.type !== "RESCUE_ASSIGNMENT_ACCEPTED" &&
+        payload.type !== "RESCUE_ASSIGNMENT_INCIDENT_REPORTED" &&
         payload.type !== "REPLENISHMENT_REQUEST_CREATED" &&
         payload.type !== "TEAM_REGISTRATION_REQUEST_CREATED"
       ) {

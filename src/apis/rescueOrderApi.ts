@@ -40,6 +40,43 @@ export interface CompleteRescueOrderDto {
   items?: CompleteRescueOrderItemDto[];
 }
 
+export interface CreateTeamHandoffItemDto {
+  orderItemId: string;
+  quantity: number;
+}
+
+export interface CreateTeamHandoffDto {
+  assignmentId: string;
+  note?: string;
+  items: CreateTeamHandoffItemDto[];
+}
+
+export type RescueSupplyTeamHandoffStatus =
+  | "PENDING_RECEIPT"
+  | "RECEIVED"
+  | "CANCELED"
+  | string;
+
+export interface RescueOrderTeamHandoffItem {
+  id?: string;
+  orderItemId: string;
+  categoryName?: string;
+  itemType?: RescueOrderItemType | string;
+  quantity: number;
+  returnedQuantity?: number;
+}
+
+export interface RescueOrderTeamHandoff {
+  id: string;
+  assignmentId: string;
+  teamId: string;
+  status: RescueSupplyTeamHandoffStatus;
+  note?: string | null;
+  dispatchedAt?: string | null;
+  receivedAt?: string | null;
+  items?: RescueOrderTeamHandoffItem[];
+}
+
 export interface CreateReplenishmentRequestDto {
   note: string;
 }
@@ -249,6 +286,22 @@ export const rescueOrderApi = {
       API_ENDPOINTS.WAREHOUSE_RESCUE_ORDER_REPLENISHMENT_REQUESTS(id),
       data,
     );
+  },
+
+  createTeamHandoff: async (
+    id: string,
+    data: CreateTeamHandoffDto,
+  ): Promise<ApiResponse<RescueOrderDetail>> => {
+    return httpClient.post(
+      API_ENDPOINTS.WAREHOUSE_RESCUE_ORDER_TEAM_HANDOFFS(id),
+      data,
+    );
+  },
+
+  listTeamHandoffs: async (
+    id: string,
+  ): Promise<ApiResponse<{ data: RescueOrderTeamHandoff[] }>> => {
+    return httpClient.get(API_ENDPOINTS.WAREHOUSE_RESCUE_ORDER_TEAM_HANDOFFS(id));
   },
 
   completeRescueOrder: async (
